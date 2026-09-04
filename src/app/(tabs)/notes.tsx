@@ -19,18 +19,17 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  type Option as SelectOption,
 } from "@/components/ui/select";
 import { Text } from "@/components/ui/text";
-import { notesApi, subjectsApi, type Note, type Subject } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
-import { Feather } from "@expo/vector-icons";
 import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+  useCreateNote,
+  useDeleteNote,
+  useNotesQuery,
+  useSubjectsQuery,
+  useUpdateNote,
+} from "@/hooks/queries";
+import { type Note } from "@/services";
+import { Feather } from "@expo/vector-icons";
 import * as React from "react";
 import {
   ActivityIndicator,
@@ -56,13 +55,6 @@ function formatShortDate(date: string) {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function toSelectOptions(subjects: Subject[]): SelectOption[] {
-  return subjects.map((subject) => ({
-    value: String(subject.id),
-    label: subject.name,
-  }));
 }
 
 function decodeHtmlEntities(content: string) {
@@ -104,8 +96,6 @@ function countWords(content: string) {
 }
 
 export default function NotesScreen() {
-  const { token } = useAuth();
-  const queryClient = useQueryClient();
   const confirm = useConfirmDialog();
   const [page, setPage] = React.useState(1);
   const [selectedSubjectId, setSelectedSubjectId] = React.useState("");
@@ -113,89 +103,40 @@ export default function NotesScreen() {
   const [editingNote, setEditingNote] = React.useState<Note | null>(null);
   const [detailsNote, setDetailsNote] = React.useState<Note | null>(null);
 
-  const subjectsQuery = useQuery({
-    queryKey: ["subjects", token],
-    queryFn: async () =>
-      subjectsApi.list(token as string, {
-        page: 1,
-        limit: 200,
-      }),
-    enabled: Boolean(token),
-  });
-
-  const subjectOptions = React.useMemo(
-    () => toSelectOptions(subjectsQuery.data?.data ?? []),
-    [subjectsQuery.data?.data],
-  );
+  const {
+    subjects,
+    subjectOptions,
+    isLoading: isLoadingSubjects,
+    isError: isSubjectsError,
+  } = useSubjectsQuery();
 
   const selectedSubject =
     subjectOptions.find((option) => option?.value === selectedSubjectId) ?? null;
 
-  const notesQuery = useQuery({
-    queryKey: ["notes", token, page, PAGE_SIZE, selectedSubjectId],
-    queryFn: async () =>
-      notesApi.list(token as string, {
-        page,
-        limit: PAGE_SIZE,
-        subjectId: selectedSubjectId || undefined,
-      }),
-    enabled: Boolean(token),
-    placeholderData: keepPreviousData,
+  const {
+    notes,
+    totalItems,
+    totalPages,
+    isLoading: isLoadingNotes,
+    isFetching: isFetchingNotes,
+    isRefreshing,
+    refetch: refetchNotes,
+  } = useNotesQuery({
+    page,
+    limit: PAGE_SIZE,
+    subjectId: selectedSubjectId,
   });
 
-  const createNoteMutation = useMutation({
-    mutationFn: async (payload: { content: string; subjectId: number }) => {
-      return notesApi.create(token as string, payload);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["notes"] });
-      setPage(1);
-      void notesQuery.refetch();
-      Alert.alert("Success", "Note created successfully.");
-    },
-  });
-
-  const updateNoteMutation = useMutation({
-    mutationFn: async (payload: {
-      id: string;
-      content: string;
-      subjectId: number;
-    }) => {
-      return notesApi.update(token as string, payload.id, {
-        content: payload.content,
-        subjectId: payload.subjectId,
-      });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["notes"] });
-      void notesQuery.refetch();
-      Alert.alert("Success", "Note updated successfully.");
-    },
-  });
-
-  const deleteNoteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return notesApi.delete(token as string, id);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["notes"] });
-      void notesQuery.refetch();
-    },
-  });
-
-  const notes = notesQuery.data?.data ?? [];
-  const totalItems = notesQuery.data?.pagination.totalItems ?? 0;
-  const totalPages =
-    notesQuery.data?.pagination.totalPages ??
-    Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const isRefreshing = notesQuery.isFetching && !notesQuery.isLoading;
+  const createNoteMutation = useCreateNote();
+  const updateNoteMutation = useUpdateNote();
+  const deleteNoteMutation = useDeleteNote();
 
   const startIndex = totalItems === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const endIndex =
     totalItems === 0 ? 0 : Math.min(page * PAGE_SIZE, totalItems);
 
   function onRefresh() {
-    void notesQuery.refetch();
+    refetchNotes();
   }
 
   function onPreviousPage() {
@@ -280,9 +221,9 @@ export default function NotesScreen() {
               size="icon"
               variant="outline"
               onPress={onRefresh}
-              disabled={notesQuery.isLoading || notesQuery.isFetching}
+              disabled={isLoadingNotes || isFetchingNotes}
             >
-              {notesQuery.isLoading || notesQuery.isFetching ? (
+              {isLoadingNotes || isFetchingNotes ? (
                 <ActivityIndicator size="small" />
               ) : (
                 <Feather name="refresh-cw" size={16} color="#a3a3a3" />
@@ -304,7 +245,7 @@ export default function NotesScreen() {
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    subjectsQuery.isLoading
+                    isLoadingSubjects
                       ? "Loading subjects..."
                       : "All subjects"
                   }
@@ -322,7 +263,7 @@ export default function NotesScreen() {
                 </SelectGroup>
               </SelectContent>
             </Select>
-            {subjectsQuery.isError ? (
+            {isSubjectsError ? (
               <Text className="text-destructive text-xs">
                 Failed to load subjects for filtering.
               </Text>
@@ -348,7 +289,7 @@ export default function NotesScreen() {
             </Button>
           </View>
 
-          {notesQuery.isLoading ? (
+          {isLoadingNotes ? (
             <View className="gap-3">
               {[0, 1, 2, 3].map((item) => (
                 <Card key={item} className="gap-3 py-4">
@@ -361,7 +302,7 @@ export default function NotesScreen() {
             </View>
           ) : null}
 
-          {!notesQuery.isLoading && notes.length === 0 ? (
+          {!isLoadingNotes && notes.length === 0 ? (
             <Card className="gap-3 py-4">
               <CardHeader className="px-4">
                 <CardTitle>No Notes Found</CardTitle>
@@ -382,7 +323,7 @@ export default function NotesScreen() {
             </Card>
           ) : null}
 
-          {!notesQuery.isLoading && notes.length > 0 ? (
+          {!isLoadingNotes && notes.length > 0 ? (
             <>
               <FlatList
                 data={notes}
@@ -500,7 +441,7 @@ export default function NotesScreen() {
                     variant="outline"
                     className="flex-1"
                     onPress={onPreviousPage}
-                    disabled={page <= 1 || notesQuery.isFetching}
+                    disabled={page <= 1 || isFetchingNotes}
                   >
                     <Feather name="chevron-left" size={16} color="#a3a3a3" />
                     <Text>Previous</Text>
@@ -510,7 +451,7 @@ export default function NotesScreen() {
                     variant="outline"
                     className="flex-1"
                     onPress={onNextPage}
-                    disabled={page >= totalPages || notesQuery.isFetching}
+                    disabled={page >= totalPages || isFetchingNotes}
                   >
                     <Text>Next</Text>
                     <Feather name="chevron-right" size={16} color="#a3a3a3" />

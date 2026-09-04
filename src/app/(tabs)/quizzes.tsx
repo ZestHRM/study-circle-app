@@ -16,24 +16,19 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  type Option as SelectOption,
 } from "@/components/ui/select";
 import { Text } from "@/components/ui/text";
 import {
-  quizzesApi,
-  subjectsApi,
+  useQuizzesQuery,
+  useStartQuizAttempt,
+  useSubjectsQuery,
+} from "@/hooks/queries";
+import {
   type Quiz,
   type QuizAttempt,
   type QuizDifficultyLevel,
-  type Subject,
-} from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+} from "@/services";
 import { Feather } from "@expo/vector-icons";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-} from "@tanstack/react-query";
 import * as React from "react";
 import {
   ActivityIndicator,
@@ -52,13 +47,6 @@ const DIFFICULTY_LABELS: Record<QuizDifficultyLevel, string> = {
   MEDIUM: "Medium",
   HARD: "Hard",
 };
-
-function toSelectOptions(subjects: Subject[]): SelectOption[] {
-  return subjects.map((subject) => ({
-    value: String(subject.id),
-    label: subject.name,
-  }));
-}
 
 function difficultyChipClass(level: QuizDifficultyLevel) {
   switch (level) {
@@ -83,7 +71,6 @@ function difficultyTextClass(level: QuizDifficultyLevel) {
 }
 
 export default function QuizzesScreen() {
-  const { token } = useAuth();
   const [page, setPage] = React.useState(1);
   const [searchText, setSearchText] = React.useState("");
   const [search, setSearch] = React.useState("");
@@ -95,53 +82,32 @@ export default function QuizzesScreen() {
     totalQuestions: number;
   } | null>(null);
 
-  const subjectsQuery = useQuery({
-    queryKey: ["subjects", token],
-    queryFn: async () =>
-      subjectsApi.list(token as string, {
-        page: 1,
-        limit: 200,
-      }),
-    enabled: Boolean(token),
-  });
-
-  const subjectOptions = React.useMemo(
-    () => toSelectOptions(subjectsQuery.data?.data ?? []),
-    [subjectsQuery.data?.data],
-  );
+  const {
+    subjectOptions,
+    isLoading: isLoadingSubjects,
+    isError: isSubjectsError,
+  } = useSubjectsQuery();
 
   const selectedSubject =
     subjectOptions.find((option) => option?.value === selectedSubjectId) ??
     null;
 
-  const quizzesQuery = useQuery({
-    queryKey: ["quizzes", token, page, PAGE_SIZE, search, selectedSubjectId],
-    queryFn: async () =>
-      quizzesApi.list(token as string, {
-        page,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-        subjectId: selectedSubjectId || undefined,
-      }),
-    enabled: Boolean(token),
-    placeholderData: keepPreviousData,
+  const {
+    quizzes,
+    totalItems,
+    totalPages,
+    isLoading: isLoadingQuizzes,
+    isFetching: isFetchingQuizzes,
+    isRefreshing,
+    refetch: refetchQuizzes,
+  } = useQuizzesQuery({
+    page,
+    limit: PAGE_SIZE,
+    search,
+    subjectId: selectedSubjectId,
   });
 
-  const startAttemptMutation = useMutation({
-    mutationFn: async (quizId: string) =>
-      quizzesApi.startAttempt(token as string, quizId),
-    onSuccess: async (attempt) => {
-      setSelectedQuizAttempt(attempt);
-      setSelectedQuizForResults(null);
-    },
-  });
-
-  const quizzes = quizzesQuery.data?.data ?? [];
-  const totalItems = quizzesQuery.data?.pagination.totalItems ?? 0;
-  const totalPages =
-    quizzesQuery.data?.pagination.totalPages ??
-    Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const isRefreshing = quizzesQuery.isFetching && !quizzesQuery.isLoading;
+  const startAttemptMutation = useStartQuizAttempt();
 
   const startIndex = totalItems === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const endIndex =
@@ -149,7 +115,7 @@ export default function QuizzesScreen() {
   const isFiltered = Boolean(search) || Boolean(selectedSubjectId);
 
   function onRefresh() {
-    void quizzesQuery.refetch();
+    refetchQuizzes();
   }
 
   function onPreviousPage() {
@@ -179,7 +145,9 @@ export default function QuizzesScreen() {
     }
 
     try {
-      await startAttemptMutation.mutateAsync(quiz.id);
+      const attempt = await startAttemptMutation.mutateAsync(quiz.id);
+      setSelectedQuizAttempt(attempt);
+      setSelectedQuizForResults(null);
     } catch (error) {
       const message =
         error instanceof Error
@@ -218,9 +186,9 @@ export default function QuizzesScreen() {
               size="icon"
               variant="outline"
               onPress={onRefresh}
-              disabled={quizzesQuery.isLoading || quizzesQuery.isFetching}
+              disabled={isLoadingQuizzes || isFetchingQuizzes}
             >
-              {quizzesQuery.isLoading || quizzesQuery.isFetching ? (
+              {isLoadingQuizzes || isFetchingQuizzes ? (
                 <ActivityIndicator size="small" />
               ) : (
                 <Feather name="refresh-cw" size={16} color="#a3a3a3" />
@@ -260,7 +228,7 @@ export default function QuizzesScreen() {
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    subjectsQuery.isLoading
+                    isLoadingSubjects
                       ? "Loading subjects..."
                       : "All subjects"
                   }
@@ -278,7 +246,7 @@ export default function QuizzesScreen() {
                 </SelectGroup>
               </SelectContent>
             </Select>
-            {subjectsQuery.isError ? (
+            {isSubjectsError ? (
               <Text className="text-destructive text-xs">
                 Failed to load subjects for filtering.
               </Text>
@@ -297,7 +265,7 @@ export default function QuizzesScreen() {
             </Button>
           </View>
 
-          {quizzesQuery.isLoading ? (
+          {isLoadingQuizzes ? (
             <View className="gap-3">
               {[0, 1, 2, 3].map((item) => (
                 <Card key={item} className="gap-3 py-4">
@@ -310,7 +278,7 @@ export default function QuizzesScreen() {
             </View>
           ) : null}
 
-          {!quizzesQuery.isLoading && quizzes.length === 0 ? (
+          {!isLoadingQuizzes && quizzes.length === 0 ? (
             <Card className="gap-3 py-4">
               <CardHeader className="px-4">
                 <CardTitle>No Quizzes Found</CardTitle>
@@ -335,7 +303,7 @@ export default function QuizzesScreen() {
             </Card>
           ) : null}
 
-          {!quizzesQuery.isLoading && quizzes.length > 0 ? (
+          {!isLoadingQuizzes && quizzes.length > 0 ? (
             <>
               <FlatList
                 data={quizzes}
@@ -453,7 +421,7 @@ export default function QuizzesScreen() {
                     variant="outline"
                     className="flex-1"
                     onPress={onPreviousPage}
-                    disabled={page <= 1 || quizzesQuery.isFetching}
+                    disabled={page <= 1 || isFetchingQuizzes}
                   >
                     <Feather name="chevron-left" size={16} color="#a3a3a3" />
                     <Text>Previous</Text>
@@ -463,7 +431,7 @@ export default function QuizzesScreen() {
                     variant="outline"
                     className="flex-1"
                     onPress={onNextPage}
-                    disabled={page >= totalPages || quizzesQuery.isFetching}
+                    disabled={page >= totalPages || isFetchingQuizzes}
                   >
                     <Text>Next</Text>
                     <Feather name="chevron-right" size={16} color="#a3a3a3" />

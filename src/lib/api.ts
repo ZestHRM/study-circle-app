@@ -1,4 +1,8 @@
-export type EducationLevel = 'School' | 'College' | 'Coaching' | 'CompetitiveExams';
+export type EducationLevel =
+  | "School"
+  | "College"
+  | "Coaching"
+  | "CompetitiveExams";
 
 export type User = {
   id: number | string;
@@ -56,20 +60,20 @@ export type PaginatedApiResponse = {
 };
 
 export type StudyMaterialQuizStatus =
-  | 'PENDING'
-  | 'GENERATING'
-  | 'GENERATED'
-  | 'GENERATION_FAILED';
+  | "PENDING"
+  | "GENERATING"
+  | "GENERATED"
+  | "GENERATION_FAILED";
 
 export type StudyMaterialStatus =
-  | 'PENDING'
-  | 'PROCESSING'
-  | 'PROCESSED'
-  | 'PROCESSING_FAILED'
-  | 'GENERATING_NOTES'
-  | 'NOTES_GENERATED'
-  | 'NOTES_GENERATION_FAILED'
-  | 'ARCHIVED';
+  | "PENDING"
+  | "PROCESSING"
+  | "PROCESSED"
+  | "PROCESSING_FAILED"
+  | "GENERATING_NOTES"
+  | "NOTES_GENERATED"
+  | "NOTES_GENERATION_FAILED"
+  | "ARCHIVED";
 
 export type StudyMaterialFile = {
   id: string;
@@ -117,11 +121,11 @@ export type Subject = {
   userId?: string;
 };
 
-export type NoteType = 'GENERATED' | 'CUSTOM';
+export type NoteType = "GENERATED" | "CUSTOM";
 
-export type QuizDifficultyLevel = 'EASY' | 'MEDIUM' | 'HARD';
+export type QuizDifficultyLevel = "EASY" | "MEDIUM" | "HARD";
 
-export type QuizStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type QuizStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
 export type QuizAttempt = {
   id: string;
@@ -136,7 +140,10 @@ export type QuizAttempt = {
   }[];
 };
 
-export type QuizQuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
+export type QuizQuestionType =
+  | "MULTIPLE_CHOICE"
+  | "TRUE_FALSE"
+  | "SHORT_ANSWER";
 
 export type QuizQuestion = {
   id: string;
@@ -152,12 +159,12 @@ export type QuizQuestion = {
 };
 
 export type QuizAnswerCorrectness =
-  | 'CORRECT'
-  | 'INCORRECT'
-  | 'PARTIALLY_CORRECT'
-  | 'NONE';
+  | "CORRECT"
+  | "INCORRECT"
+  | "PARTIALLY_CORRECT"
+  | "NONE";
 
-export type QuizAnswerGrading = 'EMBEDDING' | 'GPT' | 'NONE' | 'MATCH';
+export type QuizAnswerGrading = "EMBEDDING" | "GPT" | "NONE" | "MATCH";
 
 export type QuizAttemptAnswer = {
   id: string;
@@ -169,7 +176,13 @@ export type QuizAttemptAnswer = {
   timeSpent: number | null;
   question: Pick<
     QuizQuestion,
-    'id' | 'question' | 'type' | 'answer' | 'explanation' | 'aiConfidence' | 'topic'
+    | "id"
+    | "question"
+    | "type"
+    | "answer"
+    | "explanation"
+    | "aiConfidence"
+    | "topic"
   >;
 };
 
@@ -292,14 +305,14 @@ export type DashboardRecentActivityItem = {
 };
 
 export type DashboardCheckInMood =
-  | 'GREAT'
-  | 'GOOD'
-  | 'OKAY'
-  | 'STRUGGLING'
-  | 'MOTIVATED'
-  | 'FOCUSED'
-  | 'TIRED'
-  | 'EXCITED';
+  | "GREAT"
+  | "GOOD"
+  | "OKAY"
+  | "STRUGGLING"
+  | "MOTIVATED"
+  | "FOCUSED"
+  | "TIRED"
+  | "EXCITED";
 
 export type CreateDashboardCheckInPayload = {
   date: string;
@@ -350,24 +363,25 @@ export class ApiError extends Error {
 
   constructor(message: string, status: number, data: unknown) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.status = status;
     this.data = data;
   }
 }
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/v1';
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000/v1";
 
 function endpoint(path: string) {
-  const base = API_BASE_URL.replace(/\/$/, '');
-  const route = path.startsWith('/') ? path : `/${path}`;
+  const base = API_BASE_URL.replace(/\/$/, "");
+  const route = path.startsWith("/") ? path : `/${path}`;
   return `${base}${route}`;
 }
 
 function errorMessage(data: unknown, fallback: string) {
-  if (data && typeof data === 'object' && 'message' in data) {
+  if (data && typeof data === "object" && "message" in data) {
     const message = (data as { message?: unknown }).message;
-    if (typeof message === 'string' && message.trim()) {
+    if (typeof message === "string" && message.trim()) {
       return message;
     }
   }
@@ -378,20 +392,20 @@ function errorMessage(data: unknown, fallback: string) {
 async function request<T>(
   path: string,
   options: {
-    method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+    method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
     body?: unknown;
     token?: string | null;
-  } = {}
+  } = {},
 ) {
   const isFormData =
-    typeof FormData !== 'undefined' && options.body instanceof FormData;
+    typeof FormData !== "undefined" && options.body instanceof FormData;
 
   const headers: Record<string, string> = {
-    Accept: 'application/json',
+    Accept: "application/json",
   };
 
   if (!isFormData) {
-    headers['Content-Type'] = 'application/json';
+    headers["Content-Type"] = "application/json";
   }
 
   if (options.token) {
@@ -399,7 +413,7 @@ async function request<T>(
   }
 
   const response = await fetch(endpoint(path), {
-    method: options.method ?? 'GET',
+    method: options.method ?? "GET",
     headers,
     body: options.body
       ? isFormData
@@ -412,7 +426,11 @@ async function request<T>(
   const data = text ? JSON.parse(text) : null;
 
   if (!response.ok) {
-    throw new ApiError(errorMessage(data, 'Something went wrong'), response.status, data);
+    throw new ApiError(
+      errorMessage(data, "Something went wrong"),
+      response.status,
+      data,
+    );
   }
 
   return data as T;
@@ -420,29 +438,35 @@ async function request<T>(
 
 export const authApi = {
   login(payload: LoginPayload) {
-    return request<AuthResponse>('/auth/login', { method: 'POST', body: payload });
+    return request<AuthResponse>("/auth/login", {
+      method: "POST",
+      body: payload,
+    });
   },
   signup(payload: SignupPayload) {
-    return request<MessageResponse & Partial<User>>('/auth/signup', {
-      method: 'POST',
+    return request<MessageResponse & Partial<User>>("/auth/signup", {
+      method: "POST",
       body: payload,
     });
   },
   me(token: string) {
-    return request<User>('/auth/me', { token });
+    return request<User>("/auth/me", { token });
   },
   verifyEmail(payload: { email: string; code: string }) {
-    return request<AuthResponse>('/auth/verify-email', { method: 'POST', body: payload });
+    return request<AuthResponse>("/auth/verify-email", {
+      method: "POST",
+      body: payload,
+    });
   },
   resendVerification(email: string) {
-    return request<MessageResponse>('/auth/resend-verification', {
-      method: 'POST',
+    return request<MessageResponse>("/auth/resend-verification", {
+      method: "POST",
       body: { email },
     });
   },
   forgotPassword(email: string) {
-    return request<MessageResponse>('/auth/forgot-password', {
-      method: 'POST',
+    return request<MessageResponse>("/auth/forgot-password", {
+      method: "POST",
       body: { email },
     });
   },
@@ -452,7 +476,10 @@ export const authApi = {
     password: string;
     confirmPassword: string;
   }) {
-    return request<AuthResponse>('/auth/reset-password', { method: 'POST', body: payload });
+    return request<AuthResponse>("/auth/reset-password", {
+      method: "POST",
+      body: payload,
+    });
   },
 };
 
@@ -462,31 +489,45 @@ function getTotalItems(payload: PaginatedApiResponse | null) {
 
 export const dashboardApi = {
   async createCheckIn(token: string, payload: CreateDashboardCheckInPayload) {
-    return request<CreateDashboardCheckInResponse>('/check-ins', {
-      method: 'POST',
+    return request<CreateDashboardCheckInResponse>("/check-ins", {
+      method: "POST",
       token,
       body: payload,
     });
   },
   async getStudyMaterialsCount(token: string) {
-    const data = await request<PaginatedApiResponse>('/study-materials?page=1&limit=1', { token });
+    const data = await request<PaginatedApiResponse>(
+      "/study-materials?page=1&limit=1",
+      { token },
+    );
     return getTotalItems(data);
   },
   async getExamMaterialsCount(token: string) {
-    const data = await request<PaginatedApiResponse>('/exam-papers?page=1&limit=1', { token });
+    const data = await request<PaginatedApiResponse>(
+      "/exam-papers?page=1&limit=1",
+      { token },
+    );
     return getTotalItems(data);
   },
   async getQuizzesCount(token: string) {
-    const data = await request<PaginatedApiResponse>('/quizzes?page=1&limit=1', { token });
+    const data = await request<PaginatedApiResponse>(
+      "/quizzes?page=1&limit=1",
+      { token },
+    );
     return getTotalItems(data);
   },
   async getStudyCirclesCount(token: string) {
-    const data = await request<PaginatedApiResponse>('/study-circles?page=1&limit=1', { token });
+    const data = await request<PaginatedApiResponse>(
+      "/study-circles?page=1&limit=1",
+      { token },
+    );
     return getTotalItems(data);
   },
   async getTodayCheckIn(token: string) {
     try {
-      return await request<{ id: string } | null>('/check-ins/today', { token });
+      return await request<{ id: string } | null>("/check-ins/today", {
+        token,
+      });
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         return null;
@@ -495,18 +536,23 @@ export const dashboardApi = {
     }
   },
   async getCheckInById(token: string, checkInId: string) {
-    return request<DashboardCheckInDetail>(`/check-ins/${checkInId}`, { token });
+    return request<DashboardCheckInDetail>(`/check-ins/${checkInId}`, {
+      token,
+    });
   },
   async getChartData(
     token: string,
     params: {
       startDate: string;
       endDate: string;
-    }
+    },
   ) {
     const query = new URLSearchParams(params).toString();
     try {
-      return await request<DashboardCheckInChartPoint[]>(`/check-ins/chart-data?${query}`, { token });
+      return await request<DashboardCheckInChartPoint[]>(
+        `/check-ins/chart-data?${query}`,
+        { token },
+      );
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         return [];
@@ -515,10 +561,13 @@ export const dashboardApi = {
     }
   },
   async getStreak(token: string) {
-    return request<DashboardStreak>('/check-ins/streak', { token });
+    return request<DashboardStreak>("/check-ins/streak", { token });
   },
   async getRecentActivity(token: string) {
-    return request<DashboardRecentActivityItem[]>('/check-ins/recent-activity', { token });
+    return request<DashboardRecentActivityItem[]>(
+      "/check-ins/recent-activity",
+      { token },
+    );
   },
 };
 
@@ -529,7 +578,7 @@ export const studyMaterialsApi = {
       page: number;
       limit: number;
       search?: string;
-    }
+    },
   ) {
     const query = new URLSearchParams({
       page: String(params.page),
@@ -543,7 +592,7 @@ export const studyMaterialsApi = {
   },
   async delete(token: string, id: string) {
     return request<MessageResponse | null>(`/study-materials/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       token,
     });
   },
@@ -558,16 +607,16 @@ export const studyMaterialsApi = {
         name: string;
         type: string;
       };
-    }
+    },
   ) {
     const formData = new FormData();
-    formData.append('title', payload.title);
-    formData.append('description', payload.description ?? '');
-    formData.append('subjectId', payload.subjectId);
-    formData.append('file', payload.file as unknown as Blob);
+    formData.append("title", payload.title);
+    formData.append("description", payload.description ?? "");
+    formData.append("subjectId", payload.subjectId);
+    formData.append("file", payload.file as unknown as Blob);
 
-    return request<StudyMaterial>('/study-materials', {
-      method: 'POST',
+    return request<StudyMaterial>("/study-materials", {
+      method: "POST",
       token,
       body: formData,
     });
@@ -581,7 +630,7 @@ export const subjectsApi = {
       page: number;
       limit: number;
       search?: string;
-    }
+    },
   ) {
     const query = new URLSearchParams({
       page: String(params.page),
@@ -599,15 +648,15 @@ export const subjectsApi = {
       name: string;
       description?: string;
       userId?: string;
-    }
+    },
   ) {
-    return request<Subject>('/subjects', {
-      method: 'POST',
+    return request<Subject>("/subjects", {
+      method: "POST",
       token,
       body: {
         name: payload.name,
-        description: payload.description ?? '',
-        userId: payload.userId ?? '',
+        description: payload.description ?? "",
+        userId: payload.userId ?? "",
       },
     });
   },
@@ -621,7 +670,7 @@ export const notesApi = {
       limit: number;
       search?: string;
       subjectId?: string;
-    }
+    },
   ) {
     const query = new URLSearchParams({
       page: String(params.page),
@@ -639,10 +688,10 @@ export const notesApi = {
     payload: {
       content: string;
       subjectId: number;
-    }
+    },
   ) {
-    return request<Note>('/notes', {
-      method: 'POST',
+    return request<Note>("/notes", {
+      method: "POST",
       token,
       body: payload,
     });
@@ -653,17 +702,17 @@ export const notesApi = {
     payload: {
       content?: string;
       subjectId?: number;
-    }
+    },
   ) {
     return request<Note>(`/notes/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       token,
       body: payload,
     });
   },
   async delete(token: string, id: string) {
     return request<MessageResponse | null>(`/notes/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       token,
     });
   },
@@ -678,7 +727,7 @@ export const quizzesApi = {
       search?: string;
       subjectId?: string;
       status?: string;
-    }
+    },
   ) {
     const query = new URLSearchParams({
       page: String(params.page),
@@ -694,7 +743,7 @@ export const quizzesApi = {
   },
   async startAttempt(token: string, quizId: string) {
     return request<QuizAttempt>(`/quizzes/${quizId}/attempts`, {
-      method: 'POST',
+      method: "POST",
       token,
     });
   },
@@ -709,16 +758,19 @@ export const quizzesApi = {
     params: {
       page: number;
       limit: number;
-    }
+    },
   ) {
     const query = new URLSearchParams({
       page: String(params.page),
       limit: String(params.limit),
     }).toString();
 
-    return request<QuizAttemptsResponse>(`/quizzes/${quizId}/attempts?${query}`, {
-      token,
-    });
+    return request<QuizAttemptsResponse>(
+      `/quizzes/${quizId}/attempts?${query}`,
+      {
+        token,
+      },
+    );
   },
   async saveAnswers(
     token: string,
@@ -729,13 +781,16 @@ export const quizzesApi = {
         questionId: string;
         answer: string;
       }[];
-    }
+    },
   ) {
-    return request<QuizAttempt>(`/quizzes/${quizId}/attempts/${attemptId}/save`, {
-      method: 'POST',
-      token,
-      body: payload,
-    });
+    return request<QuizAttempt>(
+      `/quizzes/${quizId}/attempts/${attemptId}/save`,
+      {
+        method: "POST",
+        token,
+        body: payload,
+      },
+    );
   },
   async getAttemptResults(
     token: string,
@@ -744,7 +799,7 @@ export const quizzesApi = {
     params: {
       page: number;
       limit: number;
-    }
+    },
   ) {
     const query = new URLSearchParams({
       page: String(params.page),
@@ -755,7 +810,7 @@ export const quizzesApi = {
       `/quizzes/${quizId}/attempts/${attemptId}/results?${query}`,
       {
         token,
-      }
+      },
     );
   },
 };

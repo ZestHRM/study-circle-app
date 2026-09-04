@@ -1,65 +1,123 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { usePathname, useRouter } from 'expo-router';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { useColorScheme } from 'react-native';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { Tabs } from "expo-router";
+import { Platform, useColorScheme } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Colors } from '@/constants/theme';
+import { Colors } from "@/constants/theme";
 
-type TabIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+type TabIconName = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
 
 export default function AppTabs() {
-  const router = useRouter();
-  const pathname = usePathname();
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = Colors[scheme === "unspecified" ? "light" : scheme];
+  const insets = useSafeAreaInsets();
 
-  const tabIcon = (name: TabIconName) => (
-    <NativeTabs.Trigger.VectorIcon family={MaterialCommunityIcons} name={name} />
-  );
+  const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? 12 : 6);
+  const tabBarHeight = 50 + bottomInset;
 
   return (
-    <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon src={tabIcon('home')} />
-      </NativeTabs.Trigger>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.backgroundElement,
+          borderTopWidth: 1,
+          elevation: 0,
+          height: tabBarHeight,
+          paddingBottom: bottomInset,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "500",
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="home" size={size} color={color} />
+          ),
+        }}
+      />
 
-      <NativeTabs.Trigger name="materials">
-        <NativeTabs.Trigger.Label>Materials</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon src={tabIcon('file-document')} />
-      </NativeTabs.Trigger>
+      <Tabs.Screen
+        name="materials"
+        options={{
+          title: "Materials",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="file-document"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
 
-      <NativeTabs.Trigger name="notes">
-        <NativeTabs.Trigger.Label>Notes</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon src={tabIcon('notebook')} />
-      </NativeTabs.Trigger>
+      <Tabs.Screen
+        name="notes"
+        options={{
+          title: "Notes",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="notebook" size={size} color={color} />
+          ),
+        }}
+      />
 
-      <NativeTabs.Trigger name="quizzes">
-        <NativeTabs.Trigger.Label>Quizzes</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon src={tabIcon('check-decagram')} />
-      </NativeTabs.Trigger>
+      <Tabs.Screen
+        name="quizzes"
+        options={{
+          title: "Quizzes",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="check-decagram"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
 
-      <NativeTabs.Trigger name="circles">
-        <NativeTabs.Trigger.Label>Circles</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon src={tabIcon('account-group')} />
-      </NativeTabs.Trigger>
+      <Tabs.Screen
+        name="circles"
+        options={{
+          title: "Circles",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="account-group"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
 
-      <NativeTabs.Trigger
+      <Tabs.Screen
+        name="explore"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
         name="more"
-        disabled
-        listeners={{
-          tabPress: () => {
-            if (pathname !== '/profile') {
-              router.push('/profile');
-            }
-          },
-        }}>
-        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon src={tabIcon('account-circle')} />
-      </NativeTabs.Trigger>
-    </NativeTabs>
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="account-circle"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }

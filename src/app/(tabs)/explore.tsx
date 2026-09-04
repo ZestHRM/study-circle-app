@@ -5,8 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ExploreScreen() {
   return (
-    <SafeAreaView className="bg-background flex-1">
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 24 }}>
+    <SafeAreaView className="bg-background flex-1" edges={['top']}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 }}>
         <View className="mx-auto w-full max-w-md">
           <Card>
             <CardHeader>

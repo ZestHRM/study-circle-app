@@ -1,12 +1,24 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
-import { ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Text } from "@/components/ui/text";
+import { ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CirclesScreen() {
   return (
-    <SafeAreaView className="bg-background flex-1">
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 24 }}>
+    <SafeAreaView className="bg-background flex-1" edges={['top']}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: 24,
+        }}
+      >
         <View className="mx-auto w-full max-w-md">
           <Card>
             <CardHeader>
@@ -15,8 +27,9 @@ export default function CirclesScreen() {
             </CardHeader>
             <CardContent>
               <Text className="text-muted-foreground text-sm">
-                Study circles will be available soon. You will be able to join groups,
-                collaborate with peers, and track circle activities here.
+                Study circles will be available soon. You will be able to join
+                groups, collaborate with peers, and track circle activities
+                here.
               </Text>
             </CardContent>
           </Card>

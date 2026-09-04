@@ -41,10 +41,10 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView className="bg-background flex-1">
+    <SafeAreaView className="bg-background flex-1" edges={['top']}>
       <ScrollView
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 20 }}>
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 }}>
         <View className="mx-auto w-full max-w-md gap-4 pb-8">
           <HomeGreeting name={user?.name} />
 

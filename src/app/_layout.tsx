@@ -8,9 +8,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
-import { useColorScheme, useWindowDimensions } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
 
 SplashScreen.preventAutoHideAsync();
@@ -76,7 +77,6 @@ export default function RootLayout() {
       }),
   );
 
-  const { height } = useWindowDimensions();
   useEffect(() => {
     // Keep utility-based theming and semantic CSS variables in sync with RN appearance.
     Uniwind.setTheme(
@@ -90,34 +90,28 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ConfirmDialogProvider>
-              <AnimatedSplashOverlay />
-              <SafeAreaView
-                className="bg-background flex-1"
-                style={{
-                  height,
-                }}
-              >
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen
-                    name="circles"
-                    options={{ headerShown: true, title: "Circles" }}
-                  />
-                  <Stack.Screen
-                    name="profile"
-                    options={{ headerShown: true, title: "Profile" }}
-                  />
-                </Stack>
-                <PortalHost />
-              </SafeAreaView>
-            </ConfirmDialogProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+      <SafeAreaProvider>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <ConfirmDialogProvider>
+                <AnimatedSplashOverlay />
+                <StatusBar style="auto" />
+                <View className="bg-background flex-1">
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen
+                      name="profile"
+                      options={{ headerShown: true, title: "Profile" }}
+                    />
+                  </Stack>
+                  <PortalHost />
+                </View>
+              </ConfirmDialogProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

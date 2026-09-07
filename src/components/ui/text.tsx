@@ -6,7 +6,7 @@ import { Platform, Text as RNText, type Role } from 'react-native';
 
 const textVariants = cva(
   cn(
-    'text-foreground text-base',
+    'text-stone-900 dark:text-stone-100 text-base',
     Platform.select({
       web: 'select-text',
     })
@@ -14,26 +14,22 @@ const textVariants = cva(
   {
     variants: {
       variant: {
-        default: '',
-        h1: cn(
-          'text-center text-4xl font-extrabold tracking-tight',
-          Platform.select({ web: 'scroll-m-20 text-balance' })
-        ),
-        h2: cn(
-          'border-border border-b pb-2 text-3xl font-semibold tracking-tight',
-          Platform.select({ web: 'scroll-m-20 first:mt-0' })
-        ),
-        h3: cn('text-2xl font-semibold tracking-tight', Platform.select({ web: 'scroll-m-20' })),
-        h4: cn('text-xl font-semibold tracking-tight', Platform.select({ web: 'scroll-m-20' })),
-        p: 'mt-3 leading-7 sm:mt-6',
-        blockquote: 'mt-4 border-l-2 pl-3 italic sm:mt-6 sm:pl-6',
-        code: cn(
-          'bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold'
-        ),
-        lead: 'text-muted-foreground text-xl',
-        large: 'text-lg font-semibold',
-        small: 'text-sm font-medium leading-none',
-        muted: 'text-muted-foreground text-sm',
+        default: 'text-stone-900 dark:text-stone-100',
+        h1: 'text-stone-900 dark:text-stone-100 text-3xl font-extrabold tracking-tight',
+        h2: 'text-stone-900 dark:text-stone-100 text-xl font-bold',
+        h3: 'text-stone-900 dark:text-stone-100 text-base font-semibold',
+        h4: 'text-stone-900 dark:text-stone-100 text-sm font-semibold',
+        muted: 'text-stone-500 dark:text-stone-400 text-xs font-medium',
+        subhead: 'text-stone-700 dark:text-stone-300 text-xs font-semibold',
+        caption: 'text-stone-400 dark:text-stone-500 text-xs',
+        primary: 'text-[#8B5CF6] font-bold',
+        terracotta: 'text-[#D95B38] font-bold',
+        success: 'text-[#047857] font-semibold',
+        error: 'text-red-500 font-medium text-xs',
+        p: 'text-stone-800 dark:text-stone-200 text-sm leading-6',
+        large: 'text-lg font-semibold text-stone-900 dark:text-stone-100',
+        small: 'text-xs font-medium text-stone-700 dark:text-stone-300',
+        code: 'bg-stone-200 dark:bg-stone-800 rounded px-1.5 py-0.5 font-mono text-xs font-semibold',
       },
     },
     defaultVariants: {
@@ -51,7 +47,6 @@ const ROLE: Partial<Record<TextVariant, Role>> = {
   h2: 'heading',
   h3: 'heading',
   h4: 'heading',
-  blockquote: Platform.select({ web: 'blockquote' as Role }),
   code: Platform.select({ web: 'code' as Role }),
 };
 

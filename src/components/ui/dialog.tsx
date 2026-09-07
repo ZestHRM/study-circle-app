@@ -1,122 +1,125 @@
-import { Icon } from '@/components/ui/icon';
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
 import { cn } from '@/lib/utils';
-import * as DialogPrimitive from '@rn-primitives/dialog';
-import { X } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import * as React from 'react';
-import { Platform, Text, View, type GestureResponderEvent, type ViewProps } from 'react-native';
-import { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
-import { FullWindowOverlay as RNFullWindowOverlay } from 'react-native-screens';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+  type ViewProps,
+} from 'react-native';
 
-const Dialog = DialogPrimitive.Root;
+type DialogContextType = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
-const DialogTrigger = DialogPrimitive.Trigger;
+const DialogContext = React.createContext<DialogContextType>({
+  open: false,
+  onOpenChange: () => {},
+});
 
-const DialogPortal = DialogPrimitive.Portal;
-
-const DialogClose = DialogPrimitive.Close;
-
-const FullWindowOverlay = Platform.OS === 'ios' ? RNFullWindowOverlay : React.Fragment;
-
-function DialogOverlay({
-  className,
+export function Dialog({
+  open,
+  onOpenChange,
   children,
-  onPress,
-  ...props
-}: Omit<React.ComponentProps<typeof DialogPrimitive.Overlay>, 'asChild'> & {
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   children?: React.ReactNode;
 }) {
-  const { onOpenChange } = DialogPrimitive.useRootContext();
+  const isOpen = Boolean(open);
+  console.log('[Dialog] rendering Modal with visible =', isOpen);
 
-  function onOverlayPress(event: GestureResponderEvent) {
-    onPress?.(event);
-    if (event.target === event.currentTarget && !event.isDefaultPrevented()) {
-      onOpenChange(false);
-    }
+  if (!isOpen) {
+    return null;
   }
 
+  const handleOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      onOpenChange?.(nextOpen);
+    },
+    [onOpenChange]
+  );
+
   return (
-    <FullWindowOverlay>
-      <DialogPrimitive.Overlay
+    <DialogContext.Provider value={{ open: isOpen, onOpenChange: handleOpenChange }}>
+      <Modal
+        visible={isOpen}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => handleOpenChange(false)}
+      >
+        {children}
+      </Modal>
+    </DialogContext.Provider>
+  );
+}
+
+export function DialogContent({
+  className,
+  children,
+  style,
+  ...props
+}: ViewProps) {
+  const { onOpenChange } = React.useContext(DialogContext);
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1 justify-end"
+    >
+      {/* Backdrop */}
+      <Pressable
+        onPress={() => onOpenChange(false)}
+        className="absolute inset-0 bg-black/60"
+      />
+
+      {/* Modal Content Box */}
+      <View
         className={cn(
-          'absolute bottom-0 left-0 right-0 top-0 z-50 flex items-center justify-center bg-black/50 p-2',
-          Platform.select({
-            web: 'animate-in fade-in-0 fixed cursor-default [&>*]:cursor-auto',
-          }),
+          'bg-[#FAF8F5] dark:bg-stone-900 border-t border-stone-200 dark:border-stone-800 rounded-t-[32px] px-6 pb-8 pt-4 w-full shadow-2xl',
           className
         )}
+        style={[{ maxHeight: '90%' }, style]}
         {...props}
-        onPress={Platform.select({ web: onOverlayPress, native: onPress })}
-        asChild={Platform.OS !== 'web'}>
-        <NativeOnlyAnimatedView
-          entering={FadeIn.duration(200).reduceMotion(ReduceMotion.System)}
-          exiting={FadeOut.duration(150).reduceMotion(ReduceMotion.System)}
-          as="Pressable">
-          <NativeOnlyAnimatedView
-            entering={FadeIn.delay(50).reduceMotion(ReduceMotion.System)}
-            exiting={FadeOut.duration(150).reduceMotion(ReduceMotion.System)}>
-            <>{children}</>
-          </NativeOnlyAnimatedView>
-        </NativeOnlyAnimatedView>
-      </DialogPrimitive.Overlay>
-    </FullWindowOverlay>
-  );
-}
-function DialogContent({
-  className,
-  portalHost,
-  children,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
-  portalHost?: string;
-}) {
-  return (
-    <DialogPortal hostName={portalHost}>
-      <DialogOverlay>
-        <DialogPrimitive.Content
-          className={cn(
-            'bg-background border-border z-50 mx-auto flex w-full flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-lg',
-            Platform.select({
-              web: 'animate-in fade-in-0 zoom-in-95 web:max-w-[calc(100%-2rem)] duration-200',
-            }),
-            className
-          )}
-          {...props}>
-          <>{children}</>
-          <DialogPrimitive.Close
-            className={cn(
-              'absolute right-4 top-4 rounded opacity-70 active:opacity-100',
-              Platform.select({
-                web: 'ring-offset-background focus:ring-ring data-[state=open]:bg-accent transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2',
-              })
-            )}
-            hitSlop={12}>
-            <Icon
-              as={X}
-              className={cn('text-accent-foreground web:pointer-events-none size-4 shrink-0')}
-            />
-            <Text className="sr-only">Close</Text>
-          </DialogPrimitive.Close>
-        </DialogPrimitive.Content>
-      </DialogOverlay>
-    </DialogPortal>
+      >
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => onOpenChange(false)}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          className="absolute right-5 top-5 z-20 w-8 h-8 rounded-full bg-stone-200/80 dark:bg-stone-800 items-center justify-center"
+        >
+          <Feather name="x" size={18} color="#78716C" />
+        </TouchableOpacity>
+        {children}
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
-function DialogHeader({ className, ...props }: ViewProps) {
+export function DialogHeader({ className, ...props }: ViewProps) {
   return (
-    <View className={cn('flex flex-col gap-2 text-center sm:text-left', className)} {...props} />
+    <View
+      className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
+      {...props}
+    />
   );
 }
 
-function DialogFooter({ className, children, ...props }: ViewProps) {
+export function DialogFooter({ className, children, ...props }: ViewProps) {
   const actionItems = React.Children.toArray(children).filter(Boolean);
   const shouldSplitEvenly = actionItems.length === 2;
 
   return (
     <View
       className={cn('flex flex-row items-center gap-2', className)}
-      {...props}>
+      {...props}
+    >
       {actionItems.map((child, index) => {
         if (!shouldSplitEvenly) {
           return child;
@@ -132,37 +135,44 @@ function DialogFooter({ className, children, ...props }: ViewProps) {
   );
 }
 
-function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
-  return (
-    <DialogPrimitive.Title
-      className={cn('text-foreground text-lg font-semibold leading-none', className)}
-      {...props}
-    />
-  );
-}
-
-function DialogDescription({
+export function DialogTitle({
   className,
+  children,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+}: React.ComponentProps<typeof Text>) {
   return (
-    <DialogPrimitive.Description
-      className={cn('text-muted-foreground text-sm', className)}
+    <Text
+      className={cn(
+        'text-stone-900 dark:text-stone-100 text-lg font-semibold leading-none',
+        className
+      )}
       {...props}
-    />
+    >
+      {children}
+    </Text>
   );
 }
 
-export {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogOverlay,
-    DialogPortal,
-    DialogTitle,
-    DialogTrigger
-};
+export function DialogDescription({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof Text>) {
+  return (
+    <Text
+      className={cn(
+        'text-stone-500 dark:text-stone-400 text-sm',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </Text>
+  );
+}
+
+export const DialogTrigger = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
+export const DialogPortal = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
+export const DialogOverlay = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
+export const DialogClose = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
 

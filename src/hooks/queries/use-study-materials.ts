@@ -1,12 +1,12 @@
 import { useAuth } from '@/lib/auth';
-import { studyMaterialsApi } from '@/services';
+import { studyMaterialsApi, type StudyMaterial } from '@/services';
 import {
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
 import * as React from 'react';
-import { Alert } from 'react-native';
 
 export function useStudyMaterialsInfinite(options?: {
   limit?: number;
@@ -72,7 +72,7 @@ export function useCreateStudyMaterial() {
     mutationFn: async (payload: {
       title: string;
       description?: string;
-      subjectId: string;
+      subjectId: string | number;
       file: {
         uri: string;
         name: string;
@@ -85,7 +85,6 @@ export function useCreateStudyMaterial() {
       await queryClient.invalidateQueries({
         queryKey: ['study-materials'],
       });
-      Alert.alert('Success', 'Study material created successfully.');
     },
   });
 }
@@ -105,3 +104,9 @@ export function useDeleteStudyMaterial() {
     },
   });
 }
+
+
+
+
+
+

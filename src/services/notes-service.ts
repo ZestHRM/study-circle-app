@@ -1,6 +1,6 @@
-import { MessageResponse, request } from './api-client';
+import { MessageResponse, request } from "./api-client";
 
-export type NoteType = 'GENERATED' | 'CUSTOM';
+export type NoteType = "GENERATED" | "CUSTOM";
 
 export type Note = {
   id: string;
@@ -30,6 +30,36 @@ export type NotesResponse = {
   };
 };
 
+export type StudyNotesDetail = {
+  id: string;
+  subjectId: number | string;
+  studyMaterialId: string;
+  studyMaterialFileId: string;
+  userId: number | string;
+  content: string;
+  type: string;
+  sourceFile: string | null;
+  createdAt: string;
+  updatedAt: string;
+  model: string;
+  subject: {
+    id: number | string;
+    name: string;
+  };
+  studyMaterial: {
+    id: string;
+    title: string;
+    subject: {
+      id: number | string;
+      name: string;
+    };
+  };
+};
+
+export type StudyNotesDetailResponse = {
+  data: StudyNotesDetail;
+};
+
 export const notesApi = {
   async list(
     token: string,
@@ -38,7 +68,7 @@ export const notesApi = {
       limit: number;
       search?: string;
       subjectId?: string;
-    }
+    },
   ) {
     const query = new URLSearchParams({
       page: String(params.page),
@@ -51,15 +81,20 @@ export const notesApi = {
       token,
     });
   },
+  async getById(token: string, notesId: string) {
+    return request<StudyNotesDetailResponse>(`/notes/${notesId}`, {
+      token,
+    });
+  },
   async create(
     token: string,
     payload: {
       content: string;
       subjectId: number;
-    }
+    },
   ) {
-    return request<Note>('/notes', {
-      method: 'POST',
+    return request<Note>("/notes", {
+      method: "POST",
       token,
       body: payload,
     });
@@ -70,17 +105,17 @@ export const notesApi = {
     payload: {
       content?: string;
       subjectId?: number;
-    }
+    },
   ) {
     return request<Note>(`/notes/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       token,
       body: payload,
     });
   },
   async delete(token: string, id: string) {
     return request<MessageResponse | null>(`/notes/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       token,
     });
   },

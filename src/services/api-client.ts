@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export type EducationLevel = 'School' | 'College' | 'Coaching' | 'CompetitiveExams';
 
 export type User = {
@@ -89,6 +91,16 @@ export function errorMessage(data: unknown, fallback: string) {
   return fallback;
 }
 
+export const getErrorMessage = (error: any, defaultErrorMessage?: string) =>
+  error?.response?.data?.message ??
+  error?.response?.data?.errors?.message ??
+  error?.data?.message ??
+  error?.data?.errors?.message ??
+  error?.message ??
+  error?.errors?.message ??
+  defaultErrorMessage ??
+  'Something went wrong';
+
 export async function request<T>(
   path: string,
   options: {
@@ -97,11 +109,18 @@ export async function request<T>(
     token?: string | null;
   } = {}
 ): Promise<T> {
+  const method = options.method ?? 'GET';
+  const fullUrl = endpoint(path);
+  const hasToken = Boolean(options.token);
+
+  console.log(`[RestClient] ${method} ${fullUrl} (Token Attached: ${hasToken})`);
+
   const isFormData =
     typeof FormData !== 'undefined' && options.body instanceof FormData;
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    'x-device-type': Platform.OS,
   };
 
   if (!isFormData) {
@@ -109,27 +128,94 @@ export async function request<T>(
   }
 
   if (options.token) {
-    headers.Authorization = `Bearer ${options.token}`;
+    const formattedToken = options.token.startsWith('Bearer ')
+      ? options.token
+      : `Bearer ${options.token}`;
+    headers.Authorization = formattedToken;
   }
 
-  const response = await fetch(endpoint(path), {
-    method: options.method ?? 'GET',
-    headers,
-    body: options.body
-      ? isFormData
-        ? (options.body as FormData)
-        : JSON.stringify(options.body)
-      : undefined,
+  try {
+    const response = await fetch(fullUrl, {
+      method,
+      headers,
+      body: options.body
+        ? isFormData
+          ? (options.body as FormData)
+          : JSON.stringify(options.body)
+        : undefined,
+    });
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : null;
+
+    if (!response.ok) {
+      const msg = errorMessage(data, 'Something went wrong');
+      console.warn(`[RestClient Error] ${method} ${fullUrl} Status: ${response.status}`, data);
+      throw new ApiError(msg, response.status, data);
+    }
+
+    console.log(`[RestClient Success] ${method} ${fullUrl}`, data);
+    return data as T;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    console.error(`[RestClient Failure] ${method} ${fullUrl}`, error);
+    throw error;
+  }
+}
+
+export function uploadFormData<T>(
+  path: string,
+  formData: FormData,
+  token?: string | null
+): Promise<T> {
+  const fullUrl = endpoint(path);
+  const hasToken = Boolean(token);
+
+  console.log(`[RestClient Upload] POST ${fullUrl} (Token Attached: ${hasToken})`);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', fullUrl);
+
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.setRequestHeader('x-device-type', Platform.OS);
+    if (token) {
+      const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      xhr.setRequestHeader('Authorization', formattedToken);
+    }
+
+    xhr.onload = () => {
+      try {
+        const text = xhr.responseText;
+        const data = text ? JSON.parse(text) : null;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          console.log(`[RestClient Upload Success] POST ${fullUrl}`, data);
+          resolve(data as T);
+        } else {
+          const msg = errorMessage(data, 'Upload failed');
+          console.warn(`[RestClient Upload Error] POST ${fullUrl} Status: ${xhr.status}`, data);
+          reject(new ApiError(msg, xhr.status, data));
+        }
+      } catch (err) {
+        console.error(`[RestClient Upload Parse Error] POST ${fullUrl}`, err);
+        reject(err instanceof Error ? err : new Error('Unable to parse response'));
+      }
+    };
+
+    xhr.onerror = () => {
+      console.error(`[RestClient Upload Network Error] POST ${fullUrl}`);
+      reject(new Error('Network request failed during file upload'));
+    };
+
+    xhr.ontimeout = () => {
+      console.error(`[RestClient Upload Timeout] POST ${fullUrl}`);
+      reject(new Error('File upload request timed out'));
+    };
+
+    xhr.send(formData);
   });
-
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
-
-  if (!response.ok) {
-    throw new ApiError(errorMessage(data, 'Something went wrong'), response.status, data);
-  }
-
-  return data as T;
 }
 
 export function getTotalItems(payload: PaginatedApiResponse | null) {

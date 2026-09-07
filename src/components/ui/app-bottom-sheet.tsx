@@ -77,6 +77,10 @@ export function AppBottomSheet({
     onOpenChange(false);
   }, [onOpenChange]);
 
+  if (!open) {
+    return null;
+  }
+
   return (
     <BottomSheet
       index={sheetIndex}

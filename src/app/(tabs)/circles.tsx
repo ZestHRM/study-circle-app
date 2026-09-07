@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CirclesScreen() {
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
+    <SafeAreaView className="bg-background flex-1" edges={["top"]}>
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 16,

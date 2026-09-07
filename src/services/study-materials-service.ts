@@ -1,4 +1,5 @@
-import { MessageResponse, request } from './api-client';
+import { Platform } from 'react-native';
+import { MessageResponse, request, uploadFormData } from './api-client';
 
 export type StudyMaterialQuizStatus =
   | 'PENDING'
@@ -30,10 +31,10 @@ export type StudyMaterial = {
   description: string;
   status: StudyMaterialStatus;
   userId: string;
-  subjectId: string;
+  subjectId: string | number;
   processedNotes: string | null;
   subject: {
-    id: string;
+    id: string | number;
     name: string;
   } | null;
   _count: {
@@ -41,6 +42,7 @@ export type StudyMaterial = {
   };
   quizStatus: StudyMaterialQuizStatus;
   files: StudyMaterialFile[];
+  notes?: Array<{ id: string }>;
   createdAt: string;
   updatedAt: string;
 };
@@ -74,18 +76,26 @@ export const studyMaterialsApi = {
       token,
     });
   },
+
+  async getById(token: string, id: string) {
+    return request<StudyMaterial>(`/study-materials/${id}`, {
+      token,
+    });
+  },
+
   async delete(token: string, id: string) {
     return request<MessageResponse | null>(`/study-materials/${id}`, {
       method: 'DELETE',
       token,
     });
   },
+
   async create(
     token: string,
     payload: {
       title: string;
       description?: string;
-      subjectId: string;
+      subjectId: string | number;
       file: {
         uri: string;
         name: string;
@@ -93,16 +103,40 @@ export const studyMaterialsApi = {
       };
     }
   ) {
-    const formData = new FormData();
-    formData.append('title', payload.title);
-    formData.append('description', payload.description ?? '');
-    formData.append('subjectId', payload.subjectId);
-    formData.append('file', payload.file as unknown as Blob);
+    if (!payload.file || !payload.file.uri) {
+      throw new Error('Kripya valid PDF file upload karein.');
+    }
 
-    return request<StudyMaterial>('/study-materials', {
-      method: 'POST',
-      token,
-      body: formData,
-    });
+    const formData = new FormData();
+    formData.append('title', String(payload.title ?? '').trim());
+    formData.append('description', String(payload.description ?? '').trim());
+    formData.append('subjectId', String(payload.subjectId ?? ''));
+
+    const fileUri = String(payload.file.uri);
+    const fileName = String(payload.file.name || 'document.pdf');
+    const fileType = String(payload.file.type || 'application/pdf');
+
+    if (Platform.OS === 'web') {
+      try {
+        const res = await fetch(fileUri);
+        const blob = await res.blob();
+        const fileObj = new File([blob], fileName, { type: fileType });
+        formData.append('file', fileObj);
+      } catch {
+        formData.append('file', {
+          uri: fileUri,
+          name: fileName,
+          type: fileType,
+        } as unknown as Blob);
+      }
+    } else {
+      formData.append('file', {
+        uri: fileUri,
+        name: fileName,
+        type: fileType,
+      } as unknown as Blob);
+    }
+
+    return uploadFormData<StudyMaterial>('/study-materials', formData, token);
   },
 };

@@ -111,7 +111,8 @@ export default function NotesScreen() {
   } = useSubjectsQuery();
 
   const selectedSubject =
-    subjectOptions.find((option) => option?.value === selectedSubjectId) ?? null;
+    subjectOptions.find((option) => option?.value === selectedSubjectId) ??
+    null;
 
   const {
     notes,
@@ -202,12 +203,16 @@ export default function NotesScreen() {
     createNoteMutation.isPending || updateNoteMutation.isPending;
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
+    <SafeAreaView className="bg-background flex-1" edges={["top"]}>
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: 24,
+        }}
       >
         <View className="mx-auto w-full max-w-md gap-4 pb-8">
           <View className="flex-row items-start justify-between">
@@ -245,9 +250,7 @@ export default function NotesScreen() {
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    isLoadingSubjects
-                      ? "Loading subjects..."
-                      : "All subjects"
+                    isLoadingSubjects ? "Loading subjects..." : "All subjects"
                   }
                 />
               </SelectTrigger>
@@ -517,12 +520,16 @@ export default function NotesScreen() {
             </View>
             <View className="bg-muted rounded-full px-2 py-1">
               <Text className="text-xs text-muted-foreground">
-                Type: {detailsNote?.type === "GENERATED" ? "AI Generated" : "Custom"}
+                Type:{" "}
+                {detailsNote?.type === "GENERATED" ? "AI Generated" : "Custom"}
               </Text>
             </View>
             <View className="bg-muted rounded-full px-2 py-1">
               <Text className="text-xs text-muted-foreground">
-                Created: {detailsNote ? formatShortDate(detailsNote.createdAt) : "Unknown date"}
+                Created:{" "}
+                {detailsNote
+                  ? formatShortDate(detailsNote.createdAt)
+                  : "Unknown date"}
               </Text>
             </View>
           </View>

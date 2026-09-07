@@ -1,5 +1,5 @@
 import { useAuth } from '@/lib/auth';
-import { notesApi } from '@/services';
+import { notesApi, type StudyMaterial } from '@/services';
 import {
   keepPreviousData,
   useMutation,
@@ -105,3 +105,57 @@ export function useDeleteNote() {
     },
   });
 }
+
+export function useStudyNotesQuery(notesId?: string | null) {
+  const { token } = useAuth();
+
+  return useQuery({
+    queryKey: ['study-notes-detail', token, notesId],
+    queryFn: async () => {
+      if (!notesId) return null;
+      const res = await notesApi.getById(token as string, notesId);
+      return res.data;
+    },
+    enabled: Boolean(token && notesId),
+  });
+}
+
+export function useStudyMaterialNotesQuery(materialInput?: StudyMaterial | string | null) {
+  const { token } = useAuth();
+
+  const materialId = typeof materialInput === 'string' ? materialInput : materialInput?.id;
+  const explicitNotesId =
+    typeof materialInput === 'object' && materialInput !== null
+      ? (materialInput as any).notesId ||
+        (materialInput as any).noteId ||
+        (Array.isArray((materialInput as any).notes)
+          ? (materialInput as any).notes[0]?.id
+          : (materialInput as any).notes?.id) ||
+        (Array.isArray((materialInput as any).files)
+          ? (materialInput as any).files[0]?.id
+          : null)
+      : null;
+
+  const targetNotesId = explicitNotesId || materialId;
+
+  return useQuery({
+    queryKey: ['study-notes-detail', token, targetNotesId],
+    queryFn: async () => {
+      if (!targetNotesId) return null;
+      console.log(`[useStudyMaterialNotesQuery] Calling Notes API in use-notes.ts: GET /notes/${targetNotesId}`);
+      const notesRes = await notesApi.getById(token as string, targetNotesId);
+      if (notesRes && notesRes.data) {
+        return {
+          content: notesRes.data.content,
+          title: notesRes.data.studyMaterial?.title || 'Notes Detail',
+          subjectName: notesRes.data.subject?.name || notesRes.data.studyMaterial?.subject?.name,
+          createdAt: notesRes.data.createdAt,
+        };
+      }
+      return null;
+    },
+    enabled: Boolean(token && targetNotesId),
+    staleTime: 0,
+  });
+}
+

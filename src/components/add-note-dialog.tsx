@@ -1,30 +1,20 @@
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-    type Option as SelectOption,
-} from '@/components/ui/select';
-import { Text } from '@/components/ui/text';
-import { ApiError, subjectsApi, type Note, type Subject } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
-import { Feather } from '@expo/vector-icons';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import * as React from 'react';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { AppBottomSheetScrollView } from "@/components/ui/app-bottom-sheet";
+import { CreateSubjectCard } from "@/components/ui/create-subject-card";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { FormField } from "@/components/ui/form-field";
+import { Input } from "@/components/ui/input";
+import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
+import { Text } from "@/components/ui/text";
+import { APP_COLORS } from "@/constants/colors";
+import { ApiError, subjectsApi, type Note, type Subject } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { Feather } from "@expo/vector-icons";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import * as React from "react";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+
+import { addNoteSchema, createSubjectSchema } from "@/schemas";
 
 type AddNoteFormValue = {
   content: string;
@@ -32,16 +22,17 @@ type AddNoteFormValue = {
 };
 
 type AddNoteFormErrors = Partial<Record<keyof AddNoteFormValue, string>>;
-type StrictSelectOption = Exclude<SelectOption, undefined>;
 
 function getInitialValues(editingNote?: Note | null): AddNoteFormValue {
   return {
-    content: editingNote?.content ?? '',
-    subjectId: editingNote?.subjectId ? String(editingNote.subjectId) : '',
+    content: editingNote?.content ?? "",
+    subjectId: editingNote?.subjectId ? String(editingNote.subjectId) : "",
   };
 }
 
-function toSelectOptions(subjects: Subject[]): StrictSelectOption[] {
+function toSelectOptions(
+  subjects: Subject[],
+): Array<{ value: string; label: string }> {
   return subjects.map((subject) => ({
     value: String(subject.id),
     label: subject.name,
@@ -49,21 +40,17 @@ function toSelectOptions(subjects: Subject[]): StrictSelectOption[] {
 }
 
 function validateForm(values: AddNoteFormValue): AddNoteFormErrors {
-  const errors: AddNoteFormErrors = {};
+  const parseResult = addNoteSchema.safeParse(values);
+  if (parseResult.success) return {};
 
-  if (!values.subjectId) {
-    errors.subjectId = 'Subject is required.';
+  const fieldErrors: AddNoteFormErrors = {};
+  for (const issue of parseResult.error.issues) {
+    const field = issue.path[0] as keyof AddNoteFormValue;
+    if (field && !fieldErrors[field]) {
+      fieldErrors[field] = issue.message;
+    }
   }
-
-  if (!values.content.trim()) {
-    errors.content = 'Content is required.';
-  }
-
-  if (values.content.trim().length > 5000) {
-    errors.content = 'Content must be 5000 characters or less.';
-  }
-
-  return errors;
+  return fieldErrors;
 }
 
 export function AddNoteDialog({
@@ -83,22 +70,29 @@ export function AddNoteDialog({
   submitting: boolean;
 }) {
   const { token } = useAuth();
-  const [values, setValues] = React.useState<AddNoteFormValue>(() => getInitialValues(editingNote));
+  const [values, setValues] = React.useState<AddNoteFormValue>(() =>
+    getInitialValues(editingNote),
+  );
   const [errors, setErrors] = React.useState<AddNoteFormErrors>({});
   const [submitError, setSubmitError] = React.useState<string | null>(null);
-  const [newSubjectName, setNewSubjectName] = React.useState('');
-  const [newSubjectError, setNewSubjectError] = React.useState<string | null>(null);
+  const [showInlineCreateSubject, setShowInlineCreateSubject] =
+    React.useState(false);
+  const [newSubjectName, setNewSubjectName] = React.useState("");
+  const [newSubjectError, setNewSubjectError] = React.useState<string | null>(
+    null,
+  );
 
   const resetForm = React.useCallback(() => {
     setValues(getInitialValues(null));
     setErrors({});
     setSubmitError(null);
-    setNewSubjectName('');
+    setShowInlineCreateSubject(false);
+    setNewSubjectName("");
     setNewSubjectError(null);
   }, []);
 
   const subjectsQuery = useQuery({
-    queryKey: ['subjects', token],
+    queryKey: ["subjects", token],
     queryFn: async () =>
       subjectsApi.list(token as string, {
         page: 1,
@@ -109,16 +103,14 @@ export function AddNoteDialog({
 
   const subjectOptions = React.useMemo(
     () => toSelectOptions(subjectsQuery.data?.data ?? []),
-    [subjectsQuery.data?.data]
+    [subjectsQuery.data?.data],
   );
-
-  const selectedSubject = subjectOptions.find((option) => option.value === values.subjectId);
 
   const createSubjectMutation = useMutation({
     mutationFn: async (name: string) => {
       return subjectsApi.create(token as string, {
         name,
-        description: '',
+        description: "",
       });
     },
     onSuccess: async (subject) => {
@@ -126,8 +118,9 @@ export function AddNoteDialog({
         ...current,
         subjectId: String(subject.id),
       }));
-      setNewSubjectName('');
+      setNewSubjectName("");
       setNewSubjectError(null);
+      setShowInlineCreateSubject(false);
       if (errors.subjectId) {
         setErrors((current) => ({ ...current, subjectId: undefined }));
       }
@@ -142,24 +135,24 @@ export function AddNoteDialog({
       }
       onOpenChange(nextOpen);
     },
-    [onOpenChange, resetForm]
+    [onOpenChange, resetForm],
   );
 
   async function onCreateSubject() {
-    const trimmedName = newSubjectName.trim();
+    const result = createSubjectSchema.safeParse({ name: newSubjectName });
 
-    if (!trimmedName) {
-      setNewSubjectError('Subject name is required.');
+    if (!result.success) {
+      setNewSubjectError(
+        result.error.issues[0]?.message ?? "Subject name is required.",
+      );
       return;
     }
 
-    if (trimmedName.length > 100) {
-      setNewSubjectError('Subject name must be 100 characters or less.');
-      return;
-    }
+    const trimmedName = result.data.name;
 
     const existingSubject = (subjectsQuery.data?.data ?? []).find(
-      (subject) => subject.name.trim().toLowerCase() === trimmedName.toLowerCase()
+      (subject) =>
+        subject.name.trim().toLowerCase() === trimmedName.toLowerCase(),
     );
 
     if (existingSubject) {
@@ -167,8 +160,9 @@ export function AddNoteDialog({
         ...current,
         subjectId: String(existingSubject.id),
       }));
-      setNewSubjectName('');
+      setNewSubjectName("");
       setNewSubjectError(null);
+      setShowInlineCreateSubject(false);
       if (errors.subjectId) {
         setErrors((current) => ({ ...current, subjectId: undefined }));
       }
@@ -184,7 +178,7 @@ export function AddNoteDialog({
           ? error.message
           : error instanceof Error
             ? error.message
-            : 'Unable to create subject right now.';
+            : "Unable to create subject right now.";
       setNewSubjectError(message);
     }
   }
@@ -210,137 +204,163 @@ export function AddNoteDialog({
           ? error.message
           : error instanceof Error
             ? error.message
-            : 'Unable to submit note right now.';
+            : "Unable to submit note right now.";
       setSubmitError(message);
     }
   }
 
+  if (!open) return null;
+
   return (
     <Dialog open={open} onOpenChange={onDialogOpenChange}>
-      <DialogContent className="mt-auto max-h-[88%] w-full max-w-none rounded-b-none rounded-t-2xl px-5 pb-6 pt-5">
-        <DialogHeader>
-          <DialogTitle>{editingNote ? 'Edit Note' : 'Add Note'}</DialogTitle>
-          <DialogDescription>
-            Add a custom note for the selected subject.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent>
+        {/* Dialog Header */}
+        <View className="flex-row items-center justify-between pb-3 border-b border-stone-200/80 dark:border-stone-800">
+          <View className="flex-1 pr-2">
+            <Text variant="h2">
+              {editingNote ? "Edit Note" : "Add New Note"}
+            </Text>
+            <Text variant="muted" className="mt-0.5">
+              {editingNote
+                ? "Update your custom note details"
+                : "Create a custom note for your study subject"}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => onDialogOpenChange(false)}
+            disabled={submitting}
+            className="p-1.5 rounded-full bg-stone-100 dark:bg-stone-800 active:opacity-70"
+          >
+            <Feather name="x" size={18} color={APP_COLORS.stone500} />
+          </Pressable>
+        </View>
 
-        <ScrollView className="max-h-[70vh]" contentContainerStyle={{ gap: 12 }}>
-          <View className="gap-2">
-            <Label>Subject</Label>
-            <Select
-              value={selectedSubject}
-              onValueChange={(option) => {
-                setValues((current) => ({
-                  ...current,
-                  subjectId: option?.value ?? '',
-                }));
-                if (errors.subjectId) {
-                  setErrors((current) => ({ ...current, subjectId: undefined }));
-                }
-              }}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    subjectsQuery.isLoading ? 'Loading subjects...' : 'Select subject'
+        <AppBottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          nestedScrollEnabled
+          contentContainerStyle={{ gap: 16, paddingTop: 12, paddingBottom: 24 }}
+        >
+          {/* Subject Field & Inline Create */}
+          <FormField label="Subject" required error={errors.subjectId}>
+            <View className="gap-2 mt-1">
+              <SubjectSelectDropdown
+                value={values.subjectId}
+                onValueChange={(val) => {
+                  setValues((current) => ({
+                    ...current,
+                    subjectId: val,
+                  }));
+                  if (errors.subjectId) {
+                    setErrors((current) => ({
+                      ...current,
+                      subjectId: undefined,
+                    }));
                   }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {subjectOptions.map((subject) => (
-                    <SelectItem
-                      key={subject.value}
-                      value={subject.value}
-                      label={subject.label}
-                    />
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {errors.subjectId ? (
-              <Text className="text-destructive text-xs">{errors.subjectId}</Text>
-            ) : null}
-            {subjectsQuery.isError ? (
-              <Text className="text-destructive text-xs">
-                Failed to load subjects. Pull to refresh and try again.
-              </Text>
-            ) : null}
+                }}
+                subjects={subjectOptions}
+                isLoading={subjectsQuery.isLoading}
+                placeholder="Choose a subject..."
+                triggerClassName="bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 rounded-2xl h-14 px-5 shadow-2xs"
+              />
 
-            <View className="mt-2 gap-2 rounded-md border border-dashed border-border p-3">
-              <Label htmlFor="new-note-subject-name">Create New Subject</Label>
-              <View className="flex-row items-center gap-2">
-                <Input
-                  id="new-note-subject-name"
+              {subjectsQuery.isError ? (
+                <Text variant="error" className="text-xs">
+                  Failed to load subjects. Please try again.
+                </Text>
+              ) : null}
+
+              {/* Add New Subject Action Toggle Button */}
+              {!showInlineCreateSubject ? (
+                <Button
+                  variant="ghost"
+                  onPress={() => setShowInlineCreateSubject(true)}
+                  className="self-start flex-row items-center gap-1.5 bg-[#F3E8FF] px-3.5 py-1.5 h-8.5 rounded-full mt-1"
+                >
+                  <Feather
+                    name="plus"
+                    size={14}
+                    color={APP_COLORS.primaryDark}
+                  />
+                  <Text className="text-xs font-semibold text-[#7C3AED]">
+                    Create New Subject
+                  </Text>
+                </Button>
+              ) : (
+                /* Inline Create Subject Card */
+                <CreateSubjectCard
                   value={newSubjectName}
                   onChangeText={(text) => {
                     setNewSubjectName(text);
-                    if (newSubjectError) {
-                      setNewSubjectError(null);
-                    }
+                    if (newSubjectError) setNewSubjectError(null);
                   }}
-                  editable={!submitting && !createSubjectMutation.isPending}
-                  placeholder="Type subject name"
-                  className="flex-1"
+                  onSubmit={onCreateSubject}
+                  onClose={() => {
+                    setShowInlineCreateSubject(false);
+                    setNewSubjectError(null);
+                  }}
+                  isCreating={createSubjectMutation.isPending}
+                  error={newSubjectError}
                 />
-                <Button
-                  variant="outline"
-                  onPress={onCreateSubject}
-                  disabled={submitting || createSubjectMutation.isPending || subjectsQuery.isLoading}>
-                  {createSubjectMutation.isPending ? (
-                    <ActivityIndicator size="small" />
-                  ) : (
-                    <Feather name="plus" size={16} color="#a3a3a3" />
-                  )}
-                  <Text>Create</Text>
-                </Button>
-              </View>
-              {newSubjectError ? (
-                <Text className="text-destructive text-xs">{newSubjectError}</Text>
-              ) : (
-                <Text className="text-muted-foreground text-xs">
-                  Create and auto-select a new subject if it does not exist.
-                </Text>
               )}
             </View>
-          </View>
+          </FormField>
 
-          <View className="gap-2">
-            <Label htmlFor="note-content">Content</Label>
+          {/* Note Content Field */}
+          <FormField label="Note Content" required error={errors.content}>
             <Input
-              id="note-content"
               value={values.content}
               onChangeText={(text) => {
                 setValues((current) => ({ ...current, content: text }));
                 if (errors.content) {
-                  setErrors((current) => ({ ...current, content: undefined }));
+                  setErrors((current) => ({
+                    ...current,
+                    content: undefined,
+                  }));
                 }
               }}
               editable={!submitting}
-              placeholder="Write your note"
+              placeholder="Write or paste your note content here..."
+              placeholderTextColor="#A8A29E"
               multiline
               numberOfLines={6}
-              className="h-32 py-3"
+              className="bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl p-4 text-base font-medium text-stone-900 dark:text-stone-100 h-36 mt-1 shadow-2xs"
               textAlignVertical="top"
             />
-            {errors.content ? <Text className="text-destructive text-xs">{errors.content}</Text> : null}
+          </FormField>
+
+          {submitError ? (
+            <Text variant="error" className="text-center">
+              {submitError}
+            </Text>
+          ) : null}
+
+          {/* Footer Action Buttons */}
+          <View className="flex-row items-center gap-3 pt-2">
+            <Button
+              variant="outline"
+              title="Cancel"
+              onPress={() => onDialogOpenChange(false)}
+              disabled={submitting}
+              className="flex-1 h-12 rounded-xl justify-center items-center"
+            />
+            <Button
+              variant="terracotta"
+              title={
+                submitting
+                  ? "Saving Note..."
+                  : editingNote
+                    ? "Update Note"
+                    : "Save Note"
+              }
+              loading={submitting}
+              onPress={onFormSubmit}
+              disabled={submitting || subjectsQuery.isLoading}
+              className="flex-1 h-12 rounded-xl justify-center items-center"
+            />
           </View>
-
-          {submitError ? <Text className="text-destructive text-sm">{submitError}</Text> : null}
-        </ScrollView>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onPress={() => onDialogOpenChange(false)}
-            disabled={submitting}>
-            <Text>Cancel</Text>
-          </Button>
-          <Button onPress={onFormSubmit} disabled={submitting || subjectsQuery.isLoading}>
-            {submitting ? <ActivityIndicator size="small" color="#ffffff" /> : null}
-            <Text>{submitting ? 'Submitting...' : 'Submit'}</Text>
-          </Button>
-        </DialogFooter>
+        </AppBottomSheetScrollView>
       </DialogContent>
     </Dialog>
   );

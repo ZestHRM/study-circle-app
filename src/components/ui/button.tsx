@@ -1,49 +1,38 @@
-import { TextClassContext } from '@/components/ui/text';
+import { APP_COLORS } from '@/constants/colors';
 import { cn } from '@/lib/utils';
+import { Feather } from '@expo/vector-icons';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Platform, Pressable } from 'react-native';
+import * as React from 'react';
+import { Spinner } from './spinner';
+import {
+  Pressable,
+  Text as RNText,
+  View,
+} from 'react-native';
 
 const buttonVariants = cva(
-  cn(
-    'group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none',
-    Platform.select({
-      web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-    })
-  ),
+  'group shrink-0 flex-row items-center justify-center gap-2 rounded-xl border-0 active:opacity-90',
   {
     variants: {
       variant: {
-        default: cn(
-          'bg-primary active:bg-primary/90 shadow-sm shadow-black/5',
-          Platform.select({ web: 'hover:bg-primary/90' })
-        ),
-        destructive: cn(
-          'bg-destructive active:bg-destructive/90 dark:bg-destructive/60 shadow-sm shadow-black/5',
-          Platform.select({
-            web: 'hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
-          })
-        ),
-        outline: cn(
-          'border-border bg-background active:bg-accent dark:bg-input/30 dark:border-input dark:active:bg-input/50 border shadow-sm shadow-black/5',
-          Platform.select({
-            web: 'hover:bg-accent dark:hover:bg-input/50',
-          })
-        ),
-        secondary: cn(
-          'bg-secondary active:bg-secondary/80 shadow-sm shadow-black/5',
-          Platform.select({ web: 'hover:bg-secondary/80' })
-        ),
-        ghost: cn(
-          'active:bg-accent dark:active:bg-accent/50',
-          Platform.select({ web: 'hover:bg-accent dark:hover:bg-accent/50' })
-        ),
-        link: '',
+        default: 'bg-[#D95B38] active:bg-[#C04928] shadow-2xs',
+        terracotta: 'bg-[#D95B38] active:bg-[#C04928] shadow-2xs',
+        quiz: 'bg-[#2563EB] active:bg-[#1D4ED8] shadow-2xs',
+        secondary:
+          'bg-stone-100 dark:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700',
+        outline:
+          'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 active:bg-stone-50 dark:active:bg-stone-700/50 shadow-2xs',
+        ghost:
+          'bg-transparent active:bg-stone-100 dark:active:bg-stone-800 shadow-none',
+        destructive: 'bg-red-600 active:bg-red-700 shadow-2xs',
+        link: 'bg-transparent shadow-none underline',
       },
       size: {
-        default: cn('h-10 px-4 py-2 sm:h-9', Platform.select({ web: 'has-[>svg]:px-3' })),
-        sm: cn('h-9 gap-1.5 rounded-md px-3 sm:h-8', Platform.select({ web: 'has-[>svg]:px-2.5' })),
-        lg: cn('h-11 rounded-md px-6 sm:h-10', Platform.select({ web: 'has-[>svg]:px-4' })),
-        icon: 'h-10 w-10 sm:h-9 sm:w-9',
+        default: 'h-11 px-4 py-2.5',
+        sm: 'h-9 px-3.5 py-1.5 rounded-lg',
+        md: 'h-11 px-4 py-2.5',
+        lg: 'h-13 px-6 py-3.5 rounded-2xl',
+        icon: 'h-10 w-10 p-0 rounded-full items-center justify-center',
       },
     },
     defaultVariants: {
@@ -53,57 +42,142 @@ const buttonVariants = cva(
   }
 );
 
-const buttonTextVariants = cva(
-  cn(
-    'text-foreground text-sm font-medium',
-    Platform.select({ web: 'pointer-events-none transition-colors' })
-  ),
-  {
-    variants: {
-      variant: {
-        default: 'text-primary-foreground',
-        destructive: 'text-white',
-        outline: cn(
-          'group-active:text-accent-foreground',
-          Platform.select({ web: 'group-hover:text-accent-foreground' })
-        ),
-        secondary: 'text-secondary-foreground',
-        ghost: 'group-active:text-accent-foreground',
-        link: cn(
-          'text-primary group-active:underline',
-          Platform.select({ web: 'underline-offset-4 hover:underline group-hover:underline' })
-        ),
-      },
-      size: {
-        default: '',
-        sm: '',
-        lg: '',
-        icon: '',
-      },
+const buttonTextVariants = cva('text-xs font-bold tracking-wide', {
+  variants: {
+    variant: {
+      default: 'text-white',
+      terracotta: 'text-white',
+      quiz: 'text-white',
+      secondary: 'text-stone-800 dark:text-stone-200',
+      outline: 'text-stone-700 dark:text-stone-300 font-bold',
+      ghost: 'text-stone-600 dark:text-stone-400 font-semibold',
+      destructive: 'text-white',
+      link: 'text-[#D95B38] underline',
     },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
+    size: {
+      default: 'text-xs',
+      sm: 'text-[11px]',
+      md: 'text-xs',
+      lg: 'text-sm font-bold',
+      icon: 'text-xs',
     },
-  }
-);
+  },
+  defaultVariants: {
+    variant: 'default',
+    size: 'default',
+  },
+});
 
 type ButtonProps = React.ComponentProps<typeof Pressable> &
-  React.RefAttributes<typeof Pressable> &
-  VariantProps<typeof buttonVariants>;
+  VariantProps<typeof buttonVariants> & {
+    /** Explicit text label prop (alternative to children) */
+    title?: string;
+    /** Feather icon name */
+    icon?: keyof typeof Feather.glyphMap;
+    /** Icon position (left or right) */
+    iconPosition?: 'left' | 'right';
+    /** Icon size */
+    iconSize?: number;
+    /** Override icon color */
+    iconColor?: string;
+    /** Show ActivityIndicator loader spinner */
+    loading?: boolean;
+    /** Alias for loading */
+    isLoading?: boolean;
+    /** Optional text to display while loading */
+    loadingText?: string;
+    /** Extra Tailwind text classes */
+    textClassName?: string;
+  };
 
-function Button({ className, variant, size, ...props }: ButtonProps) {
-  return (
-    <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
+const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
+  (
+    {
+      className,
+      textClassName,
+      variant = 'default',
+      size = 'default',
+      title,
+      icon,
+      iconPosition = 'left',
+      iconSize = 16,
+      iconColor,
+      loading = false,
+      isLoading = false,
+      loadingText,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const activeLoading = loading || isLoading;
+
+    const resolvedIconColor = React.useMemo(() => {
+      if (iconColor) return iconColor;
+      if (
+        variant === 'terracotta' ||
+        variant === 'default' ||
+        variant === 'quiz' ||
+        variant === 'destructive'
+      ) {
+        return '#FFFFFF';
+      }
+      if (variant === 'outline' || variant === 'secondary') {
+        return '#57534E';
+      }
+      return APP_COLORS.primary;
+    }, [iconColor, variant]);
+
+    const labelContent = activeLoading && loadingText ? loadingText : title || children;
+
+    const renderIcon = () => (
+      <Feather name={icon!} size={iconSize} color={resolvedIconColor} />
+    );
+
+    return (
       <Pressable
-        className={cn(props.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}
+        ref={ref}
+        disabled={disabled || activeLoading}
+        className={cn(
+          (disabled || activeLoading) && 'opacity-50',
+          buttonVariants({ variant, size }),
+          className
+        )}
         role="button"
         {...props}
-      />
-    </TextClassContext.Provider>
-  );
-}
+      >
+        {(state) => (
+          <>
+            {activeLoading ? (
+              <Spinner size="small" color={resolvedIconColor} />
+            ) : icon && iconPosition === 'left' ? (
+              renderIcon()
+            ) : null}
+
+            {typeof labelContent === 'string' || typeof labelContent === 'number' ? (
+              <RNText
+                className={cn(buttonTextVariants({ variant, size }), textClassName)}
+              >
+                {labelContent}
+              </RNText>
+            ) : typeof labelContent === 'function' ? (
+              (labelContent as any)(state)
+            ) : (
+              labelContent
+            )}
+
+            {!activeLoading && icon && iconPosition === 'right' ? (
+              renderIcon()
+            ) : null}
+          </>
+        )}
+      </Pressable>
+    );
+  }
+);
+
+Button.displayName = 'Button';
 
 export { Button, buttonTextVariants, buttonVariants };
 export type { ButtonProps };
-

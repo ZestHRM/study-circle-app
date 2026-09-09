@@ -7,9 +7,8 @@ import { PortalHost } from "@rn-primitives/portal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { useColorScheme, View } from "react-native";
+import { StatusBar, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Uniwind } from "uniwind";
@@ -63,6 +62,15 @@ const DARK_THEME_VARS: Record<string, string> = {
 Uniwind.updateCSSVariables("light", LIGHT_THEME_VARS);
 Uniwind.updateCSSVariables("dark", DARK_THEME_VARS);
 
+const WhiteDefaultTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: "#ffffff",
+    card: "#ffffff",
+  },
+};
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [queryClient] = useState(
@@ -88,19 +96,24 @@ export default function RootLayout() {
     );
   }, [colorScheme]);
 
+  const activeTheme = colorScheme === "dark" ? DarkTheme : WhiteDefaultTheme;
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#ffffff" }}>
+      <SafeAreaProvider style={{ flex: 1, backgroundColor: "#ffffff" }}>
+        <ThemeProvider value={activeTheme}>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <ConfirmDialogProvider>
                 <AnimatedSplashOverlay />
-                <StatusBar style="auto" />
-                <View className="bg-background flex-1">
-                  <Stack screenOptions={{ headerShown: false }}>
+                <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
+                <View style={{ flex: 1, backgroundColor: "#ffffff" }} className="bg-white dark:bg-stone-900 flex-1">
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      contentStyle: { backgroundColor: "#ffffff" },
+                    }}
+                  >
                     <Stack.Screen name="(tabs)" />
                     <Stack.Screen
                       name="profile"

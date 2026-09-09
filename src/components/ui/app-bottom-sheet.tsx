@@ -1,13 +1,12 @@
-import { Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
+import { Text } from "@/components/ui/text";
+import { useTheme } from "@/hooks/use-theme";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetScrollView,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import * as React from 'react';
-import { StyleSheet, View } from 'react-native';
+} from "@gorhom/bottom-sheet";
+import * as React from "react";
+import { StyleSheet, View } from "react-native";
 
 type AppBottomSheetProps = {
   open: boolean;
@@ -15,8 +14,10 @@ type AppBottomSheetProps = {
   title?: string;
   description?: string;
   snapPoints?: (number | string)[];
+  initialIndex?: number;
   enablePanDownToClose?: boolean;
-  backdropPressBehavior?: 'none' | 'close' | 'collapse';
+  enableContentPanningGesture?: boolean;
+  backdropPressBehavior?: "none" | "close" | "collapse";
   children: React.ReactNode;
 };
 
@@ -25,13 +26,15 @@ export function AppBottomSheet({
   onOpenChange,
   title,
   description,
-  snapPoints = ['55%', '88%'],
+  snapPoints = ["85%"],
+  initialIndex = 0,
   enablePanDownToClose = true,
-  backdropPressBehavior = 'close',
+  enableContentPanningGesture = true,
+  backdropPressBehavior = "close",
   children,
 }: AppBottomSheetProps) {
   const theme = useTheme();
-  const sheetIndex = open ? 0 : -1;
+  const sheetIndex = open ? initialIndex : -1;
 
   const memoizedSnapPoints = React.useMemo(() => snapPoints, [snapPoints]);
   const sheetBackgroundStyle = React.useMemo(
@@ -40,13 +43,13 @@ export function AppBottomSheet({
       borderTopColor: theme.backgroundElement,
       borderTopWidth: StyleSheet.hairlineWidth,
     }),
-    [theme.background, theme.backgroundElement]
+    [theme.background, theme.backgroundElement],
   );
   const indicatorStyle = React.useMemo(
     () => ({
       backgroundColor: theme.textSecondary,
     }),
-    [theme.textSecondary]
+    [theme.textSecondary],
   );
 
   const renderBackdrop = React.useCallback(
@@ -58,7 +61,7 @@ export function AppBottomSheet({
         pressBehavior={backdropPressBehavior}
       />
     ),
-    [backdropPressBehavior]
+    [backdropPressBehavior],
   );
 
   const onSheetChange = React.useCallback(
@@ -70,7 +73,7 @@ export function AppBottomSheet({
 
       onOpenChange(true);
     },
-    [onOpenChange]
+    [onOpenChange],
   );
 
   const onSheetClose = React.useCallback(() => {
@@ -86,24 +89,29 @@ export function AppBottomSheet({
       index={sheetIndex}
       snapPoints={memoizedSnapPoints}
       enablePanDownToClose={enablePanDownToClose}
+      enableContentPanningGesture={enableContentPanningGesture}
       onChange={onSheetChange}
       onClose={onSheetClose}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={indicatorStyle}
       backgroundStyle={sheetBackgroundStyle}
-      enableDynamicSizing
+      enableDynamicSizing={false}
     >
-      <BottomSheetView style={styles.contentContainer}>
+      <View style={styles.contentContainer}>
         {title || description ? (
           <View style={styles.headerContainer}>
-            {title ? <Text className="text-lg font-semibold">{title}</Text> : null}
+            {title ? (
+              <Text className="text-lg font-semibold">{title}</Text>
+            ) : null}
             {description ? (
-              <Text className="text-muted-foreground text-sm">{description}</Text>
+              <Text className="text-muted-foreground text-sm">
+                {description}
+              </Text>
             ) : null}
           </View>
         ) : null}
         <View style={styles.bodyContainer}>{children}</View>
-      </BottomSheetView>
+      </View>
     </BottomSheet>
   );
 }

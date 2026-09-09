@@ -8,7 +8,10 @@ interface HtmlNotesViewProps {
   contentWidth?: number;
 }
 
-export function HtmlNotesView({ content, contentWidth }: HtmlNotesViewProps) {
+export const HtmlNotesView = React.memo(function HtmlNotesView({
+  content,
+  contentWidth,
+}: HtmlNotesViewProps) {
   const { width: windowWidth } = useWindowDimensions();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -65,4 +68,5 @@ export function HtmlNotesView({ content, contentWidth }: HtmlNotesViewProps) {
       />
     </View>
   );
-}
+});
+

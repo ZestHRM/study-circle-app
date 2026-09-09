@@ -26,13 +26,35 @@ export function useStudyMaterialsInfinite(options?: {
       }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      const currentPage = lastPage.pagination.page ?? 1;
+      if (!lastPage?.data || lastPage.data.length === 0) {
+        return undefined;
+      }
+      const currentPage =
+        (lastPage.pagination as any).currentPage ??
+        lastPage.pagination.page ??
+        1;
       const totalPages =
         lastPage.pagination.totalPages ??
         Math.ceil((lastPage.pagination.totalItems ?? 0) / limit);
       return currentPage < totalPages ? currentPage + 1 : undefined;
     },
     enabled: Boolean(token),
+    refetchInterval: (query) => {
+      const pages = query.state.data?.pages;
+      if (!pages) return false;
+      const allMaterials = pages.flatMap((p) => p.data ?? []);
+      const isAnyProcessing = allMaterials.some((m) => {
+        const isNotesProcessing =
+          m.status === 'PENDING' ||
+          m.status === 'PROCESSING' ||
+          m.status === 'GENERATING_NOTES' ||
+          m.files?.some((f) => f.status === 'PENDING' || f.status === 'PROCESSING');
+        const isQuizProcessing =
+          m.quizStatus === 'PENDING' || m.quizStatus === 'GENERATING';
+        return isNotesProcessing || isQuizProcessing;
+      });
+      return isAnyProcessing ? 4000 : false;
+    },
   });
 
   const materials = React.useMemo(
@@ -62,6 +84,31 @@ export function useStudyMaterialsInfinite(options?: {
     fetchNextPage,
     refetch,
   };
+}
+
+export function useStudyMaterialDetail(id?: string | null) {
+  const { token } = useAuth();
+
+  return useQuery({
+    queryKey: ['study-material-detail', token, id],
+    queryFn: async () => {
+      if (!id) return null;
+      return studyMaterialsApi.getById(token as string, id);
+    },
+    enabled: Boolean(token && id),
+    refetchInterval: (query) => {
+      const material = query.state.data;
+      if (!material) return false;
+      const isNotesProcessing =
+        material.status === 'PENDING' ||
+        material.status === 'PROCESSING' ||
+        material.status === 'GENERATING_NOTES' ||
+        material.files?.some((f) => f.status === 'PENDING' || f.status === 'PROCESSING');
+      const isQuizProcessing =
+        material.quizStatus === 'PENDING' || material.quizStatus === 'GENERATING';
+      return isNotesProcessing || isQuizProcessing ? 3000 : false;
+    },
+  });
 }
 
 export function useCreateStudyMaterial() {
@@ -104,6 +151,7 @@ export function useDeleteStudyMaterial() {
     },
   });
 }
+
 
 
 

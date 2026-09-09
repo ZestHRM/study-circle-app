@@ -41,7 +41,6 @@ export function SignInForm() {
       await signIn({ email: email.trim().toLowerCase(), password });
       router.replace('/');
     } catch (caughtError) {
-      console.log('Sign-in error:', caughtError);
       const message =
         caughtError instanceof ApiError ? caughtError.message : 'Unable to sign in right now.';
 

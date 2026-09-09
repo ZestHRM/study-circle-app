@@ -1,80 +1,44 @@
-import { QuizResultsSheet } from "@/components/quizzes/quiz-results-sheet";
-import { StartQuizSheet } from "@/components/quizzes/start-quiz-sheet";
+import {
+  QuizCard,
+  QuizResultsSheet,
+  StartQuizSheet,
+} from "@/components/quizzes";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
 import { Text } from "@/components/ui/text";
+import { APP_COLORS } from "@/constants/colors";
 import {
-  useQuizzesQuery,
+  useQuizzesInfiniteQuery,
   useStartQuizAttempt,
   useSubjectsQuery,
 } from "@/hooks/queries";
-import {
-  type Quiz,
-  type QuizAttempt,
-  type QuizDifficultyLevel,
-} from "@/services";
+import { type Quiz, type QuizAttempt } from "@/services";
 import { Feather } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import * as React from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Linking,
+  Pressable,
   RefreshControl,
-  ScrollView,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const PAGE_SIZE = 8;
 
-const DIFFICULTY_LABELS: Record<QuizDifficultyLevel, string> = {
-  EASY: "Easy",
-  MEDIUM: "Medium",
-  HARD: "Hard",
-};
-
-function difficultyChipClass(level: QuizDifficultyLevel) {
-  switch (level) {
-    case "EASY":
-      return "rounded-full bg-emerald-100 px-2 py-1";
-    case "MEDIUM":
-      return "rounded-full bg-amber-100 px-2 py-1";
-    default:
-      return "rounded-full bg-rose-100 px-2 py-1";
-  }
-}
-
-function difficultyTextClass(level: QuizDifficultyLevel) {
-  switch (level) {
-    case "EASY":
-      return "text-xs text-emerald-700";
-    case "MEDIUM":
-      return "text-xs text-amber-700";
-    default:
-      return "text-xs text-rose-700";
-  }
-}
-
 export default function QuizzesScreen() {
-  const [page, setPage] = React.useState(1);
   const [searchText, setSearchText] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [selectedSubjectId, setSelectedSubjectId] = React.useState("");
+  const [startingQuizId, setStartingQuizId] = React.useState<string | null>(null);
+
   const [selectedQuizAttempt, setSelectedQuizAttempt] =
     React.useState<QuizAttempt | null>(null);
   const [selectedQuizForResults, setSelectedQuizForResults] = React.useState<{
@@ -82,26 +46,33 @@ export default function QuizzesScreen() {
     totalQuestions: number;
   } | null>(null);
 
+  // Auto-close quiz sheets when navigating away from this tab
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setSelectedQuizAttempt(null);
+        setSelectedQuizForResults(null);
+      };
+    }, [])
+  );
+
   const {
     subjectOptions,
     isLoading: isLoadingSubjects,
     isError: isSubjectsError,
   } = useSubjectsQuery();
 
-  const selectedSubject =
-    subjectOptions.find((option) => option?.value === selectedSubjectId) ??
-    null;
-
   const {
     quizzes,
-    totalItems,
-    totalPages,
     isLoading: isLoadingQuizzes,
-    isFetching: isFetchingQuizzes,
+    isForbidden,
+    forbiddenMessage,
+    isFetchingNextPage,
     isRefreshing,
+    hasNextPage,
+    fetchNextPage,
     refetch: refetchQuizzes,
-  } = useQuizzesQuery({
-    page,
+  } = useQuizzesInfiniteQuery({
     limit: PAGE_SIZE,
     search,
     subjectId: selectedSubjectId,
@@ -109,358 +80,279 @@ export default function QuizzesScreen() {
 
   const startAttemptMutation = useStartQuizAttempt();
 
-  const startIndex = totalItems === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const endIndex =
-    totalItems === 0 ? 0 : Math.min(page * PAGE_SIZE, totalItems);
   const isFiltered = Boolean(search) || Boolean(selectedSubjectId);
 
-  function onRefresh() {
+  const handleRefresh = React.useCallback(() => {
     refetchQuizzes();
-  }
+  }, [refetchQuizzes]);
 
-  function onPreviousPage() {
-    setPage((currentPage) => Math.max(1, currentPage - 1));
-  }
-
-  function onNextPage() {
-    setPage((currentPage) => Math.min(totalPages, currentPage + 1));
-  }
-
-  function onApplySearch() {
+  const handleApplySearch = React.useCallback(() => {
     setSearch(searchText.trim());
-    setPage(1);
-  }
+  }, [searchText]);
 
-  function onClearFilters() {
+  const handleClearSearch = React.useCallback(() => {
+    setSearchText("");
+    setSearch("");
+  }, []);
+
+  const handleClearFilters = React.useCallback(() => {
     setSearchText("");
     setSearch("");
     setSelectedSubjectId("");
-    setPage(1);
-  }
+  }, []);
 
-  async function onStartQuiz(quiz: Quiz) {
-    if (quiz.totalQuestions <= 0) {
-      Alert.alert("No Questions", "This quiz has no questions yet.");
-      return;
-    }
+  const handleStartQuiz = React.useCallback(
+    async (quiz: Quiz) => {
+      if (quiz.totalQuestions <= 0) {
+        Alert.alert("No Questions", "This quiz has no questions yet.");
+        return;
+      }
 
-    try {
-      const attempt = await startAttemptMutation.mutateAsync(quiz.id);
-      setSelectedQuizAttempt(attempt);
-      setSelectedQuizForResults(null);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to start quiz attempt right now.";
-      Alert.alert("Start Failed", message);
-    }
-  }
+      try {
+        setStartingQuizId(quiz.id);
+        const attempt = await startAttemptMutation.mutateAsync(quiz.id);
+        setSelectedQuizAttempt(attempt);
+        setSelectedQuizForResults(null);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to start quiz attempt right now.";
+        Alert.alert("Start Failed", message);
+      } finally {
+        setStartingQuizId(null);
+      }
+    },
+    [startAttemptMutation]
+  );
 
-  return (
-    <SafeAreaView className="bg-background flex-1" edges={['top']}>
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 }}
-      >
-        <View className="mx-auto w-full max-w-md gap-4 pb-8">
-          <Card className="gap-2 py-4">
-            <CardHeader className="px-4 pb-0">
-              <CardTitle className="text-base">Important Notice</CardTitle>
-              <CardDescription>
-                Practice sets are auto-generated from uploaded study materials.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+  const handleViewResults = React.useCallback((quiz: Quiz) => {
+    setSelectedQuizForResults({
+      quizId: quiz.id,
+      totalQuestions: quiz.totalQuestions,
+    });
+    setSelectedQuizAttempt(null);
+  }, []);
 
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1 pr-3">
-              <Text className="text-2xl font-semibold">Quizzes</Text>
-              <Text className="text-muted-foreground text-sm">
-                Search and filter quizzes by subject before starting an attempt.
-              </Text>
-            </View>
-            <Button
-              size="icon"
-              variant="outline"
-              onPress={onRefresh}
-              disabled={isLoadingQuizzes || isFetchingQuizzes}
-            >
-              {isLoadingQuizzes || isFetchingQuizzes ? (
-                <ActivityIndicator size="small" />
-              ) : (
-                <Feather name="refresh-cw" size={16} color="#a3a3a3" />
-              )}
-            </Button>
+  const keyExtractor = React.useCallback((item: Quiz) => item.id, []);
+
+  const ItemSeparator = React.useCallback(() => <View className="h-3" />, []);
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: Quiz }) => (
+      <QuizCard
+        quiz={item}
+        onStartQuiz={handleStartQuiz}
+        onViewResults={handleViewResults}
+        isStarting={startAttemptMutation.isPending && startingQuizId === item.id}
+      />
+    ),
+    [handleStartQuiz, handleViewResults, startAttemptMutation.isPending, startingQuizId]
+  );
+
+  const ListHeaderComponent = React.useMemo(
+    () => (
+      <View className="gap-3.5 pb-2">
+        <ScreenHeader
+          welcomeText="Practice & Test"
+          title="Quizzes"
+          subtitle="Auto-generated practice sets from your study materials"
+        />
+
+        {/* AI Quiz Notice Banner */}
+        <View className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 flex-row items-center gap-3">
+          <View className="w-8 h-8 rounded-xl bg-amber-500/20 items-center justify-center">
+            <Feather name="zap" size={16} color={APP_COLORS.warningDark} />
           </View>
+          <View className="flex-1">
+            <Text className="text-xs font-semibold text-amber-900 dark:text-amber-300">
+              Smart Practice Sets
+            </Text>
+            <Text className="text-xs text-amber-800/80 dark:text-amber-400 mt-0.5">
+              Quizzes are generated from your uploaded study materials.
+            </Text>
+          </View>
+        </View>
 
-          <View className="gap-2">
-            <Text className="text-muted-foreground text-xs">Search quiz</Text>
-            <View className="flex-row items-center gap-2">
+        {/* Search & Subject Filters */}
+        <View className="gap-2.5">
+          {/* Search Input Bar */}
+          <View className="flex-row items-center gap-2">
+            <View className="flex-1 relative justify-center">
               <Input
                 value={searchText}
                 onChangeText={setSearchText}
-                placeholder="Search by title or description"
+                placeholder="Search by title..."
                 returnKeyType="search"
-                onSubmitEditing={onApplySearch}
-                className="flex-1"
+                onSubmitEditing={handleApplySearch}
+                className="pr-9 h-11 rounded-xl text-sm"
               />
-              <Button variant="outline" onPress={onApplySearch}>
-                <Feather name="search" size={16} color="#a3a3a3" />
-                <Text>Search</Text>
-              </Button>
+              {searchText ? (
+                <Pressable
+                  onPress={handleClearSearch}
+                  className="absolute right-3 p-1 active:opacity-70"
+                >
+                  <Feather name="x" size={16} color={APP_COLORS.iconLight} />
+                </Pressable>
+              ) : null}
             </View>
-          </View>
 
-          <View className="gap-2">
-            <Text className="text-muted-foreground text-xs">
-              Filter by subject
-            </Text>
-            <Select
-              value={selectedSubject!}
-              onValueChange={(option) => {
-                setSelectedSubjectId(option?.value ?? "");
-                setPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    isLoadingSubjects
-                      ? "Loading subjects..."
-                      : "All subjects"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {subjectOptions.map((subject) => (
-                    <SelectItem
-                      key={subject?.value}
-                      value={subject?.value!}
-                      label={subject?.label!}
-                    />
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {isSubjectsError ? (
-              <Text className="text-destructive text-xs">
-                Failed to load subjects for filtering.
-              </Text>
-            ) : null}
-          </View>
-
-          <View className="flex-row gap-2">
             <Button
-              className="flex-1"
               variant="outline"
-              onPress={onClearFilters}
-              disabled={!isFiltered}
+              onPress={handleApplySearch}
+              className="h-11 rounded-xl px-3.5"
             >
-              <Feather name="x-circle" size={16} color="#a3a3a3" />
-              <Text>Clear Filters</Text>
+              <Feather name="search" size={16} color={APP_COLORS.grayMuted} />
             </Button>
           </View>
 
-          {isLoadingQuizzes ? (
-            <View className="gap-3">
-              {[0, 1, 2, 3].map((item) => (
-                <Card key={item} className="gap-3 py-4">
-                  <CardHeader className="px-4">
-                    <CardTitle className="text-base">Loading quiz...</CardTitle>
-                    <CardDescription>Fetching latest quizzes</CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
-            </View>
-          ) : null}
-
-          {!isLoadingQuizzes && quizzes.length === 0 ? (
-            <Card className="gap-3 py-4">
-              <CardHeader className="px-4">
-                <CardTitle>No Quizzes Found</CardTitle>
-                <CardDescription>
-                  {isFiltered
-                    ? "Try adjusting your search/filter to find quizzes."
-                    : "No quizzes are available right now."}
-                </CardDescription>
-              </CardHeader>
-              {isFiltered ? (
-                <CardContent className="px-4">
-                  <Button
-                    size="sm"
-                    className="self-start"
-                    onPress={onClearFilters}
-                  >
-                    <Feather name="rotate-ccw" size={16} color="#ffffff" />
-                    <Text>Reset Filters</Text>
-                  </Button>
-                </CardContent>
-              ) : null}
-            </Card>
-          ) : null}
-
-          {!isLoadingQuizzes && quizzes.length > 0 ? (
-            <>
-              <FlatList
-                data={quizzes}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                contentContainerClassName="gap-3"
-                renderItem={({ item }) => (
-                  <Card className="gap-3 py-4">
-                    <CardHeader className="gap-2 px-4">
-                      <View className="flex-row items-start justify-between gap-2">
-                        <CardTitle
-                          className="text-base flex-1"
-                          numberOfLines={2}
-                        >
-                          {item.title}
-                        </CardTitle>
-                        <View
-                          className={difficultyChipClass(item.difficultyLevel)}
-                        >
-                          <Text
-                            className={difficultyTextClass(
-                              item.difficultyLevel,
-                            )}
-                          >
-                            {DIFFICULTY_LABELS[item.difficultyLevel]}
-                          </Text>
-                        </View>
-                      </View>
-                      <CardDescription numberOfLines={3}>
-                        {item.description?.trim() || "No description provided"}
-                      </CardDescription>
-                    </CardHeader>
-
-                    <CardContent className="gap-2 px-4">
-                      <View className="gap-1">
-                        <Text className="text-muted-foreground text-xs">
-                          Subject
-                        </Text>
-                        <Text className="text-sm font-medium" numberOfLines={1}>
-                          {item.subject?.name ?? "N/A"}
-                        </Text>
-                      </View>
-
-                      <View className="flex-row flex-wrap gap-1">
-                        <View className="bg-muted rounded-full px-2 py-1">
-                          <Text className="text-xs">
-                            Questions: {item.totalQuestions}
-                          </Text>
-                        </View>
-                        <View className="bg-muted rounded-full px-2 py-1">
-                          <Text className="text-xs">
-                            Attempts: {item._count?.quizAttempts ?? 0}
-                          </Text>
-                        </View>
-                        {item.activeAttempt ? (
-                          <View className="bg-muted rounded-full px-2 py-1">
-                            <Text className="text-xs text-muted-foreground">
-                              Active Attempt
-                            </Text>
-                          </View>
-                        ) : null}
-                      </View>
-
-                      <View className="flex-row gap-2 pt-1">
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          onPress={() => onStartQuiz(item)}
-                          disabled={startAttemptMutation.isPending}
-                        >
-                          {startAttemptMutation.isPending ? (
-                            <ActivityIndicator size="small" color="#ffffff" />
-                          ) : (
-                            <Feather
-                              name={item.activeAttempt ? "rotate-cw" : "play"}
-                              size={16}
-                              color="#ffffff"
-                            />
-                          )}
-                          <Text>
-                            {item.activeAttempt ? "Resume Quiz" : "Start Quiz"}
-                          </Text>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onPress={() => {
-                            setSelectedQuizForResults({
-                              quizId: item.id,
-                              totalQuestions: item.totalQuestions,
-                            });
-                            setSelectedQuizAttempt(null);
-                          }}
-                          disabled={(item._count?.quizAttempts ?? 0) <= 0}
-                        >
-                          <Feather name="eye" size={16} color="#a3a3a3" />
-                          <Text>Results</Text>
-                        </Button>
-                      </View>
-                    </CardContent>
-                  </Card>
-                )}
+          {/* Subject Dropdown & Clear Filters Row */}
+          <View className="flex-row items-center gap-2">
+            <View className="flex-1">
+              <SubjectSelectDropdown
+                value={selectedSubjectId}
+                onValueChange={(val) => setSelectedSubjectId(val)}
+                subjects={subjectOptions}
+                isLoading={isLoadingSubjects}
+                showAllOption
+                allOptionLabel="All subjects"
+                placeholder="Filter by subject"
               />
+            </View>
 
-              <Card className="gap-3 py-4">
-                <CardHeader className="gap-2 px-4">
-                  <CardTitle className="text-base">Page {page}</CardTitle>
-                  <CardDescription>
-                    Showing {startIndex}-{endIndex} of {totalItems} quizzes.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-row items-center justify-between gap-2 px-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onPress={onPreviousPage}
-                    disabled={page <= 1 || isFetchingQuizzes}
-                  >
-                    <Feather name="chevron-left" size={16} color="#a3a3a3" />
-                    <Text>Previous</Text>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onPress={onNextPage}
-                    disabled={page >= totalPages || isFetchingQuizzes}
-                  >
-                    <Text>Next</Text>
-                    <Feather name="chevron-right" size={16} color="#a3a3a3" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </>
+            {isFiltered ? (
+              <Button
+                variant="ghost"
+                onPress={handleClearFilters}
+                className="h-10 rounded-xl px-3"
+              >
+                <Feather name="x-circle" size={15} color={APP_COLORS.error} />
+                <Text variant="error" className="text-xs font-semibold">
+                  Clear
+                </Text>
+              </Button>
+            ) : null}
+          </View>
+
+          {isSubjectsError ? (
+            <Text variant="error" className="text-xs">
+              Failed to load subjects for filtering.
+            </Text>
           ) : null}
         </View>
-      </ScrollView>
+      </View>
+    ),
+    [
+      searchText,
+      handleApplySearch,
+      handleClearSearch,
+      selectedSubjectId,
+      subjectOptions,
+      isLoadingSubjects,
+      isFiltered,
+      handleClearFilters,
+      isSubjectsError,
+    ]
+  );
 
+  return (
+    <SafeAreaView className="bg-stone-50 dark:bg-stone-950 flex-1" edges={["top"]}>
+      <FlatList
+        data={quizzes}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={
+          <InfiniteListFooter
+            isFetchingNextPage={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+            totalLoaded={quizzes.length}
+            itemLabel="quizzes"
+          />
+        }
+        ListEmptyComponent={
+          isForbidden ? (
+            <View className="py-8 px-4 items-center gap-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-3xl">
+              <View className="w-12 h-12 rounded-2xl bg-amber-500/20 items-center justify-center border border-amber-500/30">
+                <Feather name="lock" size={24} color={APP_COLORS.warningDark} />
+              </View>
+
+              <View className="gap-1 items-center">
+                <Text className="text-base font-bold text-amber-950 dark:text-amber-200 text-center">
+                  Plan Upgrade Required
+                </Text>
+                <Text className="text-xs text-amber-900/80 dark:text-amber-300 text-center px-2 leading-5 font-medium">
+                  {forbiddenMessage || "Access denied. Upgrade your plan to access this feature."}
+                </Text>
+              </View>
+
+              <Button
+                variant="terracotta"
+                icon="external-link"
+                iconPosition="right"
+                title="Upgrade Plan on Billing →"
+                onPress={() => {
+                  void Linking.openURL("https://app.usestudycircle.ai/billings");
+                }}
+                className="w-full h-11 rounded-2xl justify-center items-center mt-1"
+              />
+            </View>
+          ) : !isLoadingQuizzes ? (
+            <EmptyState
+              icon="zap"
+              title="No Quizzes Found"
+              description={
+                isFiltered
+                  ? "No quizzes matched your search filter. Try clearing filters."
+                  : "Upload a study material document to automatically generate your first practice quiz."
+              }
+              actionLabel={isFiltered ? "Clear Filters" : undefined}
+              onAction={isFiltered ? handleClearFilters : undefined}
+            />
+          ) : (
+            <View className="py-12 items-center justify-center">
+              <ActivityIndicator size="small" color={APP_COLORS.primary} />
+              <Text variant="muted" className="text-xs mt-2 font-medium">
+                Loading quizzes...
+              </Text>
+            </View>
+          )
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={APP_COLORS.primary}
+            colors={[APP_COLORS.primary]}
+          />
+        }
+        onEndReached={fetchNextPage}
+        onEndReachedThreshold={0.4}
+        ItemSeparatorComponent={ItemSeparator}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
+      />
+
+      {/* Quiz Attempt Bottom Sheet */}
       {selectedQuizAttempt ? (
         <StartQuizSheet
           key={selectedQuizAttempt.id}
-          open
-          onOpenChange={(open) => {
+          open={Boolean(selectedQuizAttempt)}
+          onOpenChange={(open: boolean) => {
             if (!open) {
               setSelectedQuizAttempt(null);
+              refetchQuizzes();
             }
           }}
           attempt={selectedQuizAttempt}
         />
       ) : null}
 
+      {/* Quiz Results Bottom Sheet */}
       {selectedQuizForResults ? (
         <QuizResultsSheet
           key={selectedQuizForResults.quizId}
           open
-          onOpenChange={(open) => {
+          onOpenChange={(open: boolean) => {
             if (!open) {
               setSelectedQuizForResults(null);
             }

@@ -28,7 +28,7 @@ function formatFileSize(bytes: number | null): string {
   return `${mb.toFixed(1)} MB`;
 }
 
-export function PdfDropzone({
+export const PdfDropzone = React.memo(function PdfDropzone({
   file,
   onPickFile,
   onRemoveFile,
@@ -92,4 +92,4 @@ export function PdfDropzone({
       {error ? <Text variant="error">{error}</Text> : null}
     </View>
   );
-}
+});

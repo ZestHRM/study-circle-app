@@ -1,13 +1,14 @@
-import { useAuth } from '@/lib/auth';
-import { notesApi, type StudyMaterial } from '@/services';
+import { useAuth } from "@/lib/auth";
+import { notesApi, type StudyMaterial } from "@/services";
 import {
   keepPreviousData,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
-} from '@tanstack/react-query';
-import * as React from 'react';
-import { Alert } from 'react-native';
+} from "@tanstack/react-query";
+import * as React from "react";
+import { Alert } from "react-native";
 
 export function useNotesQuery(params: {
   page: number;
@@ -19,7 +20,14 @@ export function useNotesQuery(params: {
   const limit = params.limit ?? 8;
 
   const query = useQuery({
-    queryKey: ['notes', token, params.page, limit, params.search, params.subjectId],
+    queryKey: [
+      "notes",
+      token,
+      params.page,
+      limit,
+      params.search,
+      params.subjectId,
+    ],
     queryFn: async () =>
       notesApi.list(token as string, {
         page: params.page,
@@ -55,6 +63,73 @@ export function useNotesQuery(params: {
   };
 }
 
+export function useNotesInfiniteQuery(params?: {
+  limit?: number;
+  search?: string;
+  subjectId?: string;
+}) {
+  const { token } = useAuth();
+  const limit = params?.limit ?? 8;
+  const search = params?.search;
+  const subjectId = params?.subjectId;
+
+  const query = useInfiniteQuery({
+    queryKey: ["notes-infinite", token, limit, search, subjectId],
+    queryFn: async ({ pageParam = 1 }) =>
+      notesApi.list(token as string, {
+        page: pageParam as number,
+        limit,
+        search: search || undefined,
+        subjectId: subjectId || undefined,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage?.data || lastPage.data.length === 0) {
+        return undefined;
+      }
+      const currentPage =
+        (lastPage.pagination as any).currentPage ??
+        lastPage.pagination.page ??
+        1;
+      const totalPages =
+        lastPage.pagination.totalPages ??
+        Math.ceil((lastPage.pagination.totalItems ?? 0) / limit);
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    enabled: Boolean(token),
+  });
+
+  const notes = React.useMemo(
+    () => query.data?.pages.flatMap((page) => page.data) ?? [],
+    [query.data]
+  );
+
+  const totalItems = query.data?.pages[0]?.pagination.totalItems ?? notes.length;
+  const isRefreshing = query.isRefetching && !query.isFetchingNextPage;
+
+  const fetchNextPage = React.useCallback(() => {
+    if (query.hasNextPage && !query.isFetchingNextPage && !query.isLoading) {
+      void query.fetchNextPage();
+    }
+  }, [query]);
+
+  const refetch = React.useCallback(() => {
+    void query.refetch();
+  }, [query]);
+
+  return {
+    notes,
+    totalItems,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isFetchingNextPage: query.isFetchingNextPage,
+    isRefreshing,
+    hasNextPage: Boolean(query.hasNextPage),
+    fetchNextPage,
+    refetch,
+  };
+}
+
 export function useCreateNote() {
   const { token } = useAuth();
   const queryClient = useQueryClient();
@@ -64,8 +139,8 @@ export function useCreateNote() {
       return notesApi.create(token as string, payload);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['notes'] });
-      Alert.alert('Success', 'Note created successfully.');
+      await queryClient.invalidateQueries({ queryKey: ["notes"] });
+      Alert.alert("Success", "Note created successfully.");
     },
   });
 }
@@ -86,8 +161,8 @@ export function useUpdateNote() {
       });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['notes'] });
-      Alert.alert('Success', 'Note updated successfully.');
+      await queryClient.invalidateQueries({ queryKey: ["notes"] });
+      Alert.alert("Success", "Note updated successfully.");
     },
   });
 }
@@ -101,7 +176,7 @@ export function useDeleteNote() {
       return notesApi.delete(token as string, id);
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['notes'] });
+      await queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
@@ -110,7 +185,7 @@ export function useStudyNotesQuery(notesId?: string | null) {
   const { token } = useAuth();
 
   return useQuery({
-    queryKey: ['study-notes-detail', token, notesId],
+    queryKey: ["study-notes-detail", token, notesId],
     queryFn: async () => {
       if (!notesId) return null;
       const res = await notesApi.getById(token as string, notesId);
@@ -120,12 +195,15 @@ export function useStudyNotesQuery(notesId?: string | null) {
   });
 }
 
-export function useStudyMaterialNotesQuery(materialInput?: StudyMaterial | string | null) {
+export function useStudyMaterialNotesQuery(
+  materialInput?: StudyMaterial | string | null,
+) {
   const { token } = useAuth();
 
-  const materialId = typeof materialInput === 'string' ? materialInput : materialInput?.id;
+  const materialId =
+    typeof materialInput === "string" ? materialInput : materialInput?.id;
   const explicitNotesId =
-    typeof materialInput === 'object' && materialInput !== null
+    typeof materialInput === "object" && materialInput !== null
       ? (materialInput as any).notesId ||
         (materialInput as any).noteId ||
         (Array.isArray((materialInput as any).notes)
@@ -139,16 +217,17 @@ export function useStudyMaterialNotesQuery(materialInput?: StudyMaterial | strin
   const targetNotesId = explicitNotesId || materialId;
 
   return useQuery({
-    queryKey: ['study-notes-detail', token, targetNotesId],
+    queryKey: ["study-notes-detail", token, targetNotesId],
     queryFn: async () => {
       if (!targetNotesId) return null;
-      console.log(`[useStudyMaterialNotesQuery] Calling Notes API in use-notes.ts: GET /notes/${targetNotesId}`);
       const notesRes = await notesApi.getById(token as string, targetNotesId);
       if (notesRes && notesRes.data) {
         return {
           content: notesRes.data.content,
-          title: notesRes.data.studyMaterial?.title || 'Notes Detail',
-          subjectName: notesRes.data.subject?.name || notesRes.data.studyMaterial?.subject?.name,
+          title: notesRes.data.studyMaterial?.title || "Notes Detail",
+          subjectName:
+            notesRes.data.subject?.name ||
+            notesRes.data.studyMaterial?.subject?.name,
           createdAt: notesRes.data.createdAt,
         };
       }
@@ -158,4 +237,3 @@ export function useStudyMaterialNotesQuery(materialInput?: StudyMaterial | strin
     staleTime: 0,
   });
 }
-

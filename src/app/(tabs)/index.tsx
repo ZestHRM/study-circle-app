@@ -7,6 +7,7 @@ import { TasksChartWidget } from "@/components/home/tasks-chart-widget";
 import { ViewFeedbackDialog } from "@/components/home/view-feedback-dialog";
 import { useAuth } from "@/lib/auth";
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
+import { useFocusEffect } from "expo-router";
 import * as React from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,6 +19,18 @@ export default function HomeScreen() {
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = React.useState(false);
   const [selectedFeedbackCheckInId, setSelectedFeedbackCheckInId] =
     React.useState<string | null>(null);
+
+  // Auto-close dialogs when navigating away from this tab
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setIsCheckInDialogOpen(false);
+        setIsFeedbackDialogOpen(false);
+        setSelectedFeedbackCheckInId(null);
+      };
+    }, [])
+  );
+
   const activeDashboardRequests = useIsFetching({ queryKey: ["dashboard"] });
   const isRefreshing = activeDashboardRequests > 0;
 

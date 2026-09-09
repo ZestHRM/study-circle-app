@@ -150,17 +150,17 @@ export async function request<T>(
 
     if (!response.ok) {
       const msg = errorMessage(data, 'Something went wrong');
-      console.warn(`[RestClient Error] ${method} ${fullUrl} Status: ${response.status}`, data);
+      console.error(`[API Error] ${method} ${fullUrl} (Status: ${response.status}) ->`, data);
       throw new ApiError(msg, response.status, data);
     }
 
-    console.log(`[RestClient Success] ${method} ${fullUrl}`, data);
+    console.log(`[RestClient Success] ${method} ${fullUrl} (${response.status})`);
     return data as T;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
-    console.error(`[RestClient Failure] ${method} ${fullUrl}`, error);
+    console.error(`[API Network/Request Failure] ${method} ${fullUrl} ->`, error);
     throw error;
   }
 }
@@ -191,11 +191,11 @@ export function uploadFormData<T>(
         const text = xhr.responseText;
         const data = text ? JSON.parse(text) : null;
         if (xhr.status >= 200 && xhr.status < 300) {
-          console.log(`[RestClient Upload Success] POST ${fullUrl}`, data);
+          console.log(`[RestClient Upload Success] POST ${fullUrl} (${xhr.status})`);
           resolve(data as T);
         } else {
           const msg = errorMessage(data, 'Upload failed');
-          console.warn(`[RestClient Upload Error] POST ${fullUrl} Status: ${xhr.status}`, data);
+          console.error(`[API Upload Error] POST ${fullUrl} (Status: ${xhr.status}) ->`, data);
           reject(new ApiError(msg, xhr.status, data));
         }
       } catch (err) {

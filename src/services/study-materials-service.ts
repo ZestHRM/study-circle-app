@@ -1,25 +1,27 @@
-import { Platform } from 'react-native';
-import { MessageResponse, request, uploadFormData } from './api-client';
+import { Platform } from "react-native";
+import { MessageResponse, request, uploadFormData } from "./api-client";
 
 export type StudyMaterialQuizStatus =
-  | 'PENDING'
-  | 'GENERATING'
-  | 'GENERATED'
-  | 'GENERATION_FAILED';
+  | "PENDING"
+  | "GENERATING"
+  | "GENERATED"
+  | "GENERATION_FAILED";
 
 export type StudyMaterialStatus =
-  | 'PENDING'
-  | 'PROCESSING'
-  | 'PROCESSED'
-  | 'PROCESSING_FAILED'
-  | 'GENERATING_NOTES'
-  | 'NOTES_GENERATED'
-  | 'NOTES_GENERATION_FAILED'
-  | 'ARCHIVED';
+  | "PENDING"
+  | "PROCESSING"
+  | "PROCESSED"
+  | "PROCESSING_FAILED"
+  | "GENERATING_NOTES"
+  | "NOTES_GENERATED"
+  | "NOTES_GENERATION_FAILED"
+  | "ARCHIVED";
 
 export type StudyMaterialFile = {
   id: string;
   fileName: string;
+  url?: string | null;
+  content?: string | null;
   status: StudyMaterialStatus;
   quizStatus: StudyMaterialQuizStatus;
   errorMessage: string | null;
@@ -42,7 +44,10 @@ export type StudyMaterial = {
   };
   quizStatus: StudyMaterialQuizStatus;
   files: StudyMaterialFile[];
+  notesId?: string | null;
+  quizId?: string | null;
   notes?: Array<{ id: string }>;
+  quizzes?: Array<{ id: string }>;
   createdAt: string;
   updatedAt: string;
 };
@@ -64,14 +69,14 @@ export const studyMaterialsApi = {
       page: number;
       limit: number;
       search?: string;
-    }
+    },
   ) {
     const query = new URLSearchParams({
       page: String(params.page),
       limit: String(params.limit),
       ...(params.search ? { search: params.search } : {}),
     }).toString();
-
+    console.log("Fetching study materials with query:", token);
     return request<StudyMaterialsResponse>(`/study-materials?${query}`, {
       token,
     });
@@ -85,7 +90,7 @@ export const studyMaterialsApi = {
 
   async delete(token: string, id: string) {
     return request<MessageResponse | null>(`/study-materials/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       token,
     });
   },
@@ -101,42 +106,42 @@ export const studyMaterialsApi = {
         name: string;
         type: string;
       };
-    }
+    },
   ) {
     if (!payload.file || !payload.file.uri) {
-      throw new Error('Kripya valid PDF file upload karein.');
+      throw new Error("Kripya valid PDF file upload karein.");
     }
 
     const formData = new FormData();
-    formData.append('title', String(payload.title ?? '').trim());
-    formData.append('description', String(payload.description ?? '').trim());
-    formData.append('subjectId', String(payload.subjectId ?? ''));
+    formData.append("title", String(payload.title ?? "").trim());
+    formData.append("description", String(payload.description ?? "").trim());
+    formData.append("subjectId", String(payload.subjectId ?? ""));
 
     const fileUri = String(payload.file.uri);
-    const fileName = String(payload.file.name || 'document.pdf');
-    const fileType = String(payload.file.type || 'application/pdf');
+    const fileName = String(payload.file.name || "document.pdf");
+    const fileType = String(payload.file.type || "application/pdf");
 
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       try {
         const res = await fetch(fileUri);
         const blob = await res.blob();
         const fileObj = new File([blob], fileName, { type: fileType });
-        formData.append('file', fileObj);
+        formData.append("file", fileObj);
       } catch {
-        formData.append('file', {
+        formData.append("file", {
           uri: fileUri,
           name: fileName,
           type: fileType,
         } as unknown as Blob);
       }
     } else {
-      formData.append('file', {
+      formData.append("file", {
         uri: fileUri,
         name: fileName,
         type: fileType,
       } as unknown as Blob);
     }
 
-    return uploadFormData<StudyMaterial>('/study-materials', formData, token);
+    return uploadFormData<StudyMaterial>("/study-materials", formData, token);
   },
 };

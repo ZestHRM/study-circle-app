@@ -5,17 +5,40 @@ export const APP_COLORS = {
   primaryLight: '#F3E8FF',
   primaryDark: '#6D28D9',
 
-  // Terracotta / Upload Action Colors
+  // Terracotta / Primary Action Colors
   terracotta: '#D95B38',
-  terracottaHover: '#C24E2E',
+  terracottaHover: '#C04928',
   terracottaLight: '#FEEAE3',
 
-  // Quiz / Secondary Action Colors
+  // Quiz / Secondary Blue Action Colors
   quizBlue: '#2563EB',
   quizBlueHover: '#1D4ED8',
   quizBlueLight: '#DBEAFE',
 
-  // Status Colors
+  // Neutrals & Monochromes
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
+
+  // Stone & Gray Scale Tokens
+  stone50: '#FAF8F5',
+  stone100: '#F5F5F4',
+  stone200: '#E7E5E4',
+  stone300: '#D6D3D1',
+  stone400: '#A8A29E',
+  stone500: '#78716C',
+  stone600: '#57534E',
+  stone700: '#44403C',
+  stone800: '#292524',
+  stone900: '#1C1917',
+  stone950: '#0C0A09',
+
+  // Gray Icon Tokens
+  grayMuted: '#A3A3A3',
+  grayIcon: '#737373',
+  grayDark: '#525252',
+
+  // Status & System Colors
   success: '#10B981',
   successDark: '#047857',
   successLight: '#D1FAE5',
@@ -24,17 +47,20 @@ export const APP_COLORS = {
   warningLight: '#FFEDD5',
   error: '#EF4444',
   errorLight: '#FEE2E2',
+  infoBlue: '#3B82F6',
 
-  // Background & Surfaces
+  // Background & Surface Tokens
   backgroundLight: '#FAF8F5',
   backgroundDark: '#0C0A09',
   cardLight: '#FFFFFF',
   cardDark: '#1C1917',
 
-  // Text Colors
+  // Icon & Text Tokens
   textDark: '#1C1917',
   textMuted: '#78716C',
   textLight: '#F5F5F4',
+  iconMuted: '#78716C',
+  iconLight: '#A8A29E',
 
   // Subject Chip Pastel Palette
   subjectPalette: [

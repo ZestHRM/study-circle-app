@@ -1,11 +1,12 @@
 import { request } from './api-client';
 
 export type Subject = {
-  id: string;
+  id: string | number;
   name: string;
   description?: string;
-  userId?: string;
+  userId?: string | number;
 };
+
 
 export type SubjectsResponse = {
   data: Subject[];

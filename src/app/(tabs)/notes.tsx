@@ -1,129 +1,77 @@
 import { AddNoteDialog } from "@/components/add-note-dialog";
 import { useConfirmDialog } from "@/components/confirm-dialog-provider";
-import {
-  AppBottomSheet,
-  AppBottomSheetScrollView,
-} from "@/components/ui/app-bottom-sheet";
+import { NoteCard, NotesDetailBottomSheet } from "@/components/notes";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { EmptyState } from "@/components/ui/empty-state";
+import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
 import { Text } from "@/components/ui/text";
 import {
   useCreateNote,
   useDeleteNote,
-  useNotesQuery,
+  useNotesInfiniteQuery,
+  useStudyNotesQuery,
   useSubjectsQuery,
   useUpdateNote,
 } from "@/hooks/queries";
+import { APP_COLORS } from "@/constants/colors";
 import { type Note } from "@/services";
 import { Feather } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import * as React from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   RefreshControl,
-  ScrollView,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const PAGE_SIZE = 8;
 
-function formatShortDate(date: string) {
-  const parsedDate = new Date(date);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return "Unknown date";
-  }
-
-  return parsedDate.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function decodeHtmlEntities(content: string) {
-  return content
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'");
-}
-
-function toPlainText(content: string) {
-  return decodeHtmlEntities(content)
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function toMultilineText(content: string) {
-  return decodeHtmlEntities(content)
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6)>/gi, "\n")
-    .replace(/<(p|div|li|h1|h2|h3|h4|h5|h6)(\s+[^>]*)?>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n\s+/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function countWords(content: string) {
-  const normalized = toPlainText(content);
-  if (!normalized) {
-    return 0;
-  }
-
-  return normalized.split(/\s+/).length;
-}
-
 export default function NotesScreen() {
   const confirm = useConfirmDialog();
-  const [page, setPage] = React.useState(1);
+
   const [selectedSubjectId, setSelectedSubjectId] = React.useState("");
   const [showNoteDialog, setShowNoteDialog] = React.useState(false);
   const [editingNote, setEditingNote] = React.useState<Note | null>(null);
   const [detailsNote, setDetailsNote] = React.useState<Note | null>(null);
 
+  // Auto-close dialogs and bottom sheets when navigating away from this tab
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setShowNoteDialog(false);
+        setEditingNote(null);
+        setDetailsNote(null);
+      };
+    }, [])
+  );
+
   const {
     subjects,
     subjectOptions,
     isLoading: isLoadingSubjects,
-    isError: isSubjectsError,
   } = useSubjectsQuery();
 
-  const selectedSubject =
-    subjectOptions.find((option) => option?.value === selectedSubjectId) ??
-    null;
+  const selectedSubjectOption = React.useMemo(
+    () =>
+      subjectOptions.find((opt) => opt?.value === selectedSubjectId) ?? null,
+    [subjectOptions, selectedSubjectId],
+  );
 
   const {
     notes,
     totalItems,
-    totalPages,
     isLoading: isLoadingNotes,
-    isFetching: isFetchingNotes,
+    isFetchingNextPage,
     isRefreshing,
+    hasNextPage,
+    fetchNextPage,
     refetch: refetchNotes,
-  } = useNotesQuery({
-    page,
+  } = useNotesInfiniteQuery({
     limit: PAGE_SIZE,
     subjectId: selectedSubjectId,
   });
@@ -132,340 +80,196 @@ export default function NotesScreen() {
   const updateNoteMutation = useUpdateNote();
   const deleteNoteMutation = useDeleteNote();
 
-  const startIndex = totalItems === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const endIndex =
-    totalItems === 0 ? 0 : Math.min(page * PAGE_SIZE, totalItems);
-
-  function onRefresh() {
+  const handleRefresh = React.useCallback(() => {
     refetchNotes();
-  }
+  }, [refetchNotes]);
 
-  function onPreviousPage() {
-    setPage((currentPage) => Math.max(1, currentPage - 1));
-  }
+  const handleClearFilters = React.useCallback(() => {
+    setSelectedSubjectId("");
+  }, []);
 
-  function onNextPage() {
-    setPage((currentPage) => Math.min(totalPages, currentPage + 1));
-  }
-
-  function onStartCreateNote() {
+  const handleStartCreateNote = React.useCallback(() => {
     setEditingNote(null);
     setShowNoteDialog(true);
-  }
+  }, []);
 
-  function onStartEditNote(note: Note) {
+  const handleStartEditNote = React.useCallback((note: Note) => {
     setEditingNote(note);
     setShowNoteDialog(true);
-  }
+  }, []);
 
-  function onOpenNoteDetails(note: Note) {
+  const handleOpenNoteDetails = React.useCallback((note: Note) => {
     setDetailsNote(note);
-  }
+  }, []);
 
-  async function onDeleteNote(note: Note) {
-    const confirmed = await confirm({
-      title: "Delete Note",
-      description:
-        "Are you sure you want to delete this note? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
-    });
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await deleteNoteMutation.mutateAsync(note.id);
-      Alert.alert("Deleted", "Note deleted successfully.");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to delete the note right now.";
-      Alert.alert("Delete Failed", message);
-    }
-  }
-
-  async function onSubmitNote(payload: { content: string; subjectId: number }) {
-    if (editingNote?.id) {
-      await updateNoteMutation.mutateAsync({
-        id: editingNote.id,
-        ...payload,
+  const handleDeleteNote = React.useCallback(
+    async (note: Note) => {
+      const confirmed = await confirm({
+        title: "Delete Note",
+        description: `Are you sure you want to delete this note? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
       });
-      return;
-    }
 
-    await createNoteMutation.mutateAsync(payload);
-  }
+      if (!confirmed) return;
+
+      try {
+        await deleteNoteMutation.mutateAsync(note.id);
+        Alert.alert("Success", "Note deleted successfully.");
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to delete the note right now.";
+        Alert.alert("Delete Failed", message);
+      }
+    },
+    [confirm, deleteNoteMutation],
+  );
+
+  const handleSubmitNote = React.useCallback(
+    async (payload: { content: string; subjectId: number }) => {
+      if (editingNote?.id) {
+        await updateNoteMutation.mutateAsync({
+          id: editingNote.id,
+          ...payload,
+        });
+        return;
+      }
+      await createNoteMutation.mutateAsync(payload);
+    },
+    [editingNote?.id, updateNoteMutation, createNoteMutation],
+  );
 
   const isSubmitting =
     createNoteMutation.isPending || updateNoteMutation.isPending;
 
+  const renderNoteItem = React.useCallback(
+    ({ item }: { item: Note }) => (
+      <NoteCard
+        note={item}
+        onOpenDetails={handleOpenNoteDetails}
+        onEdit={handleStartEditNote}
+        onDelete={handleDeleteNote}
+        isSubmitting={isSubmitting}
+        isDeleting={deleteNoteMutation.isPending}
+      />
+    ),
+    [
+      handleOpenNoteDetails,
+      handleStartEditNote,
+      handleDeleteNote,
+      isSubmitting,
+      deleteNoteMutation.isPending,
+    ],
+  );
+
+  const keyExtractor = React.useCallback((item: Note) => item.id, []);
+
+  const {
+    data: singleNoteDetail,
+    isLoading: isNoteDetailLoading,
+    isError: isNoteDetailError,
+    refetch: refetchNoteDetail,
+  } = useStudyNotesQuery(detailsNote?.id);
+
   return (
-    <SafeAreaView className="bg-background flex-1" edges={["top"]}>
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-        }
+    <SafeAreaView
+      className="bg-[#FAF8F5] dark:bg-stone-950 flex-1"
+      edges={["top"]}
+    >
+      <FlatList
+        data={notes}
+        keyExtractor={keyExtractor}
+        renderItem={renderNoteItem}
         contentContainerStyle={{
           paddingHorizontal: 16,
-          paddingTop: 8,
-          paddingBottom: 24,
+          paddingTop: 12,
+          paddingBottom: 36,
+          gap: 12,
         }}
-      >
-        <View className="mx-auto w-full max-w-md gap-4 pb-8">
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1 pr-3">
-              <Text className="text-2xl font-semibold">Notes</Text>
-              <Text className="text-muted-foreground text-sm">
-                Mobile uses a single-column card feed for fast browsing.
-              </Text>
-            </View>
-            <Button
-              size="icon"
-              variant="outline"
-              onPress={onRefresh}
-              disabled={isLoadingNotes || isFetchingNotes}
-            >
-              {isLoadingNotes || isFetchingNotes ? (
-                <ActivityIndicator size="small" />
-              ) : (
-                <Feather name="refresh-cw" size={16} color="#a3a3a3" />
-              )}
-            </Button>
-          </View>
-
-          <View className="gap-2">
-            <Text className="text-muted-foreground text-xs">
-              Filter by subject
-            </Text>
-            <Select
-              value={selectedSubject!}
-              onValueChange={(option) => {
-                setSelectedSubjectId(option?.value ?? "");
-                setPage(1);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    isLoadingSubjects ? "Loading subjects..." : "All subjects"
-                  }
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={APP_COLORS.terracotta}
+          />
+        }
+        ListHeaderComponent={
+          <ScreenHeader
+            title="Study Notes"
+            subtitle="Organize, read & manage your AI notes"
+            actionLabel="Add Note"
+            actionIcon="plus"
+            onAction={handleStartCreateNote}
+          >
+            {/* Subject Filter Select Dropdown */}
+            <View className="flex-row items-center gap-2 pt-1">
+              <View className="flex-1">
+                <SubjectSelectDropdown
+                  value={selectedSubjectId}
+                  onValueChange={setSelectedSubjectId}
+                  subjects={subjectOptions}
+                  isLoading={isLoadingSubjects}
+                  placeholder="Filter by Subject (All Subjects)"
+                  triggerClassName="bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 rounded-xl"
                 />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {subjectOptions.map((subject) => (
-                    <SelectItem
-                      key={subject?.value}
-                      value={subject?.value!}
-                      label={subject?.label!}
-                    />
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            {isSubjectsError ? (
-              <Text className="text-destructive text-xs">
-                Failed to load subjects for filtering.
-              </Text>
-            ) : null}
-          </View>
+              </View>
 
-          <View className="flex-row gap-2">
-            <Button
-              className="flex-1"
-              variant="outline"
-              onPress={() => {
-                setSelectedSubjectId("");
-                setPage(1);
-              }}
-              disabled={!selectedSubjectId}
-            >
-              <Feather name="x-circle" size={16} color="#a3a3a3" />
-              <Text>Clear Filter</Text>
-            </Button>
-            <Button className="flex-1" onPress={onStartCreateNote}>
-              <Feather name="plus" size={16} color="#000000" />
-              <Text>Add Note</Text>
-            </Button>
-          </View>
-
-          {isLoadingNotes ? (
-            <View className="gap-3">
-              {[0, 1, 2, 3].map((item) => (
-                <Card key={item} className="gap-3 py-4">
-                  <CardHeader className="px-4">
-                    <CardTitle className="text-base">Loading note...</CardTitle>
-                    <CardDescription>Fetching latest notes</CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
-            </View>
-          ) : null}
-
-          {!isLoadingNotes && notes.length === 0 ? (
-            <Card className="gap-3 py-4">
-              <CardHeader className="px-4">
-                <CardTitle>No Notes Found</CardTitle>
-                <CardDescription>
-                  Add your first note to start tracking ideas and key points.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-4">
+              {selectedSubjectId ? (
                 <Button
-                  size="sm"
-                  className="self-start"
-                  onPress={onStartCreateNote}
+                  variant="outline"
+                  onPress={handleClearFilters}
+                  className="rounded-xl px-3 py-2.5 flex-row items-center gap-1 bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800"
                 >
-                  <Feather name="plus" size={16} color="#ffffff" />
-                  <Text>Add Note</Text>
+                  <Feather name="x-circle" size={14} color={APP_COLORS.stone500} />
+                  <Text className="text-xs">Clear</Text>
                 </Button>
-              </CardContent>
-            </Card>
-          ) : null}
+              ) : null}
+            </View>
+          </ScreenHeader>
+        }
+        ListEmptyComponent={
+          isLoadingNotes ? (
+            <View className="py-12 items-center justify-center gap-2">
+              <ActivityIndicator size="large" color={APP_COLORS.terracotta} />
+              <Text className="text-xs text-stone-500">Loading notes...</Text>
+            </View>
+          ) : (
+            <EmptyState
+              icon="book-open"
+              title={
+                selectedSubjectId
+                  ? "No Notes for Selected Subject"
+                  : "No Notes Found"
+              }
+              description={
+                selectedSubjectId
+                  ? "No notes found for this subject. Try selecting a different subject or clear filter."
+                  : "Add your first note to start tracking key ideas, formulas and summaries."
+              }
+              actionLabel={
+                selectedSubjectId ? "Clear Filter" : "Add First Note"
+              }
+              onAction={
+                selectedSubjectId ? handleClearFilters : handleStartCreateNote
+              }
+            />
+          )
+        }
+        ListFooterComponent={
+          <InfiniteListFooter
+            isFetchingNextPage={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+            totalLoaded={notes.length}
+            itemLabel="notes"
+          />
+        }
+        onEndReached={fetchNextPage}
+        onEndReachedThreshold={0.2}
+      />
 
-          {!isLoadingNotes && notes.length > 0 ? (
-            <>
-              <FlatList
-                data={notes}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                contentContainerClassName="gap-3"
-                renderItem={({ item }) => (
-                  <Card className="gap-3 py-4">
-                    <CardHeader className="gap-2 px-4">
-                      <View className="flex-row items-start justify-between gap-2">
-                        <CardTitle
-                          className="text-base flex-1"
-                          numberOfLines={2}
-                        >
-                          {item.subject?.name ?? "General"}
-                        </CardTitle>
-                        <View className="flex-row gap-1">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-9 w-9"
-                            onPress={() => onOpenNoteDetails(item)}
-                            disabled={
-                              isSubmitting || deleteNoteMutation.isPending
-                            }
-                          >
-                            <Feather
-                              name="more-horizontal"
-                              size={14}
-                              color="#a3a3a3"
-                            />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-9 w-9"
-                            onPress={() => onStartEditNote(item)}
-                            disabled={
-                              isSubmitting || deleteNoteMutation.isPending
-                            }
-                          >
-                            <Feather name="edit-2" size={14} color="#a3a3a3" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="destructive"
-                            className="h-9 w-9"
-                            onPress={() => onDeleteNote(item)}
-                            disabled={
-                              isSubmitting || deleteNoteMutation.isPending
-                            }
-                          >
-                            {deleteNoteMutation.isPending ? (
-                              <ActivityIndicator size="small" color="#ffffff" />
-                            ) : (
-                              <Feather
-                                name="trash-2"
-                                size={14}
-                                color="#ffffff"
-                              />
-                            )}
-                          </Button>
-                        </View>
-                      </View>
-                      <CardDescription numberOfLines={6}>
-                        {toPlainText(item.content)}
-                      </CardDescription>
-                    </CardHeader>
-
-                    <CardContent className="gap-2 px-4">
-                      <View className="gap-1">
-                        <Text className="text-muted-foreground text-xs">
-                          Subject
-                        </Text>
-                        <Text className="text-sm font-medium" numberOfLines={1}>
-                          {item.subject?.name ?? "N/A"}
-                        </Text>
-                      </View>
-
-                      <View className="flex-row flex-wrap gap-1">
-                        <View className="bg-muted rounded-full px-2 py-1">
-                          <Text className="text-xs">
-                            Words: {countWords(item.content)}
-                          </Text>
-                        </View>
-                        <View className="rounded-full bg-orange-100 px-2 py-1">
-                          <Text className="text-xs text-orange-700">
-                            Type:{" "}
-                            {item.type === "GENERATED"
-                              ? "AI Generated"
-                              : "Custom"}
-                          </Text>
-                        </View>
-                        <View className="rounded-full bg-blue-100 px-2 py-1">
-                          <Text className="text-xs text-blue-700">
-                            Created: {formatShortDate(item.createdAt)}
-                          </Text>
-                        </View>
-                      </View>
-                    </CardContent>
-                  </Card>
-                )}
-              />
-
-              <Card className="gap-3 py-4">
-                <CardHeader className="gap-2 px-4">
-                  <CardTitle className="text-base">Page {page}</CardTitle>
-                  <CardDescription>
-                    Showing {startIndex}-{endIndex} of {totalItems} notes.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-row items-center justify-between gap-2 px-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onPress={onPreviousPage}
-                    disabled={page <= 1 || isFetchingNotes}
-                  >
-                    <Feather name="chevron-left" size={16} color="#a3a3a3" />
-                    <Text>Previous</Text>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onPress={onNextPage}
-                    disabled={page >= totalPages || isFetchingNotes}
-                  >
-                    <Text>Next</Text>
-                    <Feather name="chevron-right" size={16} color="#a3a3a3" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </>
-          ) : null}
-        </View>
-      </ScrollView>
-
+      {/* Add / Edit Note Form Dialog */}
       <AddNoteDialog
         key={editingNote?.id ?? "create"}
         open={showNoteDialog}
@@ -476,71 +280,30 @@ export default function NotesScreen() {
           }
         }}
         editingNote={editingNote}
-        onSubmit={onSubmitNote}
+        onSubmit={handleSubmitNote}
         submitting={isSubmitting}
       />
 
-      <AppBottomSheet
+      {/* Reusable Notes Detail Reader Bottom Sheet */}
+      <NotesDetailBottomSheet
         open={Boolean(detailsNote)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDetailsNote(null);
-          }
-        }}
-        title="Note Details"
-        description={
-          detailsNote
-            ? `Subject: ${detailsNote.subject?.name ?? "N/A"} • Created: ${formatShortDate(detailsNote.createdAt)}`
-            : "Full note content and metadata."
+        onClose={() => setDetailsNote(null)}
+        title={
+          singleNoteDetail?.studyMaterial?.title || detailsNote?.subject?.name
+            ? `${detailsNote?.subject?.name} Notes`
+            : "Note Details"
         }
-      >
-        <AppBottomSheetScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ gap: 12, paddingBottom: 8 }}
-        >
-          <View className="gap-1">
-            <Text className="text-muted-foreground text-xs">Content</Text>
-            <Text className="text-sm leading-6">
-              {detailsNote ? toMultilineText(detailsNote.content) : ""}
-            </Text>
-          </View>
-
-          <View className="gap-1">
-            <Text className="text-muted-foreground text-xs">Subject</Text>
-            <Text className="text-sm font-medium">
-              {detailsNote?.subject?.name ?? "N/A"}
-            </Text>
-          </View>
-
-          <View className="flex-row flex-wrap gap-1">
-            <View className="bg-muted rounded-full px-2 py-1">
-              <Text className="text-xs">
-                Words: {detailsNote ? countWords(detailsNote.content) : 0}
-              </Text>
-            </View>
-            <View className="bg-muted rounded-full px-2 py-1">
-              <Text className="text-xs text-muted-foreground">
-                Type:{" "}
-                {detailsNote?.type === "GENERATED" ? "AI Generated" : "Custom"}
-              </Text>
-            </View>
-            <View className="bg-muted rounded-full px-2 py-1">
-              <Text className="text-xs text-muted-foreground">
-                Created:{" "}
-                {detailsNote
-                  ? formatShortDate(detailsNote.createdAt)
-                  : "Unknown date"}
-              </Text>
-            </View>
-          </View>
-        </AppBottomSheetScrollView>
-
-        <View className="pt-2">
-          <Button variant="outline" onPress={() => setDetailsNote(null)}>
-            <Text>Close</Text>
-          </Button>
-        </View>
-      </AppBottomSheet>
+        subjectName={
+          singleNoteDetail?.subject?.name ||
+          detailsNote?.subject?.name ||
+          "General"
+        }
+        createdAt={singleNoteDetail?.createdAt || detailsNote?.createdAt}
+        content={singleNoteDetail?.content || detailsNote?.content}
+        isLoading={isNoteDetailLoading}
+        isError={isNoteDetailError}
+        onRetry={refetchNoteDetail}
+      />
     </SafeAreaView>
   );
 }

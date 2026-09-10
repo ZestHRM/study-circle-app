@@ -25,6 +25,8 @@ export * from "./selection-card";
 export * from "./separator";
 export * from "./spinner";
 
+export * from "./ai-assistant-bubble";
+export * from "./ai-avatar";
 export * from "./auth-footer";
 export * from "./auth-header";
 export * from "./subject-select-dropdown";

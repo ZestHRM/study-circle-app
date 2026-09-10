@@ -1,22 +1,12 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-    type Option as SelectOption,
-} from '@/components/ui/select';
-import { Text } from '@/components/ui/text';
-import { dashboardApi, type DashboardCheckInChartPoint } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
-import { Feather } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
-import * as React from 'react';
-import { Alert, ScrollView, View } from 'react-native';
-import { BarChart } from 'react-native-gifted-charts';
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
+import { useDashboardChartData } from "@/hooks/queries/use-dashboard";
+import { type DashboardCheckInChartPoint } from "@/lib/api";
+import { Feather } from "@expo/vector-icons";
+import * as React from "react";
+import { Alert, Pressable, ScrollView, View } from "react-native";
+import { BarChart } from "react-native-gifted-charts";
 
 function getDateRange(days: number) {
   const endDate = new Date();
@@ -29,45 +19,38 @@ function getDateRange(days: number) {
   };
 }
 
+const RANGE_OPTIONS = [
+  { value: "7d", label: "7 Days", days: 7 },
+  { value: "30d", label: "30 Days", days: 30 },
+  { value: "90d", label: "3 Months", days: 90 },
+] as const;
+
 export function TasksChartWidget({
   onCheckIn,
 }: {
   onCheckIn?: () => void;
 }) {
-  const { token } = useAuth();
-  const rangeOptions = React.useMemo(
-    () => [
-      { value: '7d', label: 'Last 7 days' },
-      { value: '30d', label: 'Last 30 days' },
-      { value: '90d', label: 'Last 3 months' },
-    ],
-    []
-  );
-  const [selectedRange, setSelectedRange] = React.useState<SelectOption>(rangeOptions[0]);
+  const [selectedRange, setSelectedRange] = React.useState<"7d" | "30d" | "90d">("7d");
 
   const selectedDays = React.useMemo(() => {
-    switch (selectedRange?.value) {
-      case '90d':
+    switch (selectedRange) {
+      case "90d":
         return 90;
-      case '30d':
+      case "30d":
         return 30;
-      case '7d':
+      case "7d":
       default:
         return 7;
     }
   }, [selectedRange]);
 
   const { startDate, endDate } = React.useMemo(() => getDateRange(selectedDays), [selectedDays]);
-  const chartDataQuery = useQuery({
-    queryKey: ['dashboard', 'chart-data', token, startDate, endDate],
-    queryFn: async () => dashboardApi.getChartData(token as string, { startDate, endDate }),
-    enabled: Boolean(token),
-  });
+  const chartDataQuery = useDashboardChartData({ startDate, endDate });
 
   const error = chartDataQuery.isError
     ? chartDataQuery.error instanceof Error
       ? chartDataQuery.error.message
-      : 'Unable to load dashboard right now. Pull down to retry.'
+      : "Unable to load dashboard right now."
     : null;
 
   const chartData: DashboardCheckInChartPoint[] = chartDataQuery.data ?? [];
@@ -89,239 +72,235 @@ export function TasksChartWidget({
     const labelDate = new Date(item.date);
     const shortLabel =
       selectedDays <= 7
-        ? labelDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-        : labelDate.toLocaleDateString(undefined, { day: 'numeric' });
+        ? labelDate.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+        : labelDate.toLocaleDateString(undefined, { day: "numeric" });
     return {
       value: item.tasksCompleted,
-      frontColor: '#f97316',
+      frontColor: "#2563EB",
       labelWidth: selectedDays <= 7 ? 38 : 24,
-      labelTextStyle: { color: '#8a8a8a', fontSize: 10 },
-      label: index % labelStep === 0 || index === visibleChartData.length - 1 ? shortLabel : '',
+      labelTextStyle: { color: "#78716C", fontSize: 10 },
+      label: index % labelStep === 0 || index === visibleChartData.length - 1 ? shortLabel : "",
     };
   });
   const lineData = visibleChartData.map((item) => ({ value: item.hoursStudied }));
   const secondaryMaxValue = Math.max(maxHours, 1);
-  const chartWidth = Math.max(320, visibleChartData.length * 28 + 48);
+  const chartWidth = Math.max(300, visibleChartData.length * 28 + 48);
 
   const handleCheckIn =
-    onCheckIn ?? (() => Alert.alert('Check-in', 'Check-in flow will be available in the mobile app soon.'));
+    onCheckIn ?? (() => Alert.alert("Check-in", "Check-in flow will be available in the mobile app soon."));
 
   return (
-    <Card className="gap-4 py-4">
-      <CardHeader className="gap-2 px-4">
-        <View className="w-full gap-2">
-          <View className="flex-row items-center gap-2">
-            <Feather name="check-square" size={18} color="#a3a3a3" />
-            <CardTitle className="text-xl">Tasks vs Study Hours</CardTitle>
+    <View className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-3xl p-4.5 gap-4 shadow-2xs">
+      {/* Widget Header Row */}
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center gap-3 flex-1 pr-2">
+          <View className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 items-center justify-center border border-blue-200 dark:border-blue-900/60">
+            <Feather name="bar-chart-2" size={18} color="#2563EB" />
           </View>
-          <CardDescription className="text-sm">
-            Daily task completion (columns) and study hours (area) from check-ins
-          </CardDescription>
+          <View className="flex-1">
+            <Text variant="h3" className="text-base font-bold text-stone-900 dark:text-stone-100">
+              Tasks vs Study Hours
+            </Text>
+            <Text variant="caption" className="text-[11px] text-stone-500 font-medium">
+              Daily task completion & study time
+            </Text>
+          </View>
         </View>
-        <Select value={selectedRange} onValueChange={(option) => setSelectedRange(option ?? rangeOptions[0])}>
-          <SelectTrigger className="w-40 self-start">
-            <SelectValue placeholder="Last 7 days" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {rangeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value} label={option.label} />
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </CardHeader>
 
-      <CardContent className="px-4">
-        {isLoading ? <Text className="text-muted-foreground py-12 text-center">Loading chart data...</Text> : null}
-        {!isLoading && error ? <Text className="text-destructive text-sm">{error}</Text> : null}
+        {/* Range Selection Pills */}
+        <View className="flex-row items-center bg-stone-100 dark:bg-stone-800 p-1 rounded-xl gap-0.5">
+          {RANGE_OPTIONS.map((opt) => {
+            const isActive = selectedRange === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                onPress={() => setSelectedRange(opt.value)}
+                className={`px-2.5 py-1 rounded-lg ${
+                  isActive
+                    ? "bg-blue-600 dark:bg-blue-500 shadow-2xs"
+                    : "bg-transparent active:opacity-70"
+                }`}
+              >
+                <Text
+                  className={`text-xs font-bold ${
+                    isActive ? "text-white" : "text-stone-600 dark:text-stone-400"
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
 
-        {!isLoading && !error && daysWithCheckins === 0 ? (
-          <View className="items-center py-8">
-            <View className="bg-muted mb-5 h-20 w-20 items-center justify-center rounded-full">
-              <Feather name="check-square" size={34} color="#9ca3af" />
-            </View>
-            <Text className="text-center text-3xl font-bold">No Study Data Available</Text>
-            <Text className="text-muted-foreground mt-3 text-center text-base">
-              Start completing your daily check-ins to track your study progress and task completion over
-              time. Your data will appear here once you begin submitting daily reports.
-            </Text>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-5 dark:border-white dark:bg-white dark:active:bg-white/90"
-              onPress={handleCheckIn}>
-              <Feather name="plus" size={16} color="#a3a3a3" />
-              <Text className="dark:text-black">Check-in</Text>
-            </Button>
+      {/* Widget Body Content */}
+      {isLoading ? (
+        <Text variant="muted" className="py-10 text-center text-xs">
+          Loading chart data...
+        </Text>
+      ) : null}
 
-            <View className="mt-5 w-full flex-row flex-wrap gap-2">
-              <View className="bg-muted/30 border-border flex-1 rounded-lg border p-3">
-                <Text className="text-muted-foreground text-center text-xl font-bold">0</Text>
-                <Text className="text-muted-foreground text-center text-xs">Total Tasks</Text>
-              </View>
-              <View className="bg-muted/30 border-border flex-1 rounded-lg border p-3">
-                <Text className="text-muted-foreground text-center text-xl font-bold">0h</Text>
-                <Text className="text-muted-foreground text-center text-xs">Total Hours</Text>
-              </View>
-              <View className="bg-muted/30 border-border flex-1 rounded-lg border p-3">
-                <Text className="text-muted-foreground text-center text-xl font-bold">0</Text>
-                <Text className="text-muted-foreground text-center text-xs">Avg Tasks</Text>
-              </View>
-              <View className="bg-muted/30 border-border flex-1 rounded-lg border p-3">
-                <Text className="text-muted-foreground text-center text-xl font-bold">0%</Text>
-                <Text className="text-muted-foreground text-center text-xs">Check-ins</Text>
-              </View>
-            </View>
+      {!isLoading && error ? (
+        <Text variant="error" className="py-4 text-center text-xs">
+          {error}
+        </Text>
+      ) : null}
+
+      {!isLoading && !error && daysWithCheckins === 0 ? (
+        <View className="items-center py-6 gap-3">
+          <View className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 items-center justify-center border border-blue-100 dark:border-blue-900/60">
+            <Feather name="check-square" size={24} color="#2563EB" />
           </View>
-        ) : null}
-
-        {!isLoading && !error && daysWithCheckins > 0 && !hasTrackedValues ? (
-          <View className="items-center py-8">
-            <View className="bg-muted mb-5 h-20 w-20 items-center justify-center rounded-full">
-              <Feather name="bar-chart-2" size={34} color="#9ca3af" />
-            </View>
-            <Text className="text-center text-2xl font-bold">No chartable values yet</Text>
-            <Text className="text-muted-foreground mt-3 text-center text-base">
-              You have check-ins in this range, but study hours and task counts are 0. Add your numbers in
-              upcoming check-ins to see the chart plot.
+          <View className="items-center gap-1">
+            <Text variant="h3" className="text-base font-bold text-center">
+              No Study Data Yet
+            </Text>
+            <Text variant="muted" className="text-xs text-center px-4">
+              Complete daily check-ins to track your tasks and study hours over time.
             </Text>
           </View>
-        ) : null}
+          <Button
+            size="sm"
+            variant="quiz"
+            title="Start Daily Check-in"
+            icon="plus"
+            onPress={handleCheckIn}
+            className="mt-1 px-5 h-9 rounded-xl"
+          />
+        </View>
+      ) : null}
 
-        {!isLoading && !error && daysWithCheckins > 0 && hasTrackedValues ? (
-          <View className="gap-4">
-            <View className="mb-1 flex-row gap-3">
-              <View className="flex-1 gap-3">
-                <View className="bg-muted/30 rounded-lg p-4">
-                  <Text className="text-center text-2xl font-bold text-green-600">{totalTasks}</Text>
-                  <Text className="text-muted-foreground text-center text-xs">Total Tasks</Text>
-                </View>
-                <View className="bg-muted/30 rounded-lg p-4">
-                  <Text className="text-center text-2xl font-bold text-green-500">{avgTasks}</Text>
-                  <Text className="text-muted-foreground text-center text-xs">Avg Tasks/Day</Text>
-                </View>
-              </View>
+      {!isLoading && !error && daysWithCheckins > 0 && !hasTrackedValues ? (
+        <View className="items-center py-6 gap-2">
+          <Text variant="h3" className="text-sm font-bold text-center">
+            No tracked study hours yet
+          </Text>
+          <Text variant="muted" className="text-xs text-center px-4">
+            Check-ins exist, but tasks and study hours were zero. Update your check-ins to plot data.
+          </Text>
+        </View>
+      ) : null}
 
-              <View className="flex-1 gap-3">
-                <View className="bg-muted/30 rounded-lg p-4">
-                  <Text className="text-center text-2xl font-bold text-blue-600">{totalHours.toFixed(1)}h</Text>
-                  <Text className="text-muted-foreground text-center text-xs">Total Hours</Text>
-                </View>
-                <View className="bg-muted/30 rounded-lg p-4">
-                  <Text className="text-center text-2xl font-bold text-blue-500">{avgHours}h</Text>
-                  <Text className="text-muted-foreground text-center text-xs">Avg Hours/Day</Text>
-                </View>
-              </View>
+      {!isLoading && !error && daysWithCheckins > 0 && hasTrackedValues ? (
+        <View className="gap-4">
+          {/* Key Stats Bar */}
+          <View className="flex-row items-center justify-between bg-stone-50 dark:bg-stone-950/60 p-3 rounded-2xl border border-stone-200/60 dark:border-stone-800">
+            <View className="items-center flex-1">
+              <Text variant="h2" className="text-lg font-black text-blue-600 dark:text-blue-400">
+                {totalTasks}
+              </Text>
+              <Text variant="caption" className="text-[10px] font-semibold text-stone-500 uppercase">
+                Tasks
+              </Text>
             </View>
-
-            <View className="items-center">
-              <View className="bg-primary/10 flex-row items-center gap-2 rounded-lg px-4 py-2">
-                <Text className="text-primary text-lg font-bold">{checkInRate}%</Text>
-                <Text className="text-muted-foreground text-sm">Check-in Rate</Text>
-              </View>
+            <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
+            <View className="items-center flex-1">
+              <Text variant="h2" className="text-lg font-black text-purple-600 dark:text-purple-400">
+                {totalHours.toFixed(1)}h
+              </Text>
+              <Text variant="caption" className="text-[10px] font-semibold text-stone-500 uppercase">
+                Hours
+              </Text>
             </View>
-
-            <View className="gap-4">
-              <View className="flex-row items-center justify-center gap-5">
-                <View className="flex-row items-center gap-2">
-                  <View className="h-3 w-3 rounded bg-orange-500" />
-                  <Text className="text-xs">Tasks (bars)</Text>
-                </View>
-                <View className="flex-row items-center gap-2">
-                  <View className="h-3 w-3 rounded bg-cyan-500/70" />
-                  <Text className="text-xs">Hours (points)</Text>
-                </View>
-              </View>
-
-              <View className="bg-muted/20 border-border rounded-lg border px-2 py-3">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 8 }}>
-                  <BarChart
-                    width={chartWidth}
-                    data={barData}
-                    lineData={lineData}
-                    showLine
-                    lineConfig={{
-                      isSecondary: true,
-                      color: '#06b6d4',
-                      thickness: 2,
-                      curved: true,
-                      dataPointsColor: '#06b6d4',
-                      dataPointsRadius: 3,
-                      hideDataPoints: false,
-                    }}
-                    secondaryYAxis={{
-                      maxValue: secondaryMaxValue,
-                      noOfSections: 4,
-                      yAxisOffset: 0,
-                      yAxisLabelWidth: 44,
-                      yAxisTextStyle: { color: '#22d3ee', fontSize: 10 },
-                      yAxisColor: 'rgba(34,211,238,0.45)',
-                      yAxisThickness: 1,
-                      formatYLabel: (label: string) => {
-                        const numeric = Number(label);
-                        if (!Number.isFinite(numeric)) {
-                          return '0h';
-                        }
-                        return `${numeric.toFixed(1).replace(/\.0$/, '')}h`;
-                      },
-                    }}
-                    height={220}
-                    barWidth={12}
-                    spacing={14}
-                    initialSpacing={10}
-                    endSpacing={24}
-                    roundedTop
-                    hideRules={false}
-                    rulesColor="rgba(115,115,115,0.25)"
-                    rulesType="solid"
-                    yAxisThickness={0}
-                    yAxisLabelWidth={30}
-                    xAxisThickness={1}
-                    yAxisTextStyle={{ color: '#8a8a8a', fontSize: 10 }}
-                    xAxisLabelTextStyle={{ color: '#8a8a8a', fontSize: 10 }}
-                    xAxisTextNumberOfLines={1}
-                    xAxisLabelsHeight={48}
-                    xAxisLabelsAtBottom
-                    labelsDistanceFromXaxis={10}
-                    xAxisLabelsVerticalShift={8}
-                    noOfSections={4}
-                    maxValue={Math.max(maxTasks, 1)}
-                    formatYLabel={(label) => {
-                      const numeric = Number(label);
-                      if (!Number.isFinite(numeric)) {
-                        return '0';
-                      }
-                      return maxTasks <= 2 ? numeric.toFixed(1).replace(/\.0$/, '') : `${Math.round(numeric)}`;
-                    }}
-                    renderTooltip={(item: { value?: number }, index: number) => {
-                      const activity = visibleChartData[index];
-                      return (
-                        <View className="border-border bg-popover min-w-36 gap-1 rounded-md border px-2 py-1.5">
-                          <Text className="text-xs font-semibold">
-                            {activity
-                              ? new Date(activity.date).toLocaleDateString(undefined, {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                })
-                              : ''}
-                          </Text>
-                          <Text className="text-xs">Tasks: {item.value ?? 0}</Text>
-                          <Text className="text-xs">Hours: {activity?.hoursStudied?.toFixed(1) ?? '0.0'}</Text>
-                          {!activity?.hasCheckin ? (
-                            <Text className="text-muted-foreground text-[10px]">No check-in submitted</Text>
-                          ) : null}
-                        </View>
-                      );
-                    }}
-                  />
-                </ScrollView>
-              </View>
+            <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
+            <View className="items-center flex-1">
+              <Text variant="h2" className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                {avgTasks}
+              </Text>
+              <Text variant="caption" className="text-[10px] font-semibold text-stone-500 uppercase">
+                Avg Tasks
+              </Text>
+            </View>
+            <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
+            <View className="items-center flex-1">
+              <Text variant="h2" className="text-lg font-black text-amber-600 dark:text-amber-400">
+                {checkInRate}%
+              </Text>
+              <Text variant="caption" className="text-[10px] font-semibold text-stone-500 uppercase">
+                Rate
+              </Text>
             </View>
           </View>
-        ) : null}
-      </CardContent>
-    </Card>
+
+          {/* Legend */}
+          <View className="flex-row items-center justify-center gap-6">
+            <View className="flex-row items-center gap-1.5">
+              <View className="w-3 h-3 rounded bg-blue-600 dark:bg-blue-500" />
+              <Text variant="caption" className="text-xs font-semibold">
+                Tasks (Bars)
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1.5">
+              <View className="w-3 h-3 rounded-full bg-emerald-500" />
+              <Text variant="caption" className="text-xs font-semibold">
+                Hours (Line)
+              </Text>
+            </View>
+          </View>
+
+          {/* Chart Scroll Container */}
+          <View className="bg-stone-50/50 dark:bg-stone-950/40 border border-stone-200/60 dark:border-stone-800/80 rounded-2xl p-2">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <BarChart
+                width={chartWidth}
+                data={barData}
+                lineData={lineData}
+                showLine
+                lineConfig={{
+                  isSecondary: true,
+                  color: "#10B981",
+                  thickness: 2.5,
+                  curved: true,
+                  dataPointsColor: "#10B981",
+                  dataPointsRadius: 4,
+                  hideDataPoints: false,
+                }}
+                secondaryYAxis={{
+                  maxValue: secondaryMaxValue,
+                  noOfSections: 4,
+                  yAxisOffset: 0,
+                  yAxisLabelWidth: 38,
+                  yAxisTextStyle: { color: "#10B981", fontSize: 10, fontWeight: "600" },
+                  yAxisColor: "transparent",
+                  yAxisThickness: 0,
+                  formatYLabel: (label: string) => {
+                    const numeric = Number(label);
+                    if (!Number.isFinite(numeric)) return "0h";
+                    return `${numeric.toFixed(1).replace(/\.0$/, "")}h`;
+                  },
+                }}
+                height={180}
+                barWidth={14}
+                spacing={16}
+                initialSpacing={12}
+                endSpacing={24}
+                roundedTop
+                hideRules={false}
+                rulesColor="rgba(214,211,209,0.4)"
+                rulesType="dashed"
+                yAxisThickness={0}
+                yAxisLabelWidth={28}
+                xAxisThickness={1}
+                xAxisColor="rgba(214,211,209,0.6)"
+                yAxisTextStyle={{ color: "#78716C", fontSize: 10 }}
+                xAxisLabelTextStyle={{ color: "#78716C", fontSize: 10 }}
+                xAxisTextNumberOfLines={1}
+                xAxisLabelsHeight={36}
+                xAxisLabelsAtBottom
+                noOfSections={4}
+                maxValue={Math.max(maxTasks, 1)}
+                formatYLabel={(label) => {
+                  const numeric = Number(label);
+                  if (!Number.isFinite(numeric)) return "0";
+                  return maxTasks <= 2 ? numeric.toFixed(1).replace(/\.0$/, "") : `${Math.round(numeric)}`;
+                }}
+              />
+            </ScrollView>
+          </View>
+        </View>
+      ) : null}
+    </View>
   );
 }
+

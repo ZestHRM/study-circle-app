@@ -1,7 +1,7 @@
-import { Text } from '@/components/ui/text';
-import { Feather } from '@expo/vector-icons';
-import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { Text } from "@/components/ui/text";
+import { Feather } from "@expo/vector-icons";
+import * as React from "react";
+import { Pressable, View } from "react-native";
 
 export type PickedMaterialFile = {
   uri: string;
@@ -19,7 +19,7 @@ interface PdfDropzoneProps {
 }
 
 function formatFileSize(bytes: number | null): string {
-  if (!bytes || bytes <= 0) return 'PDF File';
+  if (!bytes || bytes <= 0) return "PDF File";
   if (bytes < 1024 * 1024) {
     const kb = bytes / 1024;
     return `${kb.toFixed(0)} KB`;
@@ -64,15 +64,10 @@ export const PdfDropzone = React.memo(function PdfDropzone({
             </View>
 
             <View className="flex-1">
-              <Text
-                variant="subhead"
-                numberOfLines={1}
-              >
+              <Text variant="subhead" numberOfLines={1}>
                 {file.name}
               </Text>
-              <Text variant="muted">
-                {formatFileSize(file.size)}
-              </Text>
+              <Text variant="muted">{formatFileSize(file.size)}</Text>
             </View>
           </View>
 

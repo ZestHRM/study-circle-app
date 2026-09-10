@@ -13,9 +13,11 @@ export interface EmptyStateProps {
   actionVariant?:
     | "terracotta"
     | "default"
+    | "quiz"
     | "outline"
     | "secondary"
     | "ghost"
+    | "destructive"
     | "link";
   className?: string;
 }

@@ -2,12 +2,7 @@ import { z } from "zod";
 
 export const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 
-export const step1MaterialSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(1, { message: "Please enter a material title." })
-    .max(100, { message: "Title must be 100 characters or less." }),
+export const step1SubjectSchema = z.object({
   subjectId: z
     .union([z.string(), z.number()])
     .transform((val) => String(val))
@@ -16,6 +11,13 @@ export const step1MaterialSchema = z.object({
     }),
 });
 
+export const step2TitleSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, { message: "Please enter a material title." })
+    .max(100, { message: "Title must be 100 characters or less." }),
+});
 
 export const pickedFileSchema = z.object({
   uri: z.string().min(1, { message: "Invalid file URI." }),
@@ -35,6 +37,8 @@ export const step2MaterialSchema = z.object({
   }),
 });
 
-export type Step1MaterialValues = z.infer<typeof step1MaterialSchema>;
+export type Step1SubjectValues = z.infer<typeof step1SubjectSchema>;
+export type Step2TitleValues = z.infer<typeof step2TitleSchema>;
 export type PickedFileValues = z.infer<typeof pickedFileSchema>;
 export type Step2MaterialValues = z.infer<typeof step2MaterialSchema>;
+

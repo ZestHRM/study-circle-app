@@ -2,38 +2,29 @@ import {
   AuthResponse,
   LoginPayload,
   MessageResponse,
-  request,
+  RestClient,
   SignupPayload,
   User,
-} from './api-client';
+} from "./api-client";
 
 export const authApi = {
   login(payload: LoginPayload) {
-    return request<AuthResponse>('/auth/login', { method: 'POST', body: payload });
+    return RestClient<AuthResponse>("/auth/login", "POST", payload);
   },
   signup(payload: SignupPayload) {
-    return request<MessageResponse & Partial<User>>('/auth/signup', {
-      method: 'POST',
-      body: payload,
-    });
+    return RestClient<MessageResponse & Partial<User>>("/auth/signup", "POST", payload);
   },
-  me(token: string) {
-    return request<User>('/auth/me', { token });
+  me(token?: string) {
+    return RestClient<User>("/auth/me", "GET", {}, { token });
   },
   verifyEmail(payload: { email: string; code: string }) {
-    return request<AuthResponse>('/auth/verify-email', { method: 'POST', body: payload });
+    return RestClient<AuthResponse>("/auth/verify-email", "POST", payload);
   },
   resendVerification(email: string) {
-    return request<MessageResponse>('/auth/resend-verification', {
-      method: 'POST',
-      body: { email },
-    });
+    return RestClient<MessageResponse>("/auth/resend-verification", "POST", { email });
   },
   forgotPassword(email: string) {
-    return request<MessageResponse>('/auth/forgot-password', {
-      method: 'POST',
-      body: { email },
-    });
+    return RestClient<MessageResponse>("/auth/forgot-password", "POST", { email });
   },
   resetPassword(payload: {
     email: string;
@@ -41,6 +32,6 @@ export const authApi = {
     password: string;
     confirmPassword: string;
   }) {
-    return request<AuthResponse>('/auth/reset-password', { method: 'POST', body: payload });
+    return RestClient<AuthResponse>("/auth/reset-password", "POST", payload);
   },
 };

@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
 import { Input } from "@/components/ui/input";
 import { ScreenHeader } from "@/components/ui/screen-header";
+import { Spinner } from "@/components/ui/spinner";
 import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
@@ -310,11 +311,12 @@ export default function QuizzesScreen() {
               onAction={isFiltered ? handleClearFilters : undefined}
             />
           ) : (
-            <View className="py-12 items-center justify-center">
-              <ActivityIndicator size="small" color={APP_COLORS.primary} />
-              <Text variant="muted" className="text-xs mt-2 font-medium">
-                Loading quizzes...
-              </Text>
+            <View className="py-12">
+              <Spinner
+                variant="primary"
+                size="large"
+                message="Loading quizzes..."
+              />
             </View>
           )
         }

@@ -5,3 +5,4 @@ export * from './notes-service';
 export * from './quizzes-service';
 export * from './study-materials-service';
 export * from './subjects-service';
+export * from './profile-service';

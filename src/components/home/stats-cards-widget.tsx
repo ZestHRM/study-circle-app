@@ -1,93 +1,89 @@
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
-import { dashboardApi } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
-import { Feather } from '@expo/vector-icons';
-import { useQueries } from '@tanstack/react-query';
-import { View } from 'react-native';
+import { Icon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
+import { useDashboardCounts } from "@/hooks/queries/use-dashboard";
+import * as React from "react";
+import { View } from "react-native";
 
 export type StatCardItem = {
   id: string;
   title: string;
   value: number;
-  hint: string;
+  icon: string;
+  iconBg: string;
+  iconColor: string;
 };
 
-export function StatsCardsWidget({
-}: Record<string, never>) {
-  const { token } = useAuth();
-  const dashboardQueries = useQueries({
-    queries: [
-      {
-        queryKey: ['dashboard', 'count', 'study-materials', token],
-        queryFn: async () => dashboardApi.getStudyMaterialsCount(token as string),
-        enabled: Boolean(token),
-      },
-      {
-        queryKey: ['dashboard', 'count', 'exam-materials', token],
-        queryFn: async () => dashboardApi.getExamMaterialsCount(token as string),
-        enabled: Boolean(token),
-      },
-      {
-        queryKey: ['dashboard', 'count', 'quizzes', token],
-        queryFn: async () => dashboardApi.getQuizzesCount(token as string),
-        enabled: Boolean(token),
-      },
-      {
-        queryKey: ['dashboard', 'count', 'study-circles', token],
-        queryFn: async () => dashboardApi.getStudyCirclesCount(token as string),
-        enabled: Boolean(token),
-      },
-    ],
-  });
-
-  const [studyMaterialsQuery, examMaterialsQuery, quizzesQuery, studyCirclesQuery] = dashboardQueries;
-  const isLoading = dashboardQueries.some((query) => query.isLoading);
+export function StatsCardsWidget() {
+  const {
+    studyMaterialsCount,
+    examMaterialsCount,
+    quizzesCount,
+    studyCirclesCount,
+    isLoading,
+  } = useDashboardCounts();
 
   const cards: StatCardItem[] = [
     {
-      id: 'study-materials',
-      title: 'Uploaded Study Materials',
-      value: studyMaterialsQuery.data ?? 0,
-      hint: 'Study materials uploaded by you',
+      id: "study-materials",
+      title: "Study Materials",
+      value: studyMaterialsCount,
+      icon: "file-text",
+      iconBg: "bg-blue-100 dark:bg-blue-950/60",
+      iconColor: "#2563EB",
     },
     {
-      id: 'exam-materials',
-      title: 'Uploaded Exam Materials',
-      value: examMaterialsQuery.data ?? 0,
-      hint: 'Exam materials uploaded by you',
+      id: "exam-materials",
+      title: "PYQ Papers",
+      value: examMaterialsCount,
+      icon: "clipboard",
+      iconBg: "bg-amber-100 dark:bg-amber-950/60",
+      iconColor: "#D97706",
     },
     {
-      id: 'quizzes',
-      title: 'Available Quizzes',
-      value: quizzesQuery.data ?? 0,
-      hint: 'Quizzes created by StudyCircleAI for you',
+      id: "quizzes",
+      title: "Quizzes",
+      value: quizzesCount,
+      icon: "award",
+      iconBg: "bg-purple-100 dark:bg-purple-950/60",
+      iconColor: "#7C3AED",
     },
     {
-      id: 'study-circles',
-      title: 'Study Circles Joined',
-      value: studyCirclesQuery.data ?? 0,
-      hint: 'Circles you are a member of',
+      id: "study-circles",
+      title: "Study Circles",
+      value: studyCirclesCount,
+      icon: "users",
+      iconBg: "bg-emerald-100 dark:bg-emerald-950/60",
+      iconColor: "#059669",
     },
   ];
 
   return (
-    <>
-      {cards.map((card) => (
-        <Card key={card.id} className="gap-2 py-3">
-          <CardHeader className="gap-2 px-4">
-            <View className="flex-row items-center justify-between">
-              <CardDescription className="text-sm">{card.title}</CardDescription>
-              <View className="flex-row items-center gap-1">
-                <Text className="text-xs font-semibold">View</Text>
-                <Feather name="external-link" size={14} color="#a3a3a3" />
+    <View className="gap-3 pt-2">
+      <Text variant="h2" className="text-xl font-extrabold text-stone-900 dark:text-stone-100">
+        Overview
+      </Text>
+
+      <View className="flex-row flex-wrap -mx-1">
+        {cards.map((card) => (
+          <View key={card.id} className="w-1/2 p-1">
+            <View className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 p-4 rounded-2xl gap-3 shadow-2xs">
+              <View className="flex-row items-center justify-between">
+                <View className={`w-9 h-9 rounded-xl items-center justify-center ${card.iconBg}`}>
+                  <Icon name={card.icon as any} size="sm" color="dark" />
+                </View>
+                <Text variant="h1" className="text-2xl font-black">
+                  {isLoading ? "-" : card.value}
+                </Text>
               </View>
+
+              <Text variant="muted" className="text-xs font-semibold" numberOfLines={1}>
+                {card.title}
+              </Text>
             </View>
-            <CardTitle className="text-4xl leading-none">{isLoading ? '-' : card.value}</CardTitle>
-            <Text className="text-muted-foreground text-sm font-medium">{card.hint}</Text>
-          </CardHeader>
-        </Card>
-      ))}
-    </>
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
+

@@ -47,12 +47,16 @@ async function setStoredToken(token: string) {
 }
 
 async function deleteStoredToken() {
-  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
-    localStorage.removeItem(TOKEN_KEY);
-    return;
-  }
+  try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      return;
+    }
 
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
+  } catch (err) {
+    console.warn('Failed to delete stored auth token:', err);
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -178,10 +182,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await resetPasswordMutation.mutateAsync(payload);
       },
       async signOut() {
-        await deleteStoredToken();
+        try {
+          await deleteStoredToken();
+        } catch {
+          // Ignore storage cleanup error
+        }
         if (token) {
           queryClient.removeQueries({ queryKey: AUTH_QUERY_KEYS.me(token) });
         }
+        queryClient.clear();
         setToken(null);
         setUser(null);
       },

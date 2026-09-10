@@ -1,20 +1,18 @@
-import { CreateSubjectCard } from "@/components/ui/create-subject-card";
-import { Button } from "@/components/ui/button";
-import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
-import { Text } from "@/components/ui/text";
-import { APP_COLORS } from "@/constants/colors";
-import type { Subject } from "@/lib/api";
-import { createSubjectSchema } from "@/schemas";
-import { Feather } from "@expo/vector-icons";
-import * as React from "react";
+import { Icon } from "@/components/ui/icon";
+import { SelectionCard } from "@/components/ui/selection-card";
 import { Spinner } from "@/components/ui/spinner";
-import { View } from "react-native";
+import { Text } from "@/components/ui/text";
+
+import type { Subject } from "@/services";
+import { useRouter } from "expo-router";
+import * as React from "react";
+import { Pressable, View } from "react-native";
 
 interface SubjectPickerProps {
   subjects: Subject[];
   selectedSubjectId: string;
   onSelectSubject: (subjectId: string) => void;
-  onCreateSubject: (name: string) => Promise<void>;
+  onCreateSubject?: (name: string) => Promise<void>;
   isLoading?: boolean;
   isCreating?: boolean;
   error?: string | null;
@@ -24,118 +22,69 @@ export const SubjectPicker = React.memo(function SubjectPicker({
   subjects,
   selectedSubjectId,
   onSelectSubject,
-  onCreateSubject,
   isLoading = false,
-  isCreating = false,
   error,
 }: SubjectPickerProps) {
-  const [showInlineCreate, setShowInlineCreate] = React.useState(false);
-  const [newSubjectName, setNewSubjectName] = React.useState("");
-  const [localError, setLocalError] = React.useState<string | null>(null);
-
-  const hasSubjects = subjects.length > 0;
-
-  async function handleCreate() {
-    const result = createSubjectSchema.safeParse({ name: newSubjectName });
-
-    if (!result.success) {
-      setLocalError(
-        result.error.issues[0]?.message ?? "Subject name is required.",
-      );
-      return;
-    }
-
-    setLocalError(null);
-    try {
-      await onCreateSubject(result.data.name);
-      setNewSubjectName("");
-      setShowInlineCreate(false);
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to create subject.";
-      setLocalError(msg);
-    }
-  }
+  const router = useRouter();
 
   return (
     <View className="gap-3">
-      <View className="flex-row items-center justify-between">
-        <Text variant="subhead">Select Subject</Text>
-        {hasSubjects && !showInlineCreate ? (
-          <Button
-            variant="ghost"
-            onPress={() => setShowInlineCreate(true)}
-            className="flex-row items-center gap-1.5 bg-[#F3E8FF] px-3 py-1.5 h-8 rounded-full"
-          >
-            <Feather name="plus" size={14} color={APP_COLORS.primaryDark} />
-            <Text className="text-xs font-semibold text-[#7C3AED]">
-              Add New Subject
-            </Text>
-          </Button>
-        ) : null}
-      </View>
-
       {isLoading ? (
-        <Spinner variant="primary" message="Loading subjects..." containerStyle={{ paddingVertical: 16 }} />
+        <Spinner
+          variant="primary"
+          message="Loading subjects..."
+          containerStyle={{ paddingVertical: 24 }}
+        />
       ) : null}
 
-      {!isLoading && !hasSubjects && !showInlineCreate ? (
-        <View className="bg-[#F3E8FF]/60 rounded-2xl p-5 items-center justify-center gap-2 border border-[#DDD6FE]">
-          <View className="w-10 h-10 rounded-full bg-[#DDD6FE] items-center justify-center">
-            <Feather name="star" size={20} color={APP_COLORS.primaryDark} />
-          </View>
-          <Text variant="h4" className="text-center">
-            No subjects available yet
-          </Text>
-          <Text variant="muted" className="text-center">
-            Create your first subject below
-          </Text>
-          <Button
-            onPress={() => setShowInlineCreate(true)}
-            style={{ backgroundColor: APP_COLORS.primary }}
-            className="mt-2 rounded-full px-5 py-2.5 flex-row items-center gap-1.5 border-0"
-          >
-            <Feather name="plus" size={14} color="#FFFFFF" />
-            <Text className="text-xs font-semibold text-white">
-              Add New Subject
-            </Text>
-          </Button>
+      {!isLoading && subjects.length > 0 ? (
+        <View className="gap-3">
+          {subjects.map((item) => {
+            const isSelected = String(item.id) === String(selectedSubjectId);
+
+            return (
+              <SelectionCard
+                key={String(item.id)}
+                selected={isSelected}
+                title={item.name}
+                icon="book-open"
+                onPress={() => {
+                  onSelectSubject(String(item.id));
+                }}
+              />
+            );
+          })}
         </View>
       ) : null}
 
-      {!isLoading && hasSubjects ? (
-        <SubjectSelectDropdown
-          value={selectedSubjectId}
-          onValueChange={(newVal) => {
-            onSelectSubject(newVal);
-            if (showInlineCreate) setShowInlineCreate(false);
-          }}
-          subjects={subjects}
-          placeholder="Choose a subject..."
-          triggerClassName="mt-1 h-14 px-5 rounded-2xl"
-        />
-      ) : null}
+      {/* Card Option: Create New Subject */}
+      <Pressable
+        onPress={() => router.push("/create-subject")}
+        className="py-3 px-3.5 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20 flex-row items-center justify-between active:opacity-80 shadow-2xs"
+      >
+        <View className="flex-row items-center gap-3 flex-1 pr-2">
+          <View className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 items-center justify-center border border-blue-200 dark:border-blue-800">
+            <Icon name="plus" size="sm" color="primary" />
+          </View>
+          <View className="flex-1">
+            <Text variant="h4">
+              Create new subject
+            </Text>
+            <Text variant="caption" className="mt-0.5">
+              Add a custom subject for your materials
+            </Text>
+          </View>
+        </View>
+        <Icon name="chevron-right" size="sm" color="muted" />
+      </Pressable>
 
-      {showInlineCreate ? (
-        <CreateSubjectCard
-          value={newSubjectName}
-          onChangeText={(text) => {
-            setNewSubjectName(text);
-            if (localError) setLocalError(null);
-          }}
-          onSubmit={handleCreate}
-          onClose={() => {
-            setShowInlineCreate(false);
-            setLocalError(null);
-          }}
-          isCreating={isCreating}
-          error={localError || error}
-        />
-      ) : null}
-
-      {error && !showInlineCreate ? (
-        <Text variant="error">{error}</Text>
+      {error ? (
+        <Text variant="error" className="text-center">
+          {error}
+        </Text>
       ) : null}
     </View>
   );
 });
+
+

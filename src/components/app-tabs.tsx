@@ -4,6 +4,7 @@ import { Platform, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Colors } from "@/constants/theme";
+import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
 
 type TabIconName = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
 
@@ -11,9 +12,12 @@ export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === "unspecified" ? "light" : scheme];
   const insets = useSafeAreaInsets();
+  const { subjects, isLoading } = useSubjectsQuery();
 
   const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? 12 : 6);
   const tabBarHeight = 50 + bottomInset;
+
+  const hasNoSubjects = !isLoading && subjects.length === 0;
 
   return (
     <Tabs
@@ -29,6 +33,7 @@ export default function AppTabs() {
           height: tabBarHeight,
           paddingBottom: bottomInset,
           paddingTop: 6,
+          display: hasNoSubjects ? "none" : "flex",
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -42,6 +47,20 @@ export default function AppTabs() {
           title: "Home",
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="subjects"
+        options={{
+          title: "Subjects",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="book-open-page-variant"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

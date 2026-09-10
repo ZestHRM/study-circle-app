@@ -1,5 +1,4 @@
 import { AppBottomSheetScrollView } from "@/components/ui/app-bottom-sheet";
-import { CreateSubjectCard } from "@/components/ui/create-subject-card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { FormField } from "@/components/ui/form-field";
@@ -10,11 +9,12 @@ import { APP_COLORS } from "@/constants/colors";
 import { ApiError, subjectsApi, type Note, type Subject } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { Feather } from "@expo/vector-icons";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import * as React from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 
-import { addNoteSchema, createSubjectSchema } from "@/schemas";
+import { addNoteSchema } from "@/schemas";
 
 type AddNoteFormValue = {
   content: string;
@@ -69,26 +69,18 @@ export function AddNoteDialog({
   }) => Promise<void>;
   submitting: boolean;
 }) {
+  const router = useRouter();
   const { token } = useAuth();
   const [values, setValues] = React.useState<AddNoteFormValue>(() =>
     getInitialValues(editingNote),
   );
   const [errors, setErrors] = React.useState<AddNoteFormErrors>({});
   const [submitError, setSubmitError] = React.useState<string | null>(null);
-  const [showInlineCreateSubject, setShowInlineCreateSubject] =
-    React.useState(false);
-  const [newSubjectName, setNewSubjectName] = React.useState("");
-  const [newSubjectError, setNewSubjectError] = React.useState<string | null>(
-    null,
-  );
 
   const resetForm = React.useCallback(() => {
     setValues(getInitialValues(null));
     setErrors({});
     setSubmitError(null);
-    setShowInlineCreateSubject(false);
-    setNewSubjectName("");
-    setNewSubjectError(null);
   }, []);
 
   const subjectsQuery = useQuery({
@@ -106,28 +98,6 @@ export function AddNoteDialog({
     [subjectsQuery.data?.data],
   );
 
-  const createSubjectMutation = useMutation({
-    mutationFn: async (name: string) => {
-      return subjectsApi.create(token as string, {
-        name,
-        description: "",
-      });
-    },
-    onSuccess: async (subject) => {
-      setValues((current) => ({
-        ...current,
-        subjectId: String(subject.id),
-      }));
-      setNewSubjectName("");
-      setNewSubjectError(null);
-      setShowInlineCreateSubject(false);
-      if (errors.subjectId) {
-        setErrors((current) => ({ ...current, subjectId: undefined }));
-      }
-      await subjectsQuery.refetch();
-    },
-  });
-
   const onDialogOpenChange = React.useCallback(
     (nextOpen: boolean) => {
       if (!nextOpen) {
@@ -137,51 +107,6 @@ export function AddNoteDialog({
     },
     [onOpenChange, resetForm],
   );
-
-  async function onCreateSubject() {
-    const result = createSubjectSchema.safeParse({ name: newSubjectName });
-
-    if (!result.success) {
-      setNewSubjectError(
-        result.error.issues[0]?.message ?? "Subject name is required.",
-      );
-      return;
-    }
-
-    const trimmedName = result.data.name;
-
-    const existingSubject = (subjectsQuery.data?.data ?? []).find(
-      (subject) =>
-        subject.name.trim().toLowerCase() === trimmedName.toLowerCase(),
-    );
-
-    if (existingSubject) {
-      setValues((current) => ({
-        ...current,
-        subjectId: String(existingSubject.id),
-      }));
-      setNewSubjectName("");
-      setNewSubjectError(null);
-      setShowInlineCreateSubject(false);
-      if (errors.subjectId) {
-        setErrors((current) => ({ ...current, subjectId: undefined }));
-      }
-      return;
-    }
-
-    try {
-      setNewSubjectError(null);
-      await createSubjectMutation.mutateAsync(trimmedName);
-    } catch (error) {
-      const message =
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : "Unable to create subject right now.";
-      setNewSubjectError(message);
-    }
-  }
 
   async function onFormSubmit() {
     const validationErrors = validateForm(values);
@@ -271,39 +196,24 @@ export function AddNoteDialog({
                 </Text>
               ) : null}
 
-              {/* Add New Subject Action Toggle Button */}
-              {!showInlineCreateSubject ? (
-                <Button
-                  variant="ghost"
-                  onPress={() => setShowInlineCreateSubject(true)}
-                  className="self-start flex-row items-center gap-1.5 bg-[#F3E8FF] px-3.5 py-1.5 h-8.5 rounded-full mt-1"
-                >
-                  <Feather
-                    name="plus"
-                    size={14}
-                    color={APP_COLORS.primaryDark}
-                  />
-                  <Text className="text-xs font-semibold text-[#7C3AED]">
-                    Create New Subject
-                  </Text>
-                </Button>
-              ) : (
-                /* Inline Create Subject Card */
-                <CreateSubjectCard
-                  value={newSubjectName}
-                  onChangeText={(text) => {
-                    setNewSubjectName(text);
-                    if (newSubjectError) setNewSubjectError(null);
-                  }}
-                  onSubmit={onCreateSubject}
-                  onClose={() => {
-                    setShowInlineCreateSubject(false);
-                    setNewSubjectError(null);
-                  }}
-                  isCreating={createSubjectMutation.isPending}
-                  error={newSubjectError}
+              {/* Add New Subject Action Button */}
+              <Button
+                variant="ghost"
+                onPress={() => {
+                  onDialogOpenChange(false);
+                  router.push("/create-subject");
+                }}
+                className="self-start flex-row items-center gap-1.5 bg-[#F3E8FF] px-3.5 py-1.5 h-8.5 rounded-full mt-1"
+              >
+                <Feather
+                  name="plus"
+                  size={14}
+                  color={APP_COLORS.primaryDark}
                 />
-              )}
+                <Text className="text-xs font-semibold text-[#7C3AED]">
+                  Create New Subject
+                </Text>
+              </Button>
             </View>
           </FormField>
 

@@ -1,9 +1,12 @@
 export const APP_COLORS = {
   // Primary Brand Purple Colors
-  primary: '#8B5CF6',
-  primaryHover: '#7C3AED',
-  primaryLight: '#F3E8FF',
-  primaryDark: '#6D28D9',
+  primary: '#582BE8',
+  primaryHover: '#4B22CF',
+  primaryLight: '#F4F3FF',
+  primaryDark: '#411CA4',
+  brandPurple: '#582BE8',
+  brandPurpleLight: '#F4F3FF',
+  brandPurpleBorder: '#C7C3FF',
 
   // Terracotta / Primary Action Colors
   terracotta: '#D95B38',

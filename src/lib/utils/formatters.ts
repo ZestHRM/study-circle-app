@@ -2,6 +2,73 @@
  * Centralized Date & Text Formatting Utilities
  */
 
+export function formatDateTime(
+  dateInput?: string | number | Date | null,
+  options: { includeYear?: boolean; fallback?: string } = {}
+): string {
+  const { fallback = "No activity" } = options;
+  if (!dateInput) return fallback;
+
+  const parsed =
+    typeof dateInput === "object" && dateInput instanceof Date
+      ? dateInput
+      : new Date(dateInput);
+
+  if (Number.isNaN(parsed.getTime())) return fallback;
+
+  const day = parsed.getDate();
+  const month = parsed.toLocaleString("en-US", { month: "short" });
+  const year = parsed.getFullYear();
+
+  let hours = parsed.getHours();
+  const minutes = parsed.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+
+  const timeStr = `${hours}:${minutes} ${ampm}`;
+  const showYear = options.includeYear ?? true;
+
+  if (showYear) {
+    return `${day} ${month} ${year}, ${timeStr}`;
+  }
+  return `${day} ${month}, ${timeStr}`;
+}
+
+export const formatDateWithTime = formatDateTime;
+
+export function formatDateTimeSplit(
+  dateInput?: string | number | Date | null,
+  options: { includeYear?: boolean; fallbackDate?: string } = {}
+): { time: string | null; date: string } {
+  const { fallbackDate = "No activity" } = options;
+  if (!dateInput) return { time: null, date: fallbackDate };
+
+  const parsed =
+    typeof dateInput === "object" && dateInput instanceof Date
+      ? dateInput
+      : new Date(dateInput);
+
+  if (Number.isNaN(parsed.getTime()))
+    return { time: null, date: fallbackDate };
+
+  const day = parsed.getDate();
+  const month = parsed.toLocaleString("en-US", { month: "short" });
+  const year = parsed.getFullYear();
+
+  let hours = parsed.getHours();
+  const minutes = parsed.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+
+  const timeStr = `${hours}:${minutes} ${ampm}`;
+  const showYear = options.includeYear ?? true;
+  const dateStr = showYear ? `${day} ${month} ${year}` : `${day} ${month}`;
+
+  return { time: timeStr, date: dateStr };
+}
+
 export function formatShortDate(dateStr?: string | null): string {
   if (!dateStr) return "Unknown date";
   const parsed = new Date(dateStr);
@@ -11,6 +78,17 @@ export function formatShortDate(dateStr?: string | null): string {
     month: "short",
     day: "numeric",
     year: "numeric",
+  });
+}
+
+export function formatDayDate(dateInput?: string | number | Date | null): string {
+  const parsed = dateInput ? new Date(dateInput) : new Date();
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  return parsed.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 }
 

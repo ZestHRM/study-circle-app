@@ -1,24 +1,39 @@
-import { AppLogo } from '@/components/ui/app-logo';
-import { Text } from '@/components/ui/text';
-import { View } from 'react-native';
+import { AppHeaderBar } from "@/components/ui/app-header-bar";
+import { HeroBanner } from "@/components/ui/hero-banner";
+import { View } from "react-native";
 
-export function HomeGreeting({ name }: { name?: string | null }) {
+export interface HomeGreetingProps {
+  name?: string | null;
+}
+
+export function HomeGreeting({ name }: HomeGreetingProps) {
+  const firstName = name ? name.split(" ")[0] : "Sam";
+
+  // Dynamic greeting time-of-day string
+  const currentHour = new Date().getHours();
+  const timeOfDayGreeting =
+    currentHour < 12
+      ? "Good morning!"
+      : currentHour < 17
+        ? "Good afternoon!"
+        : "Good evening!";
+
   return (
-    <View className="flex-row items-center justify-between pb-1">
-      <View className="gap-0.5 flex-1 pr-2">
-        <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-          Welcome back
-        </Text>
-        <Text className="text-2xl font-bold leading-tight text-stone-900 dark:text-stone-100">
-          Hi, {name ?? 'there'}.
-        </Text>
-        <Text className="text-muted-foreground text-xs font-medium">
-          Track your progress and keep the streak going.
-        </Text>
-      </View>
+    <View className="gap-3 pb-2">
+      {/* Standardized Top Header Bar using Reusable AppHeaderBar */}
+      <AppHeaderBar
+        logoPosition="left"
+        rightSubtitle={timeOfDayGreeting}
+        showAvatar
+        className="px-0 pt-1 pb-1 bg-transparent dark:bg-transparent border-0"
+      />
 
-      {/* Brand Official Logo */}
-      <AppLogo size={46} />
+      {/* Main Reusable Hero Banner using Design System Presets */}
+      <HeroBanner
+        title={"Hi there,\n"}
+        titleHighlight={`${firstName} 👋`}
+        subtitle={"Small steps today.\nA brighter tomorrow."}
+      />
     </View>
   );
 }

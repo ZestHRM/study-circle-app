@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
 import { ScreenHeader } from "@/components/ui/screen-header";
+import { Spinner } from "@/components/ui/spinner";
 import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
 import { Text } from "@/components/ui/text";
 import {
@@ -231,9 +232,12 @@ export default function NotesScreen() {
         }
         ListEmptyComponent={
           isLoadingNotes ? (
-            <View className="py-12 items-center justify-center gap-2">
-              <ActivityIndicator size="large" color={APP_COLORS.terracotta} />
-              <Text className="text-xs text-stone-500">Loading notes...</Text>
+            <View className="py-12">
+              <Spinner
+                variant="terracotta"
+                size="large"
+                message="Loading notes..."
+              />
             </View>
           ) : (
             <EmptyState

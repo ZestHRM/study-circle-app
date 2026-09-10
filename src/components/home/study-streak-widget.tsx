@@ -1,14 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import {
-    dashboardApi,
-    type DashboardRecentActivityItem,
-    type DashboardStreak,
+  useDashboardStreak,
+  useDashboardRecentActivity,
+} from "@/hooks/queries/use-dashboard";
+import {
+  type DashboardRecentActivityItem,
+  type DashboardStreak,
 } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { Feather } from '@expo/vector-icons';
-import { useQueries } from '@tanstack/react-query';
 import { View } from 'react-native';
 
 function formatShortDate(dateString: string) {
@@ -37,21 +38,8 @@ function getCurrentStreak(streak: DashboardStreak | null) {
 
 export function StudyStreakWidget({
 }: Record<string, never>) {
-  const { token } = useAuth();
-  const [streakQuery, recentActivityQuery] = useQueries({
-    queries: [
-      {
-        queryKey: ['dashboard', 'streak', token],
-        queryFn: async () => dashboardApi.getStreak(token as string),
-        enabled: Boolean(token),
-      },
-      {
-        queryKey: ['dashboard', 'recent-activity', token],
-        queryFn: async () => dashboardApi.getRecentActivity(token as string),
-        enabled: Boolean(token),
-      },
-    ],
-  });
+  const streakQuery = useDashboardStreak();
+  const recentActivityQuery = useDashboardRecentActivity();
 
   const isLoading = streakQuery.isLoading || recentActivityQuery.isLoading;
   const streak: DashboardStreak | null = streakQuery.data ?? null;

@@ -1,164 +1,170 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-    type Option,
-} from '@/components/ui/select';
-import { Text } from '@/components/ui/text';
-import { Feather } from '@expo/vector-icons';
-import * as React from 'react';
-import { Alert, View } from 'react-native';
+import { Button } from "@/components/ui/button";
+import { CommonHeader } from "@/components/ui/common-header";
+import { Input } from "@/components/ui/input";
+import { MoodSelector } from "@/components/ui/mood-selector";
+import { Text } from "@/components/ui/text";
+import { CENTRAL_MOOD_OPTIONS, MoodItem } from "@/constants/moods";
+import { useCreateDashboardCheckIn } from "@/hooks/queries/use-dashboard";
+import { router } from "expo-router";
+import * as React from "react";
+import { Alert, Image, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export function DailyCheckinScreen() {
-  const moodOptions = React.useMemo(
-    () => [
-      { value: 'MOTIVATED', label: 'Motivated' },
-      { value: 'FOCUSED', label: 'Focused' },
-      { value: 'GOOD', label: 'Good' },
-      { value: 'OKAY', label: 'Okay' },
-      { value: 'TIRED', label: 'Tired' },
-    ],
-    []
+  const createCheckInMutation = useCreateDashboardCheckIn();
+
+  const [selectedMood, setSelectedMood] = React.useState<MoodItem>(
+    CENTRAL_MOOD_OPTIONS[1], // Default "okay"
   );
+  const [note, setNote] = React.useState("");
+  const [studyHours, setStudyHours] = React.useState("1");
+  const [completedTasks, setCompletedTasks] = React.useState("1");
 
-  const [studyHours, setStudyHours] = React.useState('');
-  const [completedTasks, setCompletedTasks] = React.useState('');
-  const [mood, setMood] = React.useState<Option>(moodOptions[0]);
-  const [goals, setGoals] = React.useState('');
-  const [hoursError, setHoursError] = React.useState<string | null>(null);
-  const [tasksError, setTasksError] = React.useState<string | null>(null);
-
-  function submitCheckIn() {
-    setHoursError(null);
-    setTasksError(null);
-
-    const rawHours = studyHours.trim();
-    const rawTasks = completedTasks.trim();
-    let hasError = false;
-
-    if (!rawHours) {
-      setHoursError('Study hours is required.');
-      hasError = true;
+  const handleBack = React.useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
     }
+  }, []);
 
-    if (!rawTasks) {
-      setTasksError('Completed tasks is required.');
-      hasError = true;
-    }
+  const handleSubmit = async () => {
+    const parsedHours = parseFloat(studyHours) || 0;
+    const parsedTasks = parseInt(completedTasks, 10) || 0;
 
-    if (hasError) {
-      return;
-    }
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 10);
 
-    const parsedHours = Number(studyHours);
-    const parsedTasks = Number(completedTasks);
-    hasError = false;
-
-    if (!Number.isFinite(parsedHours) || parsedHours < 0 || parsedHours > 24) {
-      setHoursError('Study hours must be a number between 0 and 24.');
-      hasError = true;
-    }
-
-    if (!Number.isInteger(parsedTasks) || parsedTasks < 0) {
-      setTasksError('Completed tasks must be a whole number greater than or equal to 0.');
-      hasError = true;
-    }
-
-    if (hasError) {
-      return;
-    }
-
-    Alert.alert(
-      'Check-in',
-      'Check-in submit flow will be connected to the API next.\n\n' +
-        `Hours: ${studyHours || '0'}\nTasks: ${completedTasks || '0'}\nMood: ${mood?.label ?? 'N/A'}\nGoals: ${goals || 'N/A'}`
+    createCheckInMutation.mutate(
+      {
+        date: localDate,
+        studyHours: parsedHours,
+        completedTasks: parsedTasks,
+        mood: selectedMood.apiMood,
+        todayGoals: note.trim() ? note.trim() : undefined,
+      },
+      {
+        onSuccess: () => {
+          Alert.alert("Success 🎉", "Daily check-in submitted successfully!", [
+            {
+              text: "OK",
+              onPress: () => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace("/(tabs)");
+                }
+              },
+            },
+          ]);
+        },
+      },
     );
-  }
+  };
 
   return (
-    <Card className="gap-4 py-4">
-      <CardHeader className="px-4">
-        <View className="flex-row items-center gap-2">
-          <Feather name="calendar" size={18} color="#9ca3af" />
-          <CardTitle className="text-xl">Daily Check-in</CardTitle>
-        </View>
-        <CardDescription>Share your progress for today and keep your streak active.</CardDescription>
-      </CardHeader>
+    <SafeAreaView
+      style={{ flex: 1 }}
+      className="flex-1 bg-background"
+      edges={["top"]}
+    >
+      <CommonHeader logoPosition="center" onBack={handleBack} />
 
-      <CardContent className="gap-4 px-4">
-        <View className="gap-2">
-          <Label>Study hours today</Label>
-          <Input
-            value={studyHours}
-            onChangeText={(value) => {
-              setStudyHours(value);
-              if (hoursError) {
-                setHoursError(null);
-              }
-            }}
-            keyboardType="decimal-pad"
-            placeholder="e.g. 2.5"
+      <ScrollView
+        style={{ flex: 1 }}
+        className="flex-1 px-5 pt-4"
+        contentContainerStyle={{ paddingBottom: 50 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="mb-6">
+          <Text variant="h1" className="leading-tight">
+            How ready{"\n"}do you feel today?
+          </Text>
+          <Text variant="muted" className="mt-1.5">
+            Be honest — this helps us give you better support.
+          </Text>
+        </View>
+
+        {/* Reusable Central Mood Selector */}
+        <MoodSelector
+          value={selectedMood.id}
+          onChange={(m) => setSelectedMood(m)}
+          variant="card"
+          className="mb-6"
+        />
+
+        <View className="mb-5">
+          <View className="flex-row items-center gap-1 mb-1.5">
+            <Text variant="subhead">Want to add a note?</Text>
+            <Text variant="muted">(optional)</Text>
+          </View>
+
+          <View className="bg-card border border-border rounded-2xl p-3 shadow-2xs">
+            <Input
+              value={note}
+              onChangeText={(text) => {
+                if (text.length <= 200) {
+                  setNote(text);
+                }
+              }}
+              placeholder="e.g. I feel a bit tired but motivated to revise algebra today."
+              multiline
+              numberOfLines={3}
+              style={{ minHeight: 70, textAlignVertical: "top" }}
+              className="bg-transparent dark:bg-transparent border-0 p-0 shadow-none text-sm text-stone-900 dark:text-stone-100 h-auto"
+            />
+            <View className="items-end mt-1">
+              <Text variant="caption">{note.length}/200</Text>
+            </View>
+          </View>
+        </View>
+
+        <View className="flex-row gap-3 mb-6">
+          <View className="flex-1">
+            <Input
+              label="Study Hours"
+              value={studyHours}
+              onChangeText={setStudyHours}
+              placeholder="e.g. 2"
+              keyboardType="decimal-pad"
+            />
+          </View>
+
+          <View className="flex-1">
+            <Input
+              label="Tasks Completed"
+              value={completedTasks}
+              onChangeText={setCompletedTasks}
+              placeholder="e.g. 3"
+              keyboardType="number-pad"
+            />
+          </View>
+        </View>
+
+        <Button
+          title={
+            createCheckInMutation.isPending
+              ? "Submitting..."
+              : "Submit Check-in"
+          }
+          disabled={createCheckInMutation.isPending}
+          isLoading={createCheckInMutation.isPending}
+          variant="quiz"
+          size="lg"
+          className="w-full mb-6"
+          onPress={handleSubmit}
+        />
+
+        <View className="items-center justify-center pt-2 pb-4">
+          <Image
+            source={require("../../../assets/images/create-subject-doodle.png")}
+            style={{ width: 220, height: 110 }}
+            resizeMode="contain"
           />
-          {hoursError ? <Text className="text-destructive text-xs">{hoursError}</Text> : null}
         </View>
-
-        <View className="gap-2">
-          <Label>Tasks completed</Label>
-          <Input
-            value={completedTasks}
-            onChangeText={(value) => {
-              setCompletedTasks(value);
-              if (tasksError) {
-                setTasksError(null);
-              }
-            }}
-            keyboardType="number-pad"
-            placeholder="e.g. 6"
-          />
-          {tasksError ? <Text className="text-destructive text-xs">{tasksError}</Text> : null}
-        </View>
-
-        <View className="gap-2">
-          <Label>Mood</Label>
-          <Select value={mood} onValueChange={(option) => setMood(option ?? moodOptions[0])}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose your mood" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {moodOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value} label={option.label} />
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </View>
-
-        <View className="gap-2">
-          <Label>Today&apos;s goals (optional)</Label>
-          <Input
-            value={goals}
-            onChangeText={setGoals}
-            placeholder="What did you focus on today?"
-            multiline
-            numberOfLines={3}
-            className="h-24 items-start py-3"
-            textAlignVertical="top"
-          />
-        </View>
-
-        <Button onPress={submitCheckIn}>
-          <Feather name="check" size={16} color="#ffffff" />
-          <Text>Submit Check-in</Text>
-        </Button>
-      </CardContent>
-    </Card>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

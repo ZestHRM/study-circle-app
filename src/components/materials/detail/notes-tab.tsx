@@ -63,7 +63,7 @@ export const NotesTab = React.memo(function NotesTab({
     );
   }
 
-  if (failed && !notesReady) {
+  if (failed) {
     return (
       <View
         className="flex-1 bg-white dark:bg-stone-950 items-center justify-center px-8 gap-5"
@@ -72,12 +72,12 @@ export const NotesTab = React.memo(function NotesTab({
         <View className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-950/40 items-center justify-center">
           <Icon name="alert-triangle" size={28} color={APP_COLORS.error} />
         </View>
-        <Text variant="h3" className="text-center">
+        <Text variant="h3" className="text-center text-red-600 dark:text-red-400 font-extrabold">
           Notes Generation Failed
         </Text>
-        <Text variant="muted" className="text-center leading-6">
-          AI couldn't process this file. Please delete and re-upload the
-          document.
+        <Text variant="muted" className="text-center leading-6 font-medium">
+          {notesData?.errorMessage ||
+            "AI couldn't process this file. Please delete and re-upload the document."}
         </Text>
       </View>
     );

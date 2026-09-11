@@ -15,7 +15,39 @@ interface MaterialCardProps {
   isDeleting?: boolean;
 }
 
+export function isFailed(material: StudyMaterial): boolean {
+  return Boolean(
+    material.status === "PROCESSING_FAILED" ||
+    material.status === "NOTES_GENERATION_FAILED" ||
+    material.quizStatus === "GENERATION_FAILED" ||
+    material.files?.some(
+      (f) =>
+        f.status === "PROCESSING_FAILED" ||
+        f.status === "NOTES_GENERATION_FAILED" ||
+        f.quizStatus === "GENERATION_FAILED" ||
+        Boolean(f.errorMessage && f.errorMessage.trim().length > 0),
+    ),
+  );
+}
+
+export function isNotesFailed(material: StudyMaterial): boolean {
+  return Boolean(
+    material.status === "PROCESSING_FAILED" ||
+    material.status === "NOTES_GENERATION_FAILED" ||
+    material.files?.some(
+      (f) =>
+        f.status === "PROCESSING_FAILED" ||
+        f.status === "NOTES_GENERATION_FAILED" ||
+        Boolean(f.errorMessage && f.errorMessage.trim().length > 0),
+    ),
+  );
+}
+
 export function isNotesReady(material: StudyMaterial): boolean {
+  if (isNotesFailed(material)) {
+    return false;
+  }
+
   return Boolean(
     material.notesId ||
     (material.notes && material.notes.length > 0) ||
@@ -31,7 +63,18 @@ export function isNotesReady(material: StudyMaterial): boolean {
   );
 }
 
+export function isQuizFailed(material: StudyMaterial): boolean {
+  return Boolean(
+    material.quizStatus === "GENERATION_FAILED" ||
+    material.files?.some((f) => f.quizStatus === "GENERATION_FAILED"),
+  );
+}
+
 export function isQuizReady(material: StudyMaterial): boolean {
+  if (isQuizFailed(material)) {
+    return false;
+  }
+
   return Boolean(
     material.quizId ||
     (material.quizzes && material.quizzes.length > 0) ||
@@ -40,26 +83,13 @@ export function isQuizReady(material: StudyMaterial): boolean {
   );
 }
 
-export function isFailed(material: StudyMaterial): boolean {
-  return Boolean(
-    material.status === "PROCESSING_FAILED" ||
-    material.status === "NOTES_GENERATION_FAILED" ||
-    material.quizStatus === "GENERATION_FAILED" ||
-    material.files?.some(
-      (f) =>
-        f.status === "PROCESSING_FAILED" ||
-        f.status === "NOTES_GENERATION_FAILED" ||
-        f.quizStatus === "GENERATION_FAILED",
-    ),
-  );
-}
-
 export function getFailedMessage(material: StudyMaterial): string {
   const failedFile = material.files?.find(
     (f) =>
       f.status === "PROCESSING_FAILED" ||
       f.status === "NOTES_GENERATION_FAILED" ||
-      f.quizStatus === "GENERATION_FAILED",
+      f.quizStatus === "GENERATION_FAILED" ||
+      Boolean(f.errorMessage && f.errorMessage.trim().length > 0),
   );
   if (failedFile?.errorMessage) return failedFile.errorMessage;
   if (material.status === "NOTES_GENERATION_FAILED")

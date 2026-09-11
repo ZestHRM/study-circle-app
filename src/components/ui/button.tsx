@@ -1,8 +1,8 @@
 import { APP_COLORS } from '@/constants/colors';
 import { cn } from '@/lib/utils';
-import { Feather } from '@expo/vector-icons';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
+import { Icon } from './icon';
 import { Spinner } from './spinner';
 import {
   Pressable,
@@ -72,8 +72,8 @@ type ButtonProps = React.ComponentProps<typeof Pressable> &
   VariantProps<typeof buttonVariants> & {
     /** Explicit text label prop (alternative to children) */
     title?: string;
-    /** Feather icon name */
-    icon?: keyof typeof Feather.glyphMap;
+    /** Icon name */
+    icon?: string;
     /** Icon position (left or right) */
     iconPosition?: 'left' | 'right';
     /** Icon size */
@@ -132,7 +132,7 @@ const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>
     const labelContent = activeLoading && loadingText ? loadingText : title || children;
 
     const renderIcon = () => (
-      <Feather name={icon!} size={iconSize} color={resolvedIconColor} />
+      <Icon name={icon!} size={iconSize} color={resolvedIconColor} />
     );
 
     return (

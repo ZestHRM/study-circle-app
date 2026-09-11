@@ -12,6 +12,7 @@ import { useTodayCheckIn } from "@/hooks/queries/use-dashboard";
 import { useAuth } from "@/lib/auth";
 import { formatDayDate } from "@/lib/utils/formatters";
 import { router } from "expo-router";
+import * as React from "react";
 import { Alert, View } from "react-native";
 
 export interface DailyCheckinWidgetProps {
@@ -19,7 +20,7 @@ export interface DailyCheckinWidgetProps {
   onViewFeedback?: (checkInId: string) => void;
 }
 
-export function DailyCheckinWidget({
+export const DailyCheckinWidget = React.memo(function DailyCheckinWidget({
   onCheckIn,
   onViewFeedback,
 }: DailyCheckinWidgetProps) {
@@ -31,11 +32,17 @@ export function DailyCheckinWidget({
   const isPaidUser = Boolean(
     user?.subscriptionTier && user.subscriptionTier !== "FREE",
   );
-  const todayLabel = formatDayDate();
+  const todayLabel = React.useMemo(() => formatDayDate(), []);
 
-  const handleCheckIn = onCheckIn ?? (() => router.push("/daily-checkin"));
+  const handleCheckIn = React.useCallback(() => {
+    if (onCheckIn) {
+      onCheckIn();
+    } else {
+      router.push("/daily-checkin");
+    }
+  }, [onCheckIn]);
 
-  const handleViewFeedback = () => {
+  const handleViewFeedback = React.useCallback(() => {
     if (!todayCheckIn?.id) {
       return;
     }
@@ -49,7 +56,7 @@ export function DailyCheckinWidget({
       "AI Feedback",
       "AI feedback view will be available in the mobile app soon.",
     );
-  };
+  }, [todayCheckIn?.id, onViewFeedback]);
 
   if (todayCheckInQuery.isLoading) {
     return (
@@ -106,4 +113,4 @@ export function DailyCheckinWidget({
       onButtonPress={handleCheckIn}
     />
   );
-}
+});

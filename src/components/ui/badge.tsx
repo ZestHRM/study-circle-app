@@ -1,11 +1,11 @@
 import * as React from "react";
 import { View } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Icon, IconProps } from "./icon";
 import { Text } from "./text";
 
 export interface BadgeProps {
   label: string;
-  icon?: keyof typeof Feather.glyphMap;
+  icon?: IconProps["name"];
   iconSize?: number;
   variant?:
     | "default"
@@ -58,7 +58,7 @@ export const Badge = React.memo(function Badge({
         return {
           container: "bg-purple-100 dark:bg-purple-950/60",
           text: "text-purple-700 dark:text-purple-300",
-          iconColor: "#6b21a8",
+          iconColor: "#a855f7",
         };
       case "destructive":
         return {
@@ -88,7 +88,7 @@ export const Badge = React.memo(function Badge({
       className={`flex-row items-center gap-1 px-2.5 py-1 rounded-full ${style.container} ${className}`}
     >
       {icon ? (
-        <Feather name={icon} size={iconSize} color={style.iconColor} />
+        <Icon name={icon} size={iconSize} color={style.iconColor} />
       ) : null}
       <Text className={`text-xs font-medium ${style.text}`}>{label}</Text>
     </View>

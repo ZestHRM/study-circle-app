@@ -1,4 +1,5 @@
 export * from "./queries";
+export * from "./use-ai-voice";
 export * from "./use-color-scheme";
 export * from "./use-create-subject-form";
 export * from "./use-debounce";

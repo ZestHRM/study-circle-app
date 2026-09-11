@@ -1,5 +1,7 @@
 import { Icon } from "@/components/ui/icon";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { Text } from "@/components/ui/text";
+import { UI_STYLES } from "@/constants/styles";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -30,12 +32,16 @@ const PRESET_SUBJECT_STYLES = [
   },
 ];
 
-export function YourSubjectsListWidget() {
+export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget() {
   const { subjects } = useSubjectsQuery();
 
-  const handleSeeAll = () => {
+  const handleSeeAll = React.useCallback(() => {
     router.push("/(tabs)/subjects");
-  };
+  }, []);
+
+  const handleSubjectPress = React.useCallback((id: number | string) => {
+    router.push(`/subjects/${id}`);
+  }, []);
 
   if (!subjects || subjects.length === 0) {
     return null;
@@ -47,8 +53,8 @@ export function YourSubjectsListWidget() {
   return (
     <View className="gap-3 pt-2">
       {/* Header Row */}
-      <View className="flex-row items-center justify-between">
-        <Text variant="h2" className="text-xl font-extrabold text-stone-900 dark:text-stone-100">
+      <View className={UI_STYLES.rowBetween}>
+        <Text variant="h2" className={UI_STYLES.sectionHeaderTitle}>
           Your subjects
         </Text>
         <Pressable onPress={handleSeeAll} className="active:opacity-70">
@@ -67,7 +73,7 @@ export function YourSubjectsListWidget() {
           return (
             <Pressable
               key={item.id}
-              onPress={handleSeeAll}
+              onPress={() => handleSubjectPress(item.id)}
               className="flex-row items-center gap-3 py-1 active:opacity-80"
             >
               {/* Left Icon Badge */}
@@ -87,13 +93,11 @@ export function YourSubjectsListWidget() {
                   {item.name}
                 </Text>
 
-                {/* Progress Bar Track & Fill */}
-                <View className="h-2.5 w-full bg-stone-200/80 dark:bg-stone-800 rounded-full overflow-hidden">
-                  <View
-                    className={`h-full rounded-full ${style.barClass}`}
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </View>
+                <ProgressBar
+                  value={progressPercent}
+                  size="lg"
+                  barClassName={style.barClass}
+                />
               </View>
 
               {/* Percentage & Chevron Right */}
@@ -109,4 +113,4 @@ export function YourSubjectsListWidget() {
       </View>
     </View>
   );
-}
+});

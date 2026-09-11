@@ -15,7 +15,7 @@ export interface AppHeaderBarProps extends CommonHeaderProps {
  * Delegates layout and styling to CommonHeader.
  */
 export const AppHeaderBar = React.memo(function AppHeaderBar({
-  rightSubtitle = "Good to see you!",
+  rightSubtitle = "",
   onAvatarPress,
   showAvatar = true,
   className = "",

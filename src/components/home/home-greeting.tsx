@@ -1,22 +1,24 @@
 import { AppHeaderBar } from "@/components/ui/app-header-bar";
 import { HeroBanner } from "@/components/ui/hero-banner";
+import * as React from "react";
 import { View } from "react-native";
 
 export interface HomeGreetingProps {
   name?: string | null;
 }
 
-export function HomeGreeting({ name }: HomeGreetingProps) {
+export const HomeGreeting = React.memo(function HomeGreeting({ name }: HomeGreetingProps) {
   const firstName = name ? name.split(" ")[0] : "Sam";
 
-  // Dynamic greeting time-of-day string
-  const currentHour = new Date().getHours();
-  const timeOfDayGreeting =
-    currentHour < 12
+  // Dynamic greeting time-of-day string memoized per render pass
+  const timeOfDayGreeting = React.useMemo(() => {
+    const currentHour = new Date().getHours();
+    return currentHour < 12
       ? "Good morning!"
       : currentHour < 17
         ? "Good afternoon!"
         : "Good evening!";
+  }, []);
 
   return (
     <View className="gap-3 pb-2">
@@ -36,4 +38,4 @@ export function HomeGreeting({ name }: HomeGreetingProps) {
       />
     </View>
   );
-}
+});

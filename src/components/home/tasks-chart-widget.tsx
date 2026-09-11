@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { UI_STYLES } from "@/constants/styles";
 import { useDashboardChartData } from "@/hooks/queries/use-dashboard";
 import { type DashboardCheckInChartPoint } from "@/lib/api";
 import { Feather } from "@expo/vector-icons";
@@ -25,7 +25,7 @@ const RANGE_OPTIONS = [
   { value: "90d", label: "3 Months", days: 90 },
 ] as const;
 
-export function TasksChartWidget({
+export const TasksChartWidget = React.memo(function TasksChartWidget({
   onCheckIn,
 }: {
   onCheckIn?: () => void;
@@ -55,44 +55,73 @@ export function TasksChartWidget({
 
   const chartData: DashboardCheckInChartPoint[] = chartDataQuery.data ?? [];
   const isLoading = chartDataQuery.isLoading;
-  const totalTasks = chartData.reduce((sum, item) => sum + item.tasksCompleted, 0);
-  const totalHours = chartData.reduce((sum, item) => sum + item.hoursStudied, 0);
-  const daysWithCheckins = chartData.filter((item) => item.hasCheckin).length;
-  const hasTrackedValues = totalTasks > 0 || totalHours > 0;
-  const totalDays = chartData.length;
-  const checkInRate = totalDays > 0 ? Math.round((daysWithCheckins / totalDays) * 100) : 0;
-  const avgTasks = daysWithCheckins > 0 ? Number((totalTasks / daysWithCheckins).toFixed(1)) : 0;
-  const avgHours = daysWithCheckins > 0 ? Number((totalHours / daysWithCheckins).toFixed(1)) : 0;
+
+  const { totalTasks, totalHours, daysWithCheckins, hasTrackedValues, checkInRate, avgTasks } =
+    React.useMemo(() => {
+      const tasks = chartData.reduce((sum, item) => sum + item.tasksCompleted, 0);
+      const hours = chartData.reduce((sum, item) => sum + item.hoursStudied, 0);
+      const days = chartData.filter((item) => item.hasCheckin).length;
+      const tracked = tasks > 0 || hours > 0;
+      const totalD = chartData.length;
+      const rate = totalD > 0 ? Math.round((days / totalD) * 100) : 0;
+      const avgT = days > 0 ? Number((tasks / days).toFixed(1)) : 0;
+      return {
+        totalTasks: tasks,
+        totalHours: hours,
+        daysWithCheckins: days,
+        hasTrackedValues: tracked,
+        checkInRate: rate,
+        avgTasks: avgT,
+      };
+    }, [chartData]);
 
   const visibleChartData = chartData;
-  const maxTasks = Math.max(...visibleChartData.map((item) => item.tasksCompleted), 1);
-  const maxHours = Math.max(...visibleChartData.map((item) => item.hoursStudied), 1);
-  const labelStep = visibleChartData.length <= 10 ? 1 : visibleChartData.length <= 31 ? 5 : 10;
-  const barData = visibleChartData.map((item, index) => {
-    const labelDate = new Date(item.date);
-    const shortLabel =
-      selectedDays <= 7
-        ? labelDate.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-        : labelDate.toLocaleDateString(undefined, { day: "numeric" });
-    return {
-      value: item.tasksCompleted,
-      frontColor: "#2563EB",
-      labelWidth: selectedDays <= 7 ? 38 : 24,
-      labelTextStyle: { color: "#78716C", fontSize: 10 },
-      label: index % labelStep === 0 || index === visibleChartData.length - 1 ? shortLabel : "",
-    };
-  });
-  const lineData = visibleChartData.map((item) => ({ value: item.hoursStudied }));
-  const secondaryMaxValue = Math.max(maxHours, 1);
-  const chartWidth = Math.max(300, visibleChartData.length * 28 + 48);
 
-  const handleCheckIn =
-    onCheckIn ?? (() => Alert.alert("Check-in", "Check-in flow will be available in the mobile app soon."));
+  const { barData, lineData, maxTasks, secondaryMaxValue, chartWidth } = React.useMemo(() => {
+    const maxT = Math.max(...visibleChartData.map((item) => item.tasksCompleted), 1);
+    const maxH = Math.max(...visibleChartData.map((item) => item.hoursStudied), 1);
+    const labelStep = visibleChartData.length <= 10 ? 1 : visibleChartData.length <= 31 ? 5 : 10;
+
+    const bData = visibleChartData.map((item, index) => {
+      const labelDate = new Date(item.date);
+      const shortLabel =
+        selectedDays <= 7
+          ? labelDate.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+          : labelDate.toLocaleDateString(undefined, { day: "numeric" });
+      return {
+        value: item.tasksCompleted,
+        frontColor: "#2563EB",
+        labelWidth: selectedDays <= 7 ? 38 : 24,
+        labelTextStyle: { color: "#78716C", fontSize: 10 },
+        label: index % labelStep === 0 || index === visibleChartData.length - 1 ? shortLabel : "",
+      };
+    });
+
+    const lData = visibleChartData.map((item) => ({ value: item.hoursStudied }));
+    const secMax = Math.max(maxH, 1);
+    const cWidth = Math.max(300, visibleChartData.length * 28 + 48);
+
+    return {
+      barData: bData,
+      lineData: lData,
+      maxTasks: maxT,
+      secondaryMaxValue: secMax,
+      chartWidth: cWidth,
+    };
+  }, [visibleChartData, selectedDays]);
+
+  const handleCheckIn = React.useCallback(() => {
+    if (onCheckIn) {
+      onCheckIn();
+    } else {
+      Alert.alert("Check-in", "Check-in flow will be available in the mobile app soon.");
+    }
+  }, [onCheckIn]);
 
   return (
-    <View className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-3xl p-4.5 gap-4 shadow-2xs">
+    <View className={UI_STYLES.cardPadded}>
       {/* Widget Header Row */}
-      <View className="flex-row items-center justify-between">
+      <View className={UI_STYLES.rowBetween}>
         <View className="flex-row items-center gap-3 flex-1 pr-2">
           <View className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 items-center justify-center border border-blue-200 dark:border-blue-900/60">
             <Feather name="bar-chart-2" size={18} color="#2563EB" />
@@ -302,5 +331,4 @@ export function TasksChartWidget({
       ) : null}
     </View>
   );
-}
-
+});

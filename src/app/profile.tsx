@@ -9,9 +9,7 @@ import {
 import { AppLogo } from "@/components/ui/app-logo";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { APP_COLORS } from "@/constants/colors";
 import { useAuth } from "@/lib/auth";
-import { getErrorMessage } from "@/services";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as React from "react";
 import { Alert, BackHandler, ScrollView, StatusBar, View } from "react-native";
@@ -29,20 +27,15 @@ export default function ProfileScreen() {
     }
   }, [token, router]);
 
-  // Safe back navigation
-  const handleBack = React.useCallback(() => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace("/(tabs)");
-    }
-  }, [router]);
-
   // Intercept Android hardware back button
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
-        handleBack();
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace("/(tabs)");
+        }
         return true;
       };
       const subscription = BackHandler.addEventListener(
@@ -50,7 +43,7 @@ export default function ProfileScreen() {
         onBackPress,
       );
       return () => subscription.remove();
-    }, [handleBack]),
+    }, [router]),
   );
 
   const onSignOut = React.useCallback(async () => {
@@ -81,7 +74,7 @@ export default function ProfileScreen() {
             void onSignOut();
           },
         },
-      ]
+      ],
     );
   }, [onSignOut]);
 
@@ -140,10 +133,10 @@ export default function ProfileScreen() {
   }, [user?.city, user?.state, user?.country, user?.zipcode]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-background relative" edges={["top"]}>
       <StatusBar
-        barStyle="light-content"
-        backgroundColor={APP_COLORS.primaryDark}
+        barStyle="dark-content"
+        backgroundColor="#ffffff"
         translucent={false}
       />
 
@@ -152,7 +145,7 @@ export default function ProfileScreen() {
         contentContainerStyle={{ paddingBottom: 48 }}
       >
         {/* Hero Header */}
-        <ProfileHero user={user} onBack={handleBack} />
+        <ProfileHero user={user} />
 
         <View className="px-4 gap-5">
           {/* Quick Stats Summary Grid */}

@@ -3,12 +3,17 @@ import { Icon, IconProps } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { useAuth } from "@/lib/auth";
+import { useRouter } from "expo-router";
 import * as React from "react";
 import { Pressable, View } from "react-native";
 
 export interface CommonHeaderProps {
   /** Callback fired when left back arrow button is pressed */
   onBack?: () => void;
+  /** Force show/hide back button (defaults to true if onBack or fallbackRoute is provided) */
+  showBack?: boolean;
+  /** Fallback route to navigate to if router.canGoBack() is false */
+  fallbackRoute?: string;
   /** Custom icon name for back button (defaults to "chevron-left") */
   backIcon?: IconProps["name"];
   /** Custom left element to render instead of back button */
@@ -35,6 +40,8 @@ export interface CommonHeaderProps {
 
 export const CommonHeader = React.memo(function CommonHeader({
   onBack,
+  showBack,
+  fallbackRoute,
   backIcon = "chevron-left",
   leftElement,
   title,
@@ -47,14 +54,29 @@ export const CommonHeader = React.memo(function CommonHeader({
   showAvatar = false,
   className = "",
 }: CommonHeaderProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "S";
 
+  const handleBackPress = React.useCallback(() => {
+    if (onBack) {
+      onBack();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else if (fallbackRoute) {
+      router.replace(fallbackRoute as any);
+    } else {
+      router.replace("/(tabs)");
+    }
+  }, [onBack, fallbackRoute, router]);
+
+  const shouldShowBack = showBack ?? Boolean(onBack || fallbackRoute || leftElement !== undefined);
+
   const renderBackButton = () => {
-    if (!onBack) return null;
+    if (!shouldShowBack) return null;
     return (
       <Pressable
-        onPress={onBack}
+        onPress={handleBackPress}
         hitSlop={8}
         className="w-10 h-10 rounded-full items-center justify-center bg-stone-100 dark:bg-stone-800 active:opacity-70"
       >
@@ -73,11 +95,11 @@ export const CommonHeader = React.memo(function CommonHeader({
               : "justify-center"
           }
         >
-          <Text variant="h3" className="text-base font-bold">
+          <Text variant="h3">
             {title}
           </Text>
           {subtitle ? (
-            <Text variant="muted" className="text-xs mt-0.5">
+            <Text variant="muted" className="mt-0.5">
               {subtitle}
             </Text>
           ) : null}
@@ -103,12 +125,12 @@ export const CommonHeader = React.memo(function CommonHeader({
           className="flex-row items-center gap-2 active:opacity-80"
         >
           <View className="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center border border-stone-300/50 dark:border-stone-700/50">
-            <Text className="text-xs font-extrabold text-stone-700 dark:text-stone-300">
+            <Text variant="subhead" className="font-extrabold">
               {userInitial}
             </Text>
           </View>
           {rightSubtitle ? (
-            <Text variant="muted" className="text-xs font-medium">
+            <Text variant="muted">
               {rightSubtitle}
             </Text>
           ) : null}
@@ -117,7 +139,7 @@ export const CommonHeader = React.memo(function CommonHeader({
     }
 
     // If logo is in center and there is a left back button, render spacer to balance layout
-    if (logoPosition === "center" && (onBack || leftElement)) {
+    if (logoPosition === "center" && (shouldShowBack || leftElement)) {
       return <View className="w-10" />;
     }
 

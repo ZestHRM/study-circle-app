@@ -10,6 +10,7 @@ import {
 } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Feather } from '@expo/vector-icons';
+import * as React from 'react';
 import { View } from 'react-native';
 
 function formatShortDate(dateString: string) {
@@ -36,8 +37,7 @@ function getCurrentStreak(streak: DashboardStreak | null) {
   return dayDifference > 1 ? 0 : streak.currentStreak;
 }
 
-export function StudyStreakWidget({
-}: Record<string, never>) {
+export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
   const streakQuery = useDashboardStreak();
   const recentActivityQuery = useDashboardRecentActivity();
 
@@ -172,4 +172,4 @@ export function StudyStreakWidget({
       </CardContent>
     </Card>
   );
-}
+});

@@ -2,6 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import type { PickedFileValues } from "@/schemas";
@@ -226,7 +228,7 @@ export const Step4Processing = React.memo(function Step4Processing({
                   {step.isDone ? (
                     <Icon name="check" size="xs" color="white" />
                   ) : step.isActive ? (
-                    <ActivityIndicator
+                    <Spinner
                       size="small"
                       color={step.spinnerColor || "#FFFFFF"}
                     />
@@ -256,15 +258,12 @@ export const Step4Processing = React.memo(function Step4Processing({
                 </Text>
 
                 {step.isActive && step.progressPercent ? (
-                  <View className="h-1.5 w-full bg-blue-100 dark:bg-blue-950/40 rounded-full mt-2 overflow-hidden">
-                    <View
-                      style={{
-                        width: `${step.progressPercent}%`,
-                        backgroundColor: APP_COLORS.brandPurple,
-                      }}
-                      className="h-full rounded-full"
-                    />
-                  </View>
+                  <ProgressBar
+                    value={step.progressPercent}
+                    size="sm"
+                    variant="primary"
+                    className="mt-2"
+                  />
                 ) : null}
               </View>
             </View>

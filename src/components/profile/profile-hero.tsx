@@ -7,12 +7,13 @@ import { APP_COLORS } from "@/constants/colors";
 import { useFilePicker } from "@/hooks/use-file-picker";
 import { useAuth } from "@/lib/auth";
 import { getErrorMessage, profileApi, type User } from "@/services";
+import { useRouter } from "expo-router";
 import * as React from "react";
 import { Image, Pressable, View } from "react-native";
 
 export interface ProfileHeroProps {
   user: User | null;
-  onBack: () => void;
+  onBack?: () => void;
   onAvatarChange?: (imageUri: string) => void;
 }
 
@@ -21,8 +22,20 @@ export const ProfileHero = React.memo(function ProfileHero({
   onBack,
   onAvatarChange,
 }: ProfileHeroProps) {
+  const router = useRouter();
   const { token } = useAuth();
   const [copiedReferral, setCopiedReferral] = React.useState(false);
+
+  const handleBackPress = React.useCallback(() => {
+    if (onBack) {
+      onBack();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
+    }
+  }, [onBack, router]);
+
   const [uploadSuccessMessage, setUploadSuccessMessage] = React.useState<
     string | null
   >(null);
@@ -65,15 +78,11 @@ export const ProfileHero = React.memo(function ProfileHero({
 
     try {
       setIsUploading(true);
-      console.log("Uploading profile picture to /profile/picture API...");
-
       const response = await profileApi.uploadPicture({
         uri: picked.uri,
         name: picked.name,
         type: picked.mimeType,
       });
-
-      console.log("[Profile Picture API Response]", response);
 
       const serverAvatar =
         response?.url || response?.avatarUrl || response?.avatar;
@@ -99,34 +108,27 @@ export const ProfileHero = React.memo(function ProfileHero({
   }, [filePicker, token, onAvatarChange]);
 
   return (
-    <View
-      style={{ backgroundColor: APP_COLORS.primaryDark }}
-      className="relative overflow-hidden pt-4 pb-10 px-5 rounded-b-[36px] shadow-lg mb-6"
-    >
-      {/* Decorative Subtle Background Accents */}
-      <View className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10" />
-      <View className="absolute -bottom-16 -left-12 w-40 h-40 rounded-full bg-black/10" />
-
+    <View className="bg-white dark:bg-stone-900 border-b border-stone-200/80 dark:border-stone-800 pt-3 pb-6 px-5 mb-5 rounded-b-[28px] shadow-2xs">
       {/* Top Header Action Bar */}
-      <View className="flex-row items-center justify-between mb-4 z-20">
+      <View className="flex-row items-center justify-between mb-4">
         <Button
           variant="ghost"
           icon="arrow-left"
-          onPress={onBack}
-          className="w-10 h-10 rounded-full bg-black/20 items-center justify-center p-0 border border-white/20 active:opacity-80"
-          iconColor={APP_COLORS.white}
+          onPress={handleBackPress}
+          className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 items-center justify-center p-0 active:opacity-80"
+          iconColor={APP_COLORS.stone800}
         />
-        <Text variant="h3" className="text-white text-center">
-          Profile
+        <Text variant="h3" className="text-stone-900 dark:text-stone-100 font-extrabold text-lg text-center">
+          My Profile
         </Text>
         <View className="w-10" />
       </View>
 
       {/* Profile Hero Content */}
-      <View className="items-center z-10">
+      <View className="items-center">
         {/* AVATAR RING WITH PICTURE UPLOADER OVERLAY */}
         <View className="relative mb-3">
-          <View className="w-24 h-24 rounded-full border-4 border-amber-400 bg-white/20 items-center justify-center shadow-md overflow-hidden">
+          <View className="w-24 h-24 rounded-full border-2 border-purple-500/40 bg-purple-50 dark:bg-purple-950/40 items-center justify-center shadow-xs overflow-hidden">
             {avatarUri ? (
               <Image
                 source={{ uri: avatarUri }}
@@ -136,7 +138,7 @@ export const ProfileHero = React.memo(function ProfileHero({
             ) : (
               <Text
                 variant="h1"
-                className="text-white text-3xl font-extrabold tracking-wider"
+                className="text-purple-600 dark:text-purple-400 text-3xl font-extrabold tracking-wider"
               >
                 {initials}
               </Text>
@@ -144,13 +146,13 @@ export const ProfileHero = React.memo(function ProfileHero({
           </View>
 
           {/* Online Indicator Badge */}
-          <View className="absolute top-1 right-1 w-4 h-4 rounded-full border-2 border-purple-900 bg-emerald-500" />
+          <View className="absolute top-1 right-1 w-4 h-4 rounded-full border-2 border-white dark:border-stone-900 bg-emerald-500" />
 
           {/* Camera / Edit Profile Picture Button */}
           <Pressable
             onPress={handlePickAvatar}
             disabled={isUploading}
-            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-purple-600 border-2 border-white items-center justify-center shadow-lg active:opacity-80"
+            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-purple-600 border-2 border-white dark:border-stone-900 items-center justify-center shadow-md active:opacity-80"
             hitSlop={8}
           >
             {isUploading ? (
@@ -160,17 +162,6 @@ export const ProfileHero = React.memo(function ProfileHero({
             )}
           </Pressable>
         </View>
-
-        {/* User Name & Email */}
-        <Text variant="h2" className="text-white tracking-tight text-center">
-          {user?.name || "Student User"}
-        </Text>
-        <Text
-          variant="caption"
-          className="text-purple-200 text-sm font-medium mt-0.5 text-center"
-        >
-          {user?.email || "student@studycircle.ai"}
-        </Text>
 
         {/* Badges Row */}
         <View className="flex-row items-center gap-2 mt-3 flex-wrap justify-center">
@@ -184,26 +175,39 @@ export const ProfileHero = React.memo(function ProfileHero({
           ) : null}
         </View>
 
+        {/* Feedback Alerts */}
+        {uploadSuccessMessage ? (
+          <Text className="text-xs text-emerald-600 font-semibold mt-2 text-center">
+            {uploadSuccessMessage}
+          </Text>
+        ) : null}
+
+        {uploadErrorMessage ? (
+          <Text className="text-xs text-red-600 font-semibold mt-2 text-center">
+            {uploadErrorMessage}
+          </Text>
+        ) : null}
+
         {/* Referral Code Chip */}
         {user?.referralCode ? (
           <Pressable
             onPress={handleCopyReferral}
-            className="mt-4 flex-row items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-black/30 active:opacity-80"
+            className="mt-3 flex-row items-center gap-2 px-3.5 py-1.5 rounded-full border border-stone-200 dark:border-stone-800 bg-stone-100 dark:bg-stone-800 active:opacity-80"
           >
             <Icon name="gift" size="xs" color="warning" />
             <Text
               variant="caption"
-              className="text-purple-100 text-xs font-medium"
+              className="text-stone-700 dark:text-stone-300 text-xs font-medium"
             >
               Ref Code:{" "}
-              <Text className="font-bold text-amber-400">
+              <Text className="font-bold text-purple-600 dark:text-purple-400">
                 {user.referralCode}
               </Text>
             </Text>
             <Icon
               name={copiedReferral ? "check" : "copy"}
               size="xs"
-              color="white"
+              color={APP_COLORS.stone500}
             />
           </Pressable>
         ) : null}

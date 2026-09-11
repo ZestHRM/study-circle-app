@@ -1,34 +1,31 @@
-import { DailyCheckinScreen } from '@/components/home/daily-checkin-screen';
-import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
-import { useAuth } from '@/lib/auth';
-import { Redirect, useFocusEffect, useRouter } from 'expo-router';
-import React from 'react';
-import { ActivityIndicator, BackHandler, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { DailyCheckinScreen } from "@/components/home/daily-checkin-screen";
+import { useAuth } from "@/lib/auth";
+import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import React from "react";
+import { ActivityIndicator, BackHandler, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DailyCheckinRoute() {
   const { isLoading, token } = useAuth();
   const router = useRouter();
 
-  const handleBack = React.useCallback(() => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)');
-    }
-  }, [router]);
-
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
-        handleBack();
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace("/(tabs)");
+        }
         return true;
       };
 
-      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
       return () => subscription.remove();
-    }, [handleBack])
+    }, [router]),
   );
 
   if (isLoading) {

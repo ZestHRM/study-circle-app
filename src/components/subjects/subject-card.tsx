@@ -1,7 +1,6 @@
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as React from "react";
 import { Pressable, View } from "react-native";
 
@@ -20,7 +19,7 @@ export interface SubjectCardProps {
   course?: string;
   colorHex?: string;
   bgHex?: string;
-  iconName?: keyof typeof MaterialCommunityIcons.glyphMap;
+  iconName?: string;
   metrics?: SubjectCardMetrics;
   onPress?: () => void;
 }
@@ -69,7 +68,7 @@ export const SubjectCard = React.memo(function SubjectCard({
             style={{ backgroundColor: bgHex }}
             className="w-10 h-10 rounded-xl items-center justify-center border border-stone-100 dark:border-stone-800"
           >
-            <MaterialCommunityIcons
+            <Icon
               name={iconName}
               size={20}
               color={colorHex}

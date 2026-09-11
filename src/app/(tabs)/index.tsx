@@ -1,12 +1,11 @@
+import {
+  DailyCheckinWidget,
+  HomeGreeting,
+  NextExamWidget,
+  ViewFeedbackDialog,
+  YourSubjectsListWidget,
+} from "@/components/home";
 import { CreateFirstSubjectOnboarding } from "@/components/onboarding";
-import { DailyCheckinWidget } from "@/components/home/daily-checkin-widget";
-import { HomeGreeting } from "@/components/home/home-greeting";
-import { NextExamWidget } from "@/components/home/next-exam-widget";
-import { StatsCardsWidget } from "@/components/home/stats-cards-widget";
-import { StudyStreakWidget } from "@/components/home/study-streak-widget";
-import { TasksChartWidget } from "@/components/home/tasks-chart-widget";
-import { ViewFeedbackDialog } from "@/components/home/view-feedback-dialog";
-import { YourSubjectsListWidget } from "@/components/home/your-subjects-list-widget";
 import { Spinner } from "@/components/ui/spinner";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
 import { useAuth } from "@/lib/auth";
@@ -42,7 +41,7 @@ export default function HomeScreen() {
   const activeDashboardRequests = useIsFetching({ queryKey: ["dashboard"] });
   const isRefreshing = activeDashboardRequests > 0;
 
-  function onRefresh() {
+  const onRefresh = React.useCallback(() => {
     void Promise.all([
       queryClient.refetchQueries({
         queryKey: ["dashboard"],
@@ -50,30 +49,39 @@ export default function HomeScreen() {
       }),
       refetchSubjects(),
     ]);
-  }
+  }, [queryClient, refetchSubjects]);
 
-  function openDailyCheckIn() {
+  const openDailyCheckIn = React.useCallback(() => {
     router.push("/daily-checkin");
-  }
+  }, []);
 
-  function openFeedback(checkInId: string) {
+  const handleCreateSubject = React.useCallback(() => {
+    router.push("/create-subject");
+  }, []);
+
+  const openFeedback = React.useCallback((checkInId: string) => {
     setSelectedFeedbackCheckInId(checkInId);
     setIsFeedbackDialogOpen(true);
-  }
+  }, []);
 
-  function onFeedbackOpenChange(open: boolean) {
+  const onFeedbackOpenChange = React.useCallback((open: boolean) => {
     setIsFeedbackDialogOpen(open);
     if (!open) {
       setSelectedFeedbackCheckInId(null);
     }
-  }
+  }, []);
 
   const hasNoSubjects = !isLoadingSubjects && subjects.length === 0;
 
+  const refreshControlElement = React.useMemo(
+    () => <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />,
+    [isRefreshing, onRefresh],
+  );
+
   return (
-    <SafeAreaView className="bg-background flex-1" edges={["top"]}>
+    <SafeAreaView style={{ flex: 1 }} className="bg-background flex-1" edges={["top"]}>
       {isLoadingSubjects && subjects.length === 0 ? (
-        <View className="flex-1 justify-center items-center py-12">
+        <View style={{ flex: 1 }} className="flex-1 justify-center items-center py-12">
           <Spinner
             variant="quiz"
             size="large"
@@ -82,23 +90,15 @@ export default function HomeScreen() {
         </View>
       ) : hasNoSubjects ? (
         /* Onboarding Screen when 0 subjects exist */
-        <ScrollView
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-          }
-          contentContainerStyle={{ flexGrow: 1 }}
-        >
-          <CreateFirstSubjectOnboarding
-            onCreateSubject={() => router.push("/create-subject")}
-            onCheckInSentiment={() => openDailyCheckIn()}
-          />
-        </ScrollView>
+        <CreateFirstSubjectOnboarding
+          onCreateSubject={handleCreateSubject}
+          onCheckInSentiment={openDailyCheckIn}
+        />
       ) : (
-        /* Regular Home Dashboard Matching User Design Spec */
+        /* Clean Home Dashboard */
         <ScrollView
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-          }
+          style={{ flex: 1 }}
+          refreshControl={refreshControlElement}
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 4,
@@ -116,12 +116,6 @@ export default function HomeScreen() {
             />
 
             <YourSubjectsListWidget />
-
-            <TasksChartWidget onCheckIn={openDailyCheckIn} />
-
-            <StatsCardsWidget />
-
-            <StudyStreakWidget />
           </View>
         </ScrollView>
       )}

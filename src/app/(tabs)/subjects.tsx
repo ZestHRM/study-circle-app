@@ -1,8 +1,4 @@
-import {
-  PRESET_THEMES,
-  SubjectCard,
-  SubjectDetailModal,
-} from "@/components/subjects";
+import { PRESET_THEMES, SubjectCard } from "@/components/subjects";
 import { AppHeaderBar } from "@/components/ui/app-header-bar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,7 +8,6 @@ import { useNotesInfiniteQuery } from "@/hooks/queries/use-notes";
 import { useQuizzesInfiniteQuery } from "@/hooks/queries/use-quizzes";
 import { useStudyMaterialsInfinite } from "@/hooks/queries/use-study-materials";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
-import { useAuth } from "@/lib/auth";
 import { formatDateTimeSplit } from "@/lib/utils/formatters";
 import { Subject } from "@/services/subjects-service";
 import { router } from "expo-router";
@@ -22,13 +17,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SubjectsScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
 
   // Fetch pure API data for subjects, materials, notes, quizzes
   const {
     subjects,
     isLoading: isLoadingSubjects,
-    isError,
     refetch: refetchSubjects,
   } = useSubjectsQuery();
   const { materials, refetch: refetchMaterials } = useStudyMaterialsInfinite({
@@ -41,9 +34,6 @@ export default function SubjectsScreen() {
     limit: 200,
   });
 
-  const [selectedSubject, setSelectedSubject] = React.useState<any | null>(
-    null,
-  );
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   const handleRefresh = React.useCallback(async () => {
@@ -56,6 +46,14 @@ export default function SubjectsScreen() {
     ]);
     setIsRefreshing(false);
   }, [refetchSubjects, refetchMaterials, refetchNotes, refetchQuizzes]);
+
+  const handleAddSubject = React.useCallback(() => {
+    router.push("/create-subject");
+  }, []);
+
+  const handleSubjectPress = React.useCallback((id: string) => {
+    router.push(`/subjects/${id}`);
+  }, []);
 
   // Compute dynamic metrics strictly from real API data
   const displaySubjects = React.useMemo(() => {
@@ -105,6 +103,11 @@ export default function SubjectsScreen() {
     });
   }, [subjects, materials, notes, quizzes]);
 
+  const refreshControlComponent = React.useMemo(
+    () => <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />,
+    [isRefreshing, handleRefresh],
+  );
+
   return (
     <View className="flex-1" style={{ paddingTop: insets.top }}>
       {/* Reusable Header Bar */}
@@ -113,24 +116,20 @@ export default function SubjectsScreen() {
       <ScrollView
         className="flex-1 px-5 pt-5"
         contentContainerStyle={{ paddingBottom: 60 }}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-        }
+        refreshControl={refreshControlComponent}
       >
-        {/* Header Section using Reusable HeroBanner */}
+        {/* Header Section using Reusable HeroBanner with preset="subjects" */}
         <HeroBanner
-          title="Your subjects"
-          subtitle="Organise your learning. Everything in one place."
-          className="mb-4"
-        />
-
-        {/* Add Subject Primary CTA */}
-        <Button
-          title="Add subject"
-          icon="plus"
-          variant="quiz"
-          className="rounded-full h-11 mb-5"
-          onPress={() => router.push("/create-subject")}
+          preset="subjects"
+          action={
+            <Button
+              title="Add subject"
+              icon="plus"
+              variant="quiz"
+              className="rounded-full h-11 mb-2"
+              onPress={handleAddSubject}
+            />
+          }
         />
 
         {isLoadingSubjects && !isRefreshing ? (
@@ -149,7 +148,7 @@ export default function SubjectsScreen() {
             description="Create your subjects to organize your study materials, PYQs, and AI generated notes in one place."
             actionLabel="Add your first subject"
             actionVariant="quiz"
-            onAction={() => router.push("/create-subject")}
+            onAction={handleAddSubject}
             className="mb-6"
           />
         ) : (
@@ -164,19 +163,12 @@ export default function SubjectsScreen() {
                 bgHex={item.bgHex}
                 iconName={item.iconName}
                 metrics={item.metrics}
-                onPress={() => setSelectedSubject(item.rawSubject)}
+                onPress={() => handleSubjectPress(item.id)}
               />
             ))}
           </View>
         )}
       </ScrollView>
-
-      {/* Subject Detail View Modal */}
-      <SubjectDetailModal
-        visible={Boolean(selectedSubject)}
-        subject={selectedSubject}
-        onClose={() => setSelectedSubject(null)}
-      />
     </View>
   );
 }

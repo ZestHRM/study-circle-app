@@ -22,7 +22,6 @@ import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import * as React from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Linking,
@@ -133,6 +132,19 @@ export default function QuizzesScreen() {
       totalQuestions: quiz.totalQuestions,
     });
     setSelectedQuizAttempt(null);
+  }, []);
+
+  const handleStartSheetOpenChange = React.useCallback((open: boolean) => {
+    if (!open) {
+      setSelectedQuizAttempt(null);
+      refetchQuizzes();
+    }
+  }, [refetchQuizzes]);
+
+  const handleResultsSheetOpenChange = React.useCallback((open: boolean) => {
+    if (!open) {
+      setSelectedQuizForResults(null);
+    }
   }, []);
 
   const keyExtractor = React.useCallback((item: Quiz) => item.id, []);
@@ -256,6 +268,82 @@ export default function QuizzesScreen() {
     ]
   );
 
+  const listEmptyComponent = React.useMemo(
+    () =>
+      isForbidden ? (
+        <View className="py-8 px-4 items-center gap-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-3xl">
+          <View className="w-12 h-12 rounded-2xl bg-amber-500/20 items-center justify-center border border-amber-500/30">
+            <Feather name="lock" size={24} color={APP_COLORS.warningDark} />
+          </View>
+
+          <View className="gap-1 items-center">
+            <Text className="text-base font-bold text-amber-950 dark:text-amber-200 text-center">
+              Plan Upgrade Required
+            </Text>
+            <Text className="text-xs text-amber-900/80 dark:text-amber-300 text-center px-2 leading-5 font-medium">
+              {forbiddenMessage || "Access denied. Upgrade your plan to access this feature."}
+            </Text>
+          </View>
+
+          <Button
+            variant="terracotta"
+            icon="external-link"
+            iconPosition="right"
+            title="Upgrade Plan on Billing →"
+            onPress={() => {
+              void Linking.openURL("https://app.usestudycircle.ai/billings");
+            }}
+            className="w-full h-11 rounded-2xl justify-center items-center mt-1"
+          />
+        </View>
+      ) : !isLoadingQuizzes ? (
+        <EmptyState
+          icon="zap"
+          title="No Quizzes Found"
+          description={
+            isFiltered
+              ? "No quizzes matched your search filter. Try clearing filters."
+              : "Upload a study material document to automatically generate your first practice quiz."
+          }
+          actionLabel={isFiltered ? "Clear Filters" : undefined}
+          onAction={isFiltered ? handleClearFilters : undefined}
+        />
+      ) : (
+        <View className="py-12">
+          <Spinner
+            variant="primary"
+            size="large"
+            message="Loading quizzes..."
+          />
+        </View>
+      ),
+    [isForbidden, forbiddenMessage, isLoadingQuizzes, isFiltered, handleClearFilters],
+  );
+
+  const listFooterComponent = React.useMemo(
+    () => (
+      <InfiniteListFooter
+        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={hasNextPage}
+        totalLoaded={quizzes.length}
+        itemLabel="quizzes"
+      />
+    ),
+    [isFetchingNextPage, hasNextPage, quizzes.length],
+  );
+
+  const refreshControlComponent = React.useMemo(
+    () => (
+      <RefreshControl
+        refreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        tintColor={APP_COLORS.primary}
+        colors={[APP_COLORS.primary]}
+      />
+    ),
+    [isRefreshing, handleRefresh],
+  );
+
   return (
     <SafeAreaView className="bg-stone-50 dark:bg-stone-950 flex-1" edges={["top"]}>
       <FlatList
@@ -263,71 +351,9 @@ export default function QuizzesScreen() {
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ListHeaderComponent={ListHeaderComponent}
-        ListFooterComponent={
-          <InfiniteListFooter
-            isFetchingNextPage={isFetchingNextPage}
-            hasNextPage={hasNextPage}
-            totalLoaded={quizzes.length}
-            itemLabel="quizzes"
-          />
-        }
-        ListEmptyComponent={
-          isForbidden ? (
-            <View className="py-8 px-4 items-center gap-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-3xl">
-              <View className="w-12 h-12 rounded-2xl bg-amber-500/20 items-center justify-center border border-amber-500/30">
-                <Feather name="lock" size={24} color={APP_COLORS.warningDark} />
-              </View>
-
-              <View className="gap-1 items-center">
-                <Text className="text-base font-bold text-amber-950 dark:text-amber-200 text-center">
-                  Plan Upgrade Required
-                </Text>
-                <Text className="text-xs text-amber-900/80 dark:text-amber-300 text-center px-2 leading-5 font-medium">
-                  {forbiddenMessage || "Access denied. Upgrade your plan to access this feature."}
-                </Text>
-              </View>
-
-              <Button
-                variant="terracotta"
-                icon="external-link"
-                iconPosition="right"
-                title="Upgrade Plan on Billing →"
-                onPress={() => {
-                  void Linking.openURL("https://app.usestudycircle.ai/billings");
-                }}
-                className="w-full h-11 rounded-2xl justify-center items-center mt-1"
-              />
-            </View>
-          ) : !isLoadingQuizzes ? (
-            <EmptyState
-              icon="zap"
-              title="No Quizzes Found"
-              description={
-                isFiltered
-                  ? "No quizzes matched your search filter. Try clearing filters."
-                  : "Upload a study material document to automatically generate your first practice quiz."
-              }
-              actionLabel={isFiltered ? "Clear Filters" : undefined}
-              onAction={isFiltered ? handleClearFilters : undefined}
-            />
-          ) : (
-            <View className="py-12">
-              <Spinner
-                variant="primary"
-                size="large"
-                message="Loading quizzes..."
-              />
-            </View>
-          )
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor={APP_COLORS.primary}
-            colors={[APP_COLORS.primary]}
-          />
-        }
+        ListFooterComponent={listFooterComponent}
+        ListEmptyComponent={listEmptyComponent}
+        refreshControl={refreshControlComponent}
         onEndReached={fetchNextPage}
         onEndReachedThreshold={0.4}
         ItemSeparatorComponent={ItemSeparator}
@@ -339,12 +365,7 @@ export default function QuizzesScreen() {
         <StartQuizSheet
           key={selectedQuizAttempt.id}
           open={Boolean(selectedQuizAttempt)}
-          onOpenChange={(open: boolean) => {
-            if (!open) {
-              setSelectedQuizAttempt(null);
-              refetchQuizzes();
-            }
-          }}
+          onOpenChange={handleStartSheetOpenChange}
           attempt={selectedQuizAttempt}
         />
       ) : null}
@@ -354,11 +375,7 @@ export default function QuizzesScreen() {
         <QuizResultsSheet
           key={selectedQuizForResults.quizId}
           open
-          onOpenChange={(open: boolean) => {
-            if (!open) {
-              setSelectedQuizForResults(null);
-            }
-          }}
+          onOpenChange={handleResultsSheetOpenChange}
           quizId={selectedQuizForResults.quizId}
           totalQuestions={selectedQuizForResults.totalQuestions}
         />

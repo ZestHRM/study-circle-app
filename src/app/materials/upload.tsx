@@ -24,7 +24,7 @@ import {
   type QuizAttempt,
   type StudyMaterial,
 } from "@/services";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as React from "react";
 import { Alert, Linking, ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -38,6 +38,11 @@ type FormErrors = Partial<Record<keyof FormValues | "file", string>>;
 
 export default function UploadMaterialScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    fileUri?: string;
+    fileName?: string;
+    fileType?: string;
+  }>();
   const { token } = useAuth();
   const filePicker = useFilePicker();
   const { downloadFile } = useFileDownload();
@@ -52,6 +57,24 @@ export default function UploadMaterialScreen() {
   const [errors, setErrors] = React.useState<FormErrors>({});
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+
+  // If a file was picked directly from materials list screen, pre-populate file & clean title
+  const isPrePopulatedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isPrePopulatedRef.current && params.fileUri && params.fileName) {
+      isPrePopulatedRef.current = true;
+      filePicker.setFile({
+        uri: params.fileUri,
+        name: params.fileName,
+        mimeType: params.fileType || "application/pdf",
+        size: null,
+      });
+      const cleanTitle = params.fileName
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[-_]/g, " ");
+      setValues((prev) => ({ ...prev, title: cleanTitle }));
+    }
+  }, [params.fileUri, params.fileName, params.fileType, filePicker]);
 
   // Processing & Polling State
   const [createdMaterialId, setCreatedMaterialId] = React.useState<

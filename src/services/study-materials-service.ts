@@ -22,6 +22,7 @@ export type StudyMaterialFile = {
   fileName: string;
   url?: string | null;
   content?: string | null;
+  size?: number | null;
   status: StudyMaterialStatus;
   quizStatus: StudyMaterialQuizStatus;
   errorMessage: string | null;

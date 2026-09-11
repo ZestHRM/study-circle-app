@@ -38,34 +38,40 @@ export const OptionItem = React.memo(function OptionItem({
     <Pressable
       onPress={handlePress}
       className={cn(
-        "flex-row items-center gap-3.5 p-3.5 rounded-2xl border active:opacity-90",
+        "flex-row items-center gap-3.5 px-4 py-3.5 rounded-2xl border active:opacity-90",
         isSelected
-          ? "bg-purple-50 dark:bg-purple-950/40 border-purple-500 dark:border-purple-600 shadow-2xs"
-          : "bg-white dark:bg-stone-900 border-stone-200/90 dark:border-stone-800"
+          ? "bg-white dark:bg-stone-900 border-[#0066FF] shadow-xs"
+          : "bg-white dark:bg-stone-900 border-blue-200/80 dark:border-stone-800"
       )}
     >
+      {/* Radio Circle */}
       <View
         className={cn(
-          "w-7 h-7 rounded-full items-center justify-center border",
+          "w-6 h-6 rounded-full items-center justify-center border-2",
           isSelected
-            ? "bg-purple-600 border-purple-600"
-            : "bg-stone-100 dark:bg-stone-800 border-stone-300 dark:border-stone-700"
+            ? "border-[#0066FF] bg-[#0066FF]"
+            : "border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-900"
         )}
       >
         {isSelected ? (
-          <Feather name="check" size={14} color="#ffffff" />
-        ) : (
-          <Text className="text-xs font-bold text-stone-500 dark:text-stone-400">
-            {isTrueFalse ? "" : optionLetter}
-          </Text>
-        )}
+          <View className="w-2.5 h-2.5 rounded-full bg-white" />
+        ) : null}
       </View>
 
+      {/* Option Letter (A, B, C, D) in bold blue */}
+      {!isTrueFalse && (
+        <Text variant="subhead" className="font-extrabold text-[#0066FF] w-4">
+          {optionLetter}
+        </Text>
+      )}
+
+      {/* Option Label Text */}
       <Text
+        variant="subhead"
         className={cn(
-          "flex-1 text-sm font-medium leading-5",
+          "flex-1 font-semibold text-base",
           isSelected
-            ? "text-purple-950 dark:text-purple-100 font-semibold"
+            ? "text-stone-900 dark:text-stone-100 font-bold"
             : "text-stone-800 dark:text-stone-200"
         )}
       >

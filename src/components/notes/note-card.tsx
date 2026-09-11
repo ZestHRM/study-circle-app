@@ -1,10 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { countWords, formatShortDate, toPlainText } from "@/lib/utils/formatters";
 import { type Note } from "@/services";
-import { Feather } from "@expo/vector-icons";
 import * as React from "react";
 import { Pressable, View } from "react-native";
 
@@ -27,22 +27,38 @@ export const NoteCard = React.memo(function NoteCard({
 }: NoteCardProps) {
   const plainText = React.useMemo(
     () => toPlainText(note.content),
-    [note.content]
+    [note.content],
   );
   const words = React.useMemo(() => countWords(note.content), [note.content]);
+  const readingTimeMinutes = React.useMemo(
+    () => Math.max(1, Math.ceil(words / 150)),
+    [words],
+  );
   const isAiGenerated = note.type === "GENERATED";
+
+  const handleOpenDetails = React.useCallback(() => {
+    onOpenDetails(note);
+  }, [onOpenDetails, note]);
+
+  const handleEdit = React.useCallback(() => {
+    onEdit(note);
+  }, [onEdit, note]);
+
+  const handleDelete = React.useCallback(() => {
+    onDelete(note);
+  }, [onDelete, note]);
 
   return (
     <Pressable
-      onPress={() => onOpenDetails(note)}
-      className="bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 rounded-2xl p-4.5 gap-3.5 shadow-2xs active:opacity-95"
+      onPress={handleOpenDetails}
+      className="bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 rounded-3xl p-4.5 gap-3.5 shadow-xs active:opacity-95"
     >
-      {/* Top Header: Subject & Note Type */}
+      {/* Top Header: Accent Pill + Subject & Note Type Badge */}
       <View className="flex-row items-center justify-between gap-2">
-        <View className="flex-row items-center gap-2 flex-1 pr-1">
+        <View className="flex-row items-center gap-2.5 flex-1 pr-1">
           <View
-            className={`w-2 h-7 rounded-full ${
-              isAiGenerated ? "bg-amber-500" : "bg-blue-500"
+            className={`w-2.5 h-8 rounded-full ${
+              isAiGenerated ? "bg-purple-600" : "bg-blue-600"
             }`}
           />
           <View className="flex-1">
@@ -50,25 +66,25 @@ export const NoteCard = React.memo(function NoteCard({
               className="text-base font-bold text-stone-900 dark:text-stone-100"
               numberOfLines={1}
             >
-              {note.subject?.name ?? "General"}
+              {note.subject?.name ?? "General Subject"}
             </Text>
-            <Text className="text-xs text-stone-400 dark:text-stone-500 font-medium">
-              {formatShortDate(note.createdAt)}
+            <Text className="text-xs text-stone-400 dark:text-stone-500 font-medium mt-0.5">
+              {formatShortDate(note.createdAt)} • {readingTimeMinutes} min read
             </Text>
           </View>
         </View>
 
         <Badge
-          icon={isAiGenerated ? "zap" : "edit-3"}
-          label={isAiGenerated ? "AI Summary" : "Custom"}
-          variant={isAiGenerated ? "amber" : "blue"}
+          icon={isAiGenerated ? "sparkles" : "edit-3"}
+          label={isAiGenerated ? "✨ AI Summary" : "Custom"}
+          variant={isAiGenerated ? "purple" : "blue"}
         />
       </View>
 
       {/* Snippet Content */}
       <Text
         className="text-sm text-stone-600 dark:text-stone-300 leading-6 font-normal"
-        numberOfLines={4}
+        numberOfLines={3}
       >
         {plainText || "No preview available."}
       </Text>
@@ -77,6 +93,7 @@ export const NoteCard = React.memo(function NoteCard({
       <View className="flex-row items-center justify-between pt-2 border-t border-stone-100 dark:border-stone-800/80">
         <View className="flex-row items-center gap-2">
           <Badge label={`${words} words`} variant="outline" />
+          <Badge label="Auto-saved" variant="emerald" icon="check" />
         </View>
 
         <View className="flex-row items-center gap-1">
@@ -84,32 +101,32 @@ export const NoteCard = React.memo(function NoteCard({
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 rounded-lg"
-            onPress={() => onOpenDetails(note)}
+            className="h-8 w-8 rounded-xl bg-stone-100 dark:bg-stone-800"
+            onPress={handleOpenDetails}
           >
-            <Feather name="eye" size={14} color={APP_COLORS.iconLight} />
+            <Icon name="eye" size={14} color={APP_COLORS.stone700} />
           </Button>
 
           {/* Edit Button */}
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 rounded-lg"
-            onPress={() => onEdit(note)}
+            className="h-8 w-8 rounded-xl bg-stone-100 dark:bg-stone-800"
+            onPress={handleEdit}
             disabled={isSubmitting || isDeleting}
           >
-            <Feather name="edit-2" size={14} color={APP_COLORS.iconLight} />
+            <Icon name="edit-2" size={14} color={APP_COLORS.quizBlue} />
           </Button>
 
           {/* Delete Button */}
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 rounded-lg"
-            onPress={() => onDelete(note)}
+            className="h-8 w-8 rounded-xl bg-stone-100 dark:bg-stone-800"
+            onPress={handleDelete}
             disabled={isSubmitting || isDeleting}
           >
-            <Feather name="trash-2" size={14} color={APP_COLORS.error} />
+            <Icon name="trash-2" size={14} color={APP_COLORS.error} />
           </Button>
         </View>
       </View>

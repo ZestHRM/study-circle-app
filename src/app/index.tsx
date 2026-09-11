@@ -1,4 +1,4 @@
-import { WelcomeScreen } from "@/components/welcome-screen";
+import { WelcomeScreen } from "@/components/onboarding";
 import { useAuth } from "@/lib/auth";
 import { Redirect } from "expo-router";
 import { ActivityIndicator, View } from "react-native";

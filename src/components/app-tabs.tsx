@@ -104,6 +104,20 @@ export default function AppTabs() {
       />
 
       <Tabs.Screen
+        name="progress"
+        options={{
+          title: "Progress",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="chart-timeline-variant"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="circles"
         options={{
           title: "Circles",

@@ -1,4 +1,5 @@
 import { AppHeaderBar } from "@/components/ui/app-header-bar";
+import { AppScreen } from "@/components/ui/app-screen";
 import { Button } from "@/components/ui/button";
 import { HeroBanner } from "@/components/ui/hero-banner";
 import { MoodSelector } from "@/components/ui/mood-selector";
@@ -6,7 +7,6 @@ import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
 import * as React from "react";
 import { Image, View } from "react-native";
-
 export interface CreateFirstSubjectOnboardingProps {
   onCreateSubject?: () => void;
   onCheckInSentiment?: (feeling: "focused" | "okay" | "stressed") => void;
@@ -20,10 +20,10 @@ export const CreateFirstSubjectOnboarding = React.memo(
     const [selectedMood, setSelectedMood] = React.useState<string>("okay");
 
     return (
-      <View className="flex-1 bg-background">
-        <AppHeaderBar logoPosition="left" rightSubtitle="Good to see you!" />
+      <AppScreen edges={[]} contentContainerClassName="pb-12">
+        <AppHeaderBar logoPosition="left" />
 
-        <View className="px-5 pt-5 pb-8 gap-5">
+        <View className="gap-5 pt-4 pb-6">
           <HeroBanner
             title={"Hi there,\n"}
             titleHighlight={"let's get started 👋"}
@@ -31,6 +31,7 @@ export const CreateFirstSubjectOnboarding = React.memo(
             hideIllustration
           />
 
+          {/* Daily Check-in Mood Widget */}
           <View className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100/90 dark:border-blue-900/40 rounded-3xl p-4.5 gap-3 shadow-2xs">
             <View className="flex-row items-center gap-2">
               <Text className="text-lg">☀️</Text>
@@ -60,6 +61,7 @@ export const CreateFirstSubjectOnboarding = React.memo(
             </View>
           </View>
 
+          {/* Create First Subject Callout */}
           <View className="items-center gap-4 pt-2">
             <Image
               source={require("../../../assets/images/subjects-doodle.png")}
@@ -85,7 +87,7 @@ export const CreateFirstSubjectOnboarding = React.memo(
             />
           </View>
         </View>
-      </View>
+      </AppScreen>
     );
   },
 );

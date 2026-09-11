@@ -210,7 +210,7 @@ export function AddNoteDialog({
                   size={14}
                   color={APP_COLORS.primaryDark}
                 />
-                <Text className="text-xs font-semibold text-[#7C3AED]">
+                <Text variant="subhead" style={{ color: "#7C3AED" }}>
                   Create New Subject
                 </Text>
               </Button>

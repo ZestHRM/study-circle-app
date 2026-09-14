@@ -41,8 +41,11 @@ export const NotesTab = React.memo(function NotesTab({
   const statsItems = React.useMemo(
     () => [
       { icon: "layers", value: `${sections.length}`, label: "Topics" },
-      { icon: "clock", value: `${Math.max(3, sections.length * 2)}m`, label: "Read time" },
-      { icon: "check-circle", value: "100%", label: "Complete" },
+      {
+        icon: "clock",
+        value: `${Math.max(3, sections.length * 2)}m`,
+        label: "Read time",
+      },
     ],
     [sections.length],
   );
@@ -72,7 +75,10 @@ export const NotesTab = React.memo(function NotesTab({
         <View className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-950/40 items-center justify-center">
           <Icon name="alert-triangle" size={28} color={APP_COLORS.error} />
         </View>
-        <Text variant="h3" className="text-center text-red-600 dark:text-red-400 font-extrabold">
+        <Text
+          variant="h3"
+          className="text-center text-red-600 dark:text-red-400 font-extrabold"
+        >
           Notes Generation Failed
         </Text>
         <Text variant="muted" className="text-center leading-6 font-medium">
@@ -184,7 +190,10 @@ export const NotesTab = React.memo(function NotesTab({
               </View>
               <View className="flex-row items-center gap-1.5">
                 <View className="w-2 h-2 rounded-full bg-emerald-400" />
-                <Text variant="caption" className="text-emerald-300 font-semibold">
+                <Text
+                  variant="caption"
+                  className="text-emerald-300 font-semibold"
+                >
                   Ready
                 </Text>
               </View>
@@ -246,7 +255,10 @@ export const NotesTab = React.memo(function NotesTab({
 
         {/* ── Section Preview Label ── */}
         <View className="flex-row items-center justify-between px-4 mb-2">
-          <Text variant="caption" className="font-bold uppercase tracking-wider">
+          <Text
+            variant="caption"
+            className="font-bold uppercase tracking-wider"
+          >
             Topics Covered
           </Text>
           <Pressable onPress={onReadNotes} className="active:opacity-70">
@@ -279,16 +291,18 @@ export const NotesTab = React.memo(function NotesTab({
                     {section.heading}
                   </Text>
                   {section.bullets[0] ? (
-                    <Text variant="caption" numberOfLines={1} className="mt-0.5">
+                    <Text
+                      variant="caption"
+                      numberOfLines={1}
+                      className="mt-0.5"
+                    >
                       {section.bullets[0]}
                     </Text>
                   ) : null}
                 </View>
 
                 <View className="flex-row items-center gap-1">
-                  <Text variant="caption">
-                    {section.bullets.length} points
-                  </Text>
+                  <Text variant="caption">{section.bullets.length} points</Text>
                   <Icon
                     name="chevron-right"
                     size={14}
@@ -318,10 +332,16 @@ export const NotesTab = React.memo(function NotesTab({
               <Icon name="zap" size={15} color="#fff" />
             </View>
             <View className="flex-1">
-              <Text variant="h4" className="text-emerald-800 dark:text-emerald-200">
+              <Text
+                variant="h4"
+                className="text-emerald-800 dark:text-emerald-200"
+              >
                 Quiz is ready!
               </Text>
-              <Text variant="caption" className="text-emerald-600 dark:text-emerald-400 mt-0.5">
+              <Text
+                variant="caption"
+                className="text-emerald-600 dark:text-emerald-400 mt-0.5"
+              >
                 Practice what you just learned →
               </Text>
             </View>

@@ -3,8 +3,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import type { Quiz } from "@/services";
+import { useRouter } from "expo-router";
 import * as React from "react";
-import { Linking, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 
 interface QuizTabProps {
   quiz: Quiz | null;
@@ -18,14 +19,6 @@ interface QuizTabProps {
   materialTitle: string;
 }
 
-const BILLING_URL = "https://app.usestudycircle.ai/billings";
-
-const PAYWALL_FEATURES = [
-  { icon: "layers", label: "50+ practice sets", color: APP_COLORS.brandPurple },
-  { icon: "message-square", label: "Instant feedback", color: APP_COLORS.quizBlue },
-  { icon: "bar-chart-2", label: "Detailed performance reports", color: "#059669" },
-] as const;
-
 export const QuizTab = React.memo(function QuizTab({
   quiz,
   isLoading,
@@ -37,9 +30,54 @@ export const QuizTab = React.memo(function QuizTab({
   startingQuizId,
   materialTitle,
 }: QuizTabProps) {
+  const router = useRouter();
   const handleOpenBilling = React.useCallback(() => {
-    Linking.openURL(BILLING_URL);
-  }, []);
+    router.push("/subscriptions" as any);
+  }, [router]);
+
+  const totalQuestionsCount =
+    quiz?._count?.quizQuestions ??
+    (quiz as any)?.totalQuestions ??
+    (quiz as any)?.quizQuestions?.length ??
+    0;
+
+  const paywallFeatures = React.useMemo(() => {
+    const questionText =
+      totalQuestionsCount > 0
+        ? `${totalQuestionsCount} practice questions included`
+        : "AI-generated practice questions";
+
+    return [
+      { icon: "layers", label: questionText, color: APP_COLORS.brandPurple },
+      {
+        icon: "message-square",
+        label: "Instant feedback",
+        color: APP_COLORS.quizBlue,
+      },
+      {
+        icon: "bar-chart-2",
+        label: "Detailed performance reports",
+        color: APP_COLORS.emerald600,
+      },
+    ];
+  }, [totalQuestionsCount]);
+
+  const sampleQuestions = React.useMemo(() => {
+    if (quiz && (quiz as any).quizQuestions?.length > 0) {
+      return (quiz as any).quizQuestions
+        .slice(0, 3)
+        .map((q: any, idx: number) => ({
+          id: `Q${idx + 1}`,
+          q: q.question ?? q.title ?? `Question ${idx + 1}`,
+        }));
+    }
+    const title = materialTitle?.trim() || "Study Material";
+    return [
+      { id: "Q1", q: `Key concepts of ${title}` },
+      { id: "Q2", q: `Core principles in ${title}` },
+      { id: "Q3", q: `Practical applications of ${title}` },
+    ];
+  }, [quiz, materialTitle]);
 
   if (isLoading) {
     return (
@@ -54,8 +92,6 @@ export const QuizTab = React.memo(function QuizTab({
 
   // ── Free User or Forbidden — Exact Paywall UI matching design ──
   if (isForbidden || !isPro) {
-    const topicKeyword = materialTitle?.split(" ")?.[0] ?? "DBMS";
-
     return (
       <ScrollView
         className="flex-1 bg-slate-50 dark:bg-stone-950"
@@ -87,7 +123,10 @@ export const QuizTab = React.memo(function QuizTab({
             <Text variant="h2" className="text-center">
               Your quiz is ready!
             </Text>
-            <Text variant="muted" className="text-center leading-relaxed max-w-[280px]">
+            <Text
+              variant="muted"
+              className="text-center leading-relaxed max-w-[280px]"
+            >
               We created a practice set from your material. Test your knowledge
               and boost your score.
             </Text>
@@ -95,24 +134,19 @@ export const QuizTab = React.memo(function QuizTab({
 
           {/* Locked Sample Questions Box */}
           <View className="w-full bg-white dark:bg-stone-900 rounded-2xl border border-purple-100 dark:border-purple-900/50 overflow-hidden divide-y divide-purple-50 dark:divide-stone-800">
-            {[
-              { id: "Q1", q: `What is ${topicKeyword}?` },
-              { id: "Q2", q: `Which model is used in ${topicKeyword}?` },
-              { id: "Q3", q: `What is normalization?` },
-            ].map((item) => (
+            {sampleQuestions.map((item: { id: string; q: string }) => (
               <View
                 key={item.id}
                 className="flex-row items-center justify-between px-4 py-3 bg-purple-50/20 dark:bg-stone-900"
               >
                 <View className="flex-row items-center gap-3 flex-1 pr-2">
-                  <Text variant="caption" className="font-black text-blue-600 dark:text-blue-400 w-6">
+                  <Text
+                    variant="caption"
+                    className="font-black text-blue-600 dark:text-blue-400 w-6"
+                  >
                     {item.id}
                   </Text>
-                  <Text
-                    variant="subhead"
-                    className="flex-1"
-                    numberOfLines={1}
-                  >
+                  <Text variant="subhead" className="flex-1" numberOfLines={1}>
                     {item.q}
                   </Text>
                 </View>
@@ -135,7 +169,7 @@ export const QuizTab = React.memo(function QuizTab({
 
           {/* Feature Checklist */}
           <View className="w-full gap-2.5 pt-2 px-2">
-            {PAYWALL_FEATURES.map((feature) => (
+            {paywallFeatures.map((feature) => (
               <View key={feature.label} className="flex-row items-center gap-3">
                 <View
                   className="w-7 h-7 rounded-xl items-center justify-center"
@@ -147,18 +181,14 @@ export const QuizTab = React.memo(function QuizTab({
                     color={feature.color}
                   />
                 </View>
-                <Text variant="subhead">
-                  {feature.label}
-                </Text>
+                <Text variant="subhead">{feature.label}</Text>
               </View>
             ))}
           </View>
 
           {/* Restore purchase footer link */}
           <View className="flex-row items-center justify-center gap-1 pt-2">
-            <Text variant="caption">
-              Already a Pro user?
-            </Text>
+            <Text variant="caption">Already a Pro user?</Text>
             <Pressable onPress={handleOpenBilling}>
               <Text variant="primary" className="text-xs">
                 Restore purchase
@@ -178,7 +208,7 @@ export const QuizTab = React.memo(function QuizTab({
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       >
         <View className="w-16 h-16 rounded-2xl bg-purple-100 dark:bg-purple-950/40 items-center justify-center">
-          <Icon name="cpu" size={28} color="#7C3AED" />
+          <Icon name="cpu" size={28} color={APP_COLORS.purpleAccent} />
         </View>
         <Text variant="h3" className="text-center">
           Quiz is being generated…
@@ -226,7 +256,7 @@ export const QuizTab = React.memo(function QuizTab({
       {/* Hero */}
       <View className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200/60 dark:border-stone-800 px-6 py-8 items-center gap-3">
         <View className="w-20 h-20 rounded-3xl bg-blue-100 dark:bg-blue-950/40 items-center justify-center">
-          <Icon name="clipboard" size={38} color="#2563EB" />
+          <Icon name="clipboard" size={38} color={APP_COLORS.quizBlue} />
         </View>
         <Text variant="h2" className="text-center">
           Your quiz is ready!
@@ -236,21 +266,34 @@ export const QuizTab = React.memo(function QuizTab({
           and boost your score.
         </Text>
 
-        {/* Stats */}
+        {/* Dynamic Quiz Stats */}
         <View className="flex-row gap-3 mt-1 w-full">
           <View className="flex-1 bg-blue-50 dark:bg-blue-950/30 rounded-2xl p-3 items-center gap-0.5">
-            <Text variant="h2" className="text-blue-600">
-              {quiz.totalQuestions ?? "?"}
+            <Text variant="h2" className="text-blue-600 font-black">
+              {quiz.totalQuestions ??
+                (quiz as any).quizQuestions?.length ??
+                "?"}
             </Text>
             <Text variant="caption">Questions</Text>
           </View>
-          <View className="flex-1 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl p-3 items-center gap-0.5">
-            <Text variant="h2" className="text-emerald-600">AI</Text>
-            <Text variant="caption">Generated</Text>
+
+          <View className="flex-1 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl p-3 items-center gap-0.5 justify-center">
+            <Text
+              variant="h2"
+              className="text-emerald-600 font-black capitalize text-base"
+            >
+              {quiz.difficultyLevel
+                ? quiz.difficultyLevel.toLowerCase()
+                : "Medium"}
+            </Text>
+            <Text variant="caption">Difficulty</Text>
           </View>
+
           <View className="flex-1 bg-purple-50 dark:bg-purple-950/30 rounded-2xl p-3 items-center gap-0.5">
-            <Text variant="h2" className="text-purple-600">MCQ</Text>
-            <Text variant="caption">Format</Text>
+            <Text variant="h2" className="text-purple-600 font-black">
+              {quiz._count?.quizAttempts ?? (quiz as any).attemptsCount ?? 0}
+            </Text>
+            <Text variant="caption">Attempts</Text>
           </View>
         </View>
       </View>
@@ -262,7 +305,7 @@ export const QuizTab = React.memo(function QuizTab({
         className="bg-blue-600 rounded-2xl flex-row items-center justify-center gap-2 active:opacity-80 py-3.5"
         style={{ height: 52 }}
       >
-        <Icon name="zap" size={16} color="#fff" />
+        <Icon name="zap" size={16} color={APP_COLORS.white} />
         <Text variant="subhead" className="text-white font-bold">
           {isStarting && startingQuizId === quiz.id
             ? "Starting…"

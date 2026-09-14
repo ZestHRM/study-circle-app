@@ -1,18 +1,26 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { HeroBanner } from "@/components/ui/hero-banner";
 import { Icon } from "@/components/ui/icon";
+import { SectionHeader } from "@/components/ui/section-header";
+import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
+import { formatInputDate } from "@/lib/utils/formatters";
 import * as React from "react";
-import { Image, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 
-export type MaterialFilterType = "all" | "notes_ready" | "quiz_ready" | "processing";
-
-interface MaterialsHeaderProps {
+export interface MaterialsHeaderProps {
   onUploadPress: () => void;
-  onPasteTextPress?: () => void;
-  activeFilter?: MaterialFilterType;
-  onFilterChange?: (filter: MaterialFilterType) => void;
   totalMaterialsCount?: number;
+  selectedSubjectId?: string;
+  onSubjectChange?: (subjectId: string) => void;
+  subjects?: Array<any>;
+  selectedDate?: Date | null;
+  onDateChange?: (date: Date | null) => void;
+  onClearFilters?: () => void;
 }
 
 const BENEFITS = [
@@ -39,104 +47,194 @@ const BENEFITS = [
   },
 ] as const;
 
+const StaticHeroHeader = React.memo(function StaticHeroHeader() {
+  return (
+    <HeroBanner
+      title={
+        <Text variant="h1" className="tracking-tight leading-tight">
+          Turn your material{"\n"}into a{" "}
+          <Text variant="primary" className="text-3xl font-extrabold">
+            study plan
+          </Text>
+        </Text>
+      }
+      subtitle="Upload your notes or PDFs and we'll turn them into clear AI notes + practice."
+      imageSource={require("../../../assets/images/student-study-hero.png")}
+      imageWidth={140}
+      imageHeight={115}
+    />
+  );
+});
+
+const BenefitsRow = React.memo(function BenefitsRow() {
+  return (
+    <View className="flex-row items-center justify-between gap-2.5">
+      {BENEFITS.map((benefit) => (
+        <Card
+          key={benefit.title}
+          className="flex-1 p-3 items-start justify-start shadow-2xs"
+        >
+          <View
+            className={`w-8 h-8 rounded-xl ${benefit.bgClass} items-center justify-center mb-2`}
+          >
+            <Icon
+              name={benefit.icon as any}
+              size={16}
+              color={benefit.iconColor}
+            />
+          </View>
+          <Text variant="subhead" className="font-extrabold">
+            {benefit.title}
+          </Text>
+          <Text
+            variant="muted"
+            className="text-[10px] leading-3 mt-0.5"
+            numberOfLines={2}
+          >
+            {benefit.desc}
+          </Text>
+        </Card>
+      ))}
+    </View>
+  );
+});
+
+const UploadActionCard = React.memo(function UploadActionCard({
+  onPress,
+}: {
+  onPress: () => void;
+}) {
+  return (
+    <Card
+      onPress={onPress}
+      className="p-4 flex-row items-center justify-between rounded-3xl"
+    >
+      <View className="flex-row items-center gap-3.5 flex-1 pr-2">
+        <View className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/60 items-center justify-center">
+          <Icon name="upload-cloud" size={22} color={APP_COLORS.quizBlue} />
+        </View>
+
+        <View className="flex-1">
+          <Text variant="h3" numberOfLines={1}>
+            Upload your material
+          </Text>
+          <Text variant="muted" className="mt-0.5 text-xs" numberOfLines={1}>
+            Select subject & upload PDFs, notes or slides
+          </Text>
+        </View>
+      </View>
+
+      <Button
+        variant="quiz"
+        size="sm"
+        title="Upload →"
+        icon="plus"
+        iconSize={14}
+        onPress={onPress}
+        className="rounded-2xl"
+      />
+    </Card>
+  );
+});
+
 export const MaterialsHeader = React.memo(function MaterialsHeader({
   onUploadPress,
-  onPasteTextPress,
-  activeFilter = "all",
-  onFilterChange,
   totalMaterialsCount = 0,
+  selectedSubjectId = "",
+  onSubjectChange,
+  subjects = [],
+  selectedDate = null,
+  onDateChange,
+  onClearFilters,
 }: MaterialsHeaderProps) {
+  const isSubjectActive = Boolean(selectedSubjectId);
+  const isDateActive = Boolean(selectedDate);
+  const hasActiveFilters = isSubjectActive || isDateActive;
+
+  const selectedSubjectObj = React.useMemo(() => {
+    if (!selectedSubjectId) return null;
+    return subjects.find((s) => String(s.id) === String(selectedSubjectId));
+  }, [subjects, selectedSubjectId]);
+
+  const handleClearSubject = React.useCallback(() => {
+    onSubjectChange?.("");
+  }, [onSubjectChange]);
+
+  const handleClearDate = React.useCallback(() => {
+    onDateChange?.(null);
+  }, [onDateChange]);
+
   return (
     <View className="mb-4 gap-4">
-      {/* 1. Reusable Hero Banner Component */}
-      <HeroBanner
-        title={
-          <Text variant="h1" className="tracking-tight leading-tight">
-            Turn your material{"\n"}into a{" "}
-            <Text variant="primary" className="text-3xl font-extrabold">
-              study plan
-            </Text>
-          </Text>
-        }
-        subtitle="Upload your notes or PDFs and we'll turn them into clear AI notes + practice."
-        imageSource={require("../../../assets/images/student-study-hero.png")}
-        imageWidth={140}
-        imageHeight={115}
-      />
+      <StaticHeroHeader />
+      <UploadActionCard onPress={onUploadPress} />
+      <BenefitsRow />
 
-      {/* 2. Upload Material Action Card */}
-      <Pressable
-        onPress={onUploadPress}
-        className="bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-3xl p-4 flex-row items-center justify-between shadow-2xs active:opacity-90"
-      >
-        <View className="flex-row items-center gap-3.5 flex-1 pr-2">
-          {/* Cloud Upload Icon Badge */}
-          <View className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/60 items-center justify-center">
-            <Icon name="upload-cloud" size={22} color={APP_COLORS.quizBlue} />
-          </View>
+      <View className="pt-2">
+        <SectionHeader
+          title="Your recent materials"
+          actionLabel={hasActiveFilters ? "Clear filters" : undefined}
+          onAction={hasActiveFilters ? onClearFilters : undefined}
+        />
+      </View>
 
-          <View className="flex-1">
-            <Text variant="h3" numberOfLines={1}>
-              Upload your material
-            </Text>
-            <Text variant="muted" className="mt-0.5" numberOfLines={1}>
-              Select subject & upload PDFs, notes or slides
-            </Text>
-          </View>
-        </View>
-
-        {/* Action Button */}
-        <View className="bg-blue-600 px-4 py-2.5 rounded-2xl flex-row items-center gap-1.5 shadow-2xs">
-          <Icon name="plus" size={14} color={APP_COLORS.white} />
-          <Text variant="caption" className="font-bold text-white">
-            Upload →
-          </Text>
-        </View>
-      </Pressable>
-
-      {/* 3. Benefit Feature Chips Row (3 horizontal cards) */}
-      <View className="flex-row items-center justify-between gap-2.5">
-        {BENEFITS.map((benefit) => (
-          <View
-            key={benefit.title}
-            className="flex-1 bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 rounded-2xl p-3 items-start shadow-2xs"
-          >
-            <View className={`w-8 h-8 rounded-xl ${benefit.bgClass} items-center justify-center mb-2`}>
-              <Icon name={benefit.icon as any} size={16} color={benefit.iconColor} />
+      <Card className="p-3 rounded-2xl gap-2.5">
+        <View className="flex-row items-center gap-2">
+          {onSubjectChange ? (
+            <View className="flex-1">
+              <SubjectSelectDropdown
+                value={selectedSubjectId}
+                onValueChange={onSubjectChange}
+                subjects={subjects}
+                showAllOption={true}
+                allOptionLabel="All Subjects"
+                placeholder="Filter by Subject..."
+                triggerClassName="h-11 px-3 rounded-xl text-xs bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700"
+              />
             </View>
-            <Text variant="subhead" className="font-extrabold">
-              {benefit.title}
-            </Text>
-            <Text
-              variant="muted"
-              className="text-[10px] leading-3 mt-0.5"
-              numberOfLines={2}
-            >
-              {benefit.desc}
-            </Text>
-          </View>
-        ))}
-      </View>
+          ) : null}
 
-      {/* 4. Section Header: "Your recent materials" + "See all >" */}
-      <View className="flex-row items-center justify-between pt-2">
-        <Text variant="h2">
-          Your recent materials
-        </Text>
-        {onFilterChange ? (
-          <Pressable
-            onPress={() =>
-              onFilterChange(activeFilter === "all" ? "notes_ready" : "all")
-            }
-            className="flex-row items-center gap-1 active:opacity-70"
-          >
-            <Text variant="muted" className="text-xs font-bold text-stone-500">
-              {activeFilter === "all" ? "Filter ready" : "See all"}
+          {onDateChange ? (
+            <View className="flex-1">
+              <DatePicker
+                value={selectedDate}
+                onChange={onDateChange}
+                placeholder="Filter by Date..."
+                clearable={true}
+              />
+            </View>
+          ) : null}
+        </View>
+
+        {hasActiveFilters ? (
+          <View className="flex-row items-center gap-1.5 flex-wrap pt-1 border-t border-stone-100 dark:border-stone-800">
+            <Text className="text-[11px] font-bold text-stone-400 dark:text-stone-500">
+              Active:
             </Text>
-            <Icon name="chevron-right" size={14} color={APP_COLORS.stone400} />
-          </Pressable>
+            {isSubjectActive ? (
+              <Pressable onPress={handleClearSubject}>
+                <Badge
+                  label={`Subject: ${selectedSubjectObj?.name ?? selectedSubjectId}`}
+                  variant="purple"
+                  icon="x"
+                  iconSize={10}
+                />
+              </Pressable>
+            ) : null}
+
+            {isDateActive && selectedDate ? (
+              <Pressable onPress={handleClearDate}>
+                <Badge
+                  label={`Date: ${formatInputDate(selectedDate)}`}
+                  variant="blue"
+                  icon="x"
+                  iconSize={10}
+                />
+              </Pressable>
+            ) : null}
+          </View>
         ) : null}
-      </View>
+      </Card>
     </View>
   );
 });

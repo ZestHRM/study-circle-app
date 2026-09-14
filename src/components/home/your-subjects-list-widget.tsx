@@ -1,5 +1,6 @@
 import { Icon } from "@/components/ui/icon";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { SectionHeader } from "@/components/ui/section-header";
 import { Text } from "@/components/ui/text";
 import { UI_STYLES } from "@/constants/styles";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
@@ -52,17 +53,11 @@ export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget
 
   return (
     <View className="gap-3 pt-2">
-      {/* Header Row */}
-      <View className={UI_STYLES.rowBetween}>
-        <Text variant="h2" className={UI_STYLES.sectionHeaderTitle}>
-          Your subjects
-        </Text>
-        <Pressable onPress={handleSeeAll} className="active:opacity-70">
-          <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-            See all
-          </Text>
-        </Pressable>
-      </View>
+      <SectionHeader
+        title="Your subjects"
+        actionLabel="See all"
+        onAction={handleSeeAll}
+      />
 
       {/* Subjects Progress List */}
       <View className="gap-3">

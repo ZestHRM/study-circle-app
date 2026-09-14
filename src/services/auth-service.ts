@@ -12,7 +12,11 @@ export const authApi = {
     return RestClient<AuthResponse>("/auth/login", "POST", payload);
   },
   signup(payload: SignupPayload) {
-    return RestClient<MessageResponse & Partial<User>>("/auth/signup", "POST", payload);
+    return RestClient<MessageResponse & Partial<User>>(
+      "/auth/signup",
+      "POST",
+      payload,
+    );
   },
   me(token?: string) {
     return RestClient<User>("/auth/me", "GET", {}, { token });
@@ -21,10 +25,14 @@ export const authApi = {
     return RestClient<AuthResponse>("/auth/verify-email", "POST", payload);
   },
   resendVerification(email: string) {
-    return RestClient<MessageResponse>("/auth/resend-verification", "POST", { email });
+    return RestClient<MessageResponse>("/auth/resend-verification", "POST", {
+      email,
+    });
   },
   forgotPassword(email: string) {
-    return RestClient<MessageResponse>("/auth/forgot-password", "POST", { email });
+    return RestClient<MessageResponse>("/auth/forgot-password", "POST", {
+      email,
+    });
   },
   resetPassword(payload: {
     email: string;

@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { StatusBar, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { Uniwind } from "uniwind";
 
 SplashScreen.preventAutoHideAsync();
@@ -95,6 +96,9 @@ export default function RootLayout() {
           : "system",
     );
   }, [colorScheme]);
+
+  // Initialize push notification listeners and channels
+  usePushNotifications(true);
 
   const activeTheme = colorScheme === "dark" ? DarkTheme : WhiteDefaultTheme;
 

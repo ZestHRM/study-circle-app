@@ -81,6 +81,17 @@ export function formatShortDate(dateStr?: string | null): string {
   });
 }
 
+export function formatInputDate(dateInput?: string | Date | null): string {
+  if (!dateInput) return "";
+  const parsed = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function formatDayDate(dateInput?: string | number | Date | null): string {
   const parsed = dateInput ? new Date(dateInput) : new Date();
   if (Number.isNaN(parsed.getTime())) return "";

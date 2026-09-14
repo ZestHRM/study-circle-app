@@ -79,7 +79,7 @@ export default function AppTabs() {
         }}
       />
 
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="notes"
         options={{
           title: "Notes",
@@ -87,9 +87,9 @@ export default function AppTabs() {
             <MaterialCommunityIcons name="notebook" size={size} color={color} />
           ),
         }}
-      />
+      /> */}
 
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="quizzes"
         options={{
           title: "Quizzes",
@@ -101,7 +101,7 @@ export default function AppTabs() {
             />
           ),
         }}
-      />
+      /> */}
 
       <Tabs.Screen
         name="progress"

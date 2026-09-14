@@ -1,9 +1,10 @@
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { cn } from "@/lib/utils";
 import * as React from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 
 export interface FeatureCardProps {
   title: string;
@@ -21,7 +22,7 @@ export interface FeatureCardProps {
 }
 
 /**
- * Reusable FeatureCard component for AI study tools & dashboard action cards.
+ * Reusable FeatureCard component for AI study tools & dashboard action cards using Card primitive.
  */
 export const FeatureCard = React.memo(function FeatureCard({
   title,
@@ -38,12 +39,9 @@ export const FeatureCard = React.memo(function FeatureCard({
   className,
 }: FeatureCardProps) {
   return (
-    <Pressable
+    <Card
       onPress={onPress}
-      className={cn(
-        "flex-1 bg-white dark:bg-stone-900 rounded-3xl p-4 border border-stone-200 dark:border-stone-800 shadow-sm justify-between active:opacity-80",
-        className,
-      )}
+      className={cn("flex-1 justify-between p-4 rounded-3xl", className)}
     >
       <View className="flex-row items-center justify-between mb-3">
         <View
@@ -67,7 +65,7 @@ export const FeatureCard = React.memo(function FeatureCard({
             ) : null}
             <Text
               variant="caption"
-              className={cn("font-black uppercase", badgeTextColor)}
+              className={cn("font-black uppercase text-[10px]", badgeTextColor)}
             >
               {badgeLabel}
             </Text>
@@ -82,7 +80,7 @@ export const FeatureCard = React.memo(function FeatureCard({
             {countText}
           </Text>
         ) : null}
-        <Text variant="muted" className="mt-1" numberOfLines={2}>
+        <Text variant="muted" className="mt-1 text-xs" numberOfLines={2}>
           {description}
         </Text>
       </View>
@@ -90,6 +88,6 @@ export const FeatureCard = React.memo(function FeatureCard({
       <View className="items-end mt-2">
         <Icon name="chevron-right" size={16} color={APP_COLORS.stone400} />
       </View>
-    </Pressable>
+    </Card>
   );
 });

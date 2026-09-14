@@ -5,7 +5,7 @@ import { APP_COLORS } from "@/constants/colors";
 import type { StudyMaterial } from "@/services";
 import * as React from "react";
 import { Alert, Linking, Pressable, ScrollView, View } from "react-native";
-import { isFailed, isNotesReady, isQuizReady } from "../material-card";
+import { isFailed, isNotesReady, isQuizReady } from "@/lib/utils/material-status";
 
 interface MaterialTabProps {
   material: StudyMaterial | null;

@@ -1,9 +1,10 @@
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { cn } from "@/lib/utils";
 import * as React from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 
 export interface ListItemCardProps {
   title: string;
@@ -16,7 +17,7 @@ export interface ListItemCardProps {
 }
 
 /**
- * Reusable horizontal row card for materials, quizzes, and list items.
+ * Reusable horizontal row card for materials, quizzes, and list items using Card primitive.
  */
 export const ListItemCard = React.memo(function ListItemCard({
   title,
@@ -28,12 +29,9 @@ export const ListItemCard = React.memo(function ListItemCard({
   className,
 }: ListItemCardProps) {
   return (
-    <Pressable
+    <Card
       onPress={onPress}
-      className={cn(
-        "bg-white dark:bg-stone-900 rounded-2xl p-4 flex-row items-center justify-between border border-stone-200 dark:border-stone-800 shadow-sm active:opacity-80",
-        className,
-      )}
+      className={cn("flex-row items-center justify-between p-4", className)}
     >
       <View className="flex-row items-center gap-3 flex-1 pr-2">
         <View
@@ -49,13 +47,13 @@ export const ListItemCard = React.memo(function ListItemCard({
           <Text variant="h4" numberOfLines={1}>
             {title}
           </Text>
-          <Text variant="muted" className="mt-0.5" numberOfLines={1}>
+          <Text variant="muted" className="mt-0.5 text-xs" numberOfLines={1}>
             {subtitle}
           </Text>
         </View>
       </View>
 
       <Icon name="chevron-right" size={18} color={APP_COLORS.stone400} />
-    </Pressable>
+    </Card>
   );
 });

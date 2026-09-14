@@ -33,7 +33,6 @@ export function StartQuizSheet({
 }) {
   const { token } = useAuth();
   const confirm = useConfirmDialog();
-  const [isBookmarked, setIsBookmarked] = React.useState(false);
   const [secondsLeft, setSecondsLeft] = React.useState(135); // 02:15 countdown
 
   // Timer countdown interval
@@ -288,7 +287,7 @@ export function StartQuizSheet({
         className="flex-1 bg-white dark:bg-stone-950"
         edges={["top", "bottom"]}
       >
-        {/* 1. Header Bar: Back Arrow, StudyCircleAI Logo, Bookmark */}
+        {/* 1. Header Bar: Back Arrow & StudyCircleAI Logo */}
         <View className="flex-row items-center justify-between px-5 py-3 border-b border-stone-100 dark:border-stone-800">
           <Pressable
             onPress={() => void onAttemptExit()}
@@ -300,17 +299,7 @@ export function StartQuizSheet({
 
           <AppHeaderBrand logoSize={34} />
 
-          <Pressable
-            onPress={() => setIsBookmarked((v) => !v)}
-            className="w-10 h-10 rounded-full items-center justify-center bg-stone-100 dark:bg-stone-800 active:opacity-70"
-            hitSlop={8}
-          >
-            <Icon
-              name="bookmark"
-              size={20}
-              color={isBookmarked ? "#0066FF" : APP_COLORS.stone700}
-            />
-          </Pressable>
+          <View className="w-10 h-10" />
         </View>
 
         {/* 2. Main Screen Scrollable Content */}

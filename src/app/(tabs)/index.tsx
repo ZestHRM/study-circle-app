@@ -3,7 +3,6 @@ import {
   HomeGreeting,
   NextExamWidget,
   ViewFeedbackDialog,
-  YourSubjectsListWidget,
 } from "@/components/home";
 import { CreateFirstSubjectOnboarding } from "@/components/onboarding";
 import { Spinner } from "@/components/ui/spinner";
@@ -79,9 +78,16 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }} className="bg-background flex-1" edges={["top"]}>
+    <SafeAreaView
+      style={{ flex: 1 }}
+      className="bg-background flex-1"
+      edges={["top"]}
+    >
       {isLoadingSubjects && subjects.length === 0 ? (
-        <View style={{ flex: 1 }} className="flex-1 justify-center items-center py-12">
+        <View
+          style={{ flex: 1 }}
+          className="flex-1 justify-center items-center py-12"
+        >
           <Spinner
             variant="quiz"
             size="large"
@@ -114,8 +120,6 @@ export default function HomeScreen() {
               onCheckIn={openDailyCheckIn}
               onViewFeedback={openFeedback}
             />
-
-            <YourSubjectsListWidget />
           </View>
         </ScrollView>
       )}

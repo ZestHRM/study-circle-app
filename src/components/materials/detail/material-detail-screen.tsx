@@ -13,7 +13,7 @@ import type { Quiz, QuizAttempt } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { Alert, StatusBar, View } from "react-native";
-import { isFailed, isNotesReady, isQuizReady } from "../material-card";
+import { isFailed, isNotesReady, isQuizReady } from "@/lib/utils/material-status";
 import { DetailHeader } from "./detail-header";
 import { DetailTabBar } from "./detail-tab-bar";
 import { MaterialTab } from "./material-tab";
@@ -55,9 +55,32 @@ export function MaterialDetailScreen({
   } = useQuizzesInfiniteQuery({ limit: 20 });
   const startAttemptMutation = useStartQuizAttempt();
 
-  const isPro = Boolean(
-    user?.subscriptionTier && user.subscriptionTier !== "FREE",
-  );
+  const isPro = React.useMemo(() => {
+    if (!user) return !isForbidden;
+    const tier = (
+      user.subscriptionTier ||
+      (user as any).tier ||
+      (user as any).plan ||
+      (user as any).subscription?.plan ||
+      (user as any).subscription?.status ||
+      ""
+    )
+      .toString()
+      .toUpperCase();
+
+    if (tier && tier !== "FREE" && tier !== "GUEST" && tier !== "INACTIVE") {
+      return true;
+    }
+    if (
+      (user as any).isPro ||
+      (user as any).isPremium ||
+      (user as any).hasSubscription ||
+      (user as any).subscribed
+    ) {
+      return true;
+    }
+    return !isForbidden;
+  }, [user, isForbidden]);
 
   const materialQuiz = React.useMemo(() => {
     if (!material) return null;
@@ -151,7 +174,11 @@ export function MaterialDetailScreen({
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       {/* Tab Navigation */}
-      <DetailTabBar activeTab={activeTab} onSelectTab={setActiveTab} />
+      <DetailTabBar
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        isPro={isPro}
+      />
 
       {/* Active Tab Screen Content */}
       <View className="flex-1" style={{ flex: 1 }}>

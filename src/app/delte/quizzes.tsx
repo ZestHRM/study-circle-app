@@ -37,7 +37,9 @@ export default function QuizzesScreen() {
   const [searchText, setSearchText] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [selectedSubjectId, setSelectedSubjectId] = React.useState("");
-  const [startingQuizId, setStartingQuizId] = React.useState<string | null>(null);
+  const [startingQuizId, setStartingQuizId] = React.useState<string | null>(
+    null,
+  );
 
   const [selectedQuizAttempt, setSelectedQuizAttempt] =
     React.useState<QuizAttempt | null>(null);
@@ -53,7 +55,7 @@ export default function QuizzesScreen() {
         setSelectedQuizAttempt(null);
         setSelectedQuizForResults(null);
       };
-    }, [])
+    }, []),
   );
 
   const {
@@ -123,7 +125,7 @@ export default function QuizzesScreen() {
         setStartingQuizId(null);
       }
     },
-    [startAttemptMutation]
+    [startAttemptMutation],
   );
 
   const handleViewResults = React.useCallback((quiz: Quiz) => {
@@ -134,12 +136,15 @@ export default function QuizzesScreen() {
     setSelectedQuizAttempt(null);
   }, []);
 
-  const handleStartSheetOpenChange = React.useCallback((open: boolean) => {
-    if (!open) {
-      setSelectedQuizAttempt(null);
-      refetchQuizzes();
-    }
-  }, [refetchQuizzes]);
+  const handleStartSheetOpenChange = React.useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setSelectedQuizAttempt(null);
+        refetchQuizzes();
+      }
+    },
+    [refetchQuizzes],
+  );
 
   const handleResultsSheetOpenChange = React.useCallback((open: boolean) => {
     if (!open) {
@@ -157,10 +162,17 @@ export default function QuizzesScreen() {
         quiz={item}
         onStartQuiz={handleStartQuiz}
         onViewResults={handleViewResults}
-        isStarting={startAttemptMutation.isPending && startingQuizId === item.id}
+        isStarting={
+          startAttemptMutation.isPending && startingQuizId === item.id
+        }
       />
     ),
-    [handleStartQuiz, handleViewResults, startAttemptMutation.isPending, startingQuizId]
+    [
+      handleStartQuiz,
+      handleViewResults,
+      startAttemptMutation.isPending,
+      startingQuizId,
+    ],
   );
 
   const ListHeaderComponent = React.useMemo(
@@ -265,7 +277,7 @@ export default function QuizzesScreen() {
       isFiltered,
       handleClearFilters,
       isSubjectsError,
-    ]
+    ],
   );
 
   const listEmptyComponent = React.useMemo(
@@ -281,7 +293,8 @@ export default function QuizzesScreen() {
               Plan Upgrade Required
             </Text>
             <Text className="text-xs text-amber-900/80 dark:text-amber-300 text-center px-2 leading-5 font-medium">
-              {forbiddenMessage || "Access denied. Upgrade your plan to access this feature."}
+              {forbiddenMessage ||
+                "Access denied. Upgrade your plan to access this feature."}
             </Text>
           </View>
 
@@ -317,7 +330,13 @@ export default function QuizzesScreen() {
           />
         </View>
       ),
-    [isForbidden, forbiddenMessage, isLoadingQuizzes, isFiltered, handleClearFilters],
+    [
+      isForbidden,
+      forbiddenMessage,
+      isLoadingQuizzes,
+      isFiltered,
+      handleClearFilters,
+    ],
   );
 
   const listFooterComponent = React.useMemo(
@@ -345,7 +364,10 @@ export default function QuizzesScreen() {
   );
 
   return (
-    <SafeAreaView className="bg-stone-50 dark:bg-stone-950 flex-1" edges={["top"]}>
+    <SafeAreaView
+      className="bg-stone-50 dark:bg-stone-950 flex-1"
+      edges={["top"]}
+    >
       <FlatList
         data={quizzes}
         keyExtractor={keyExtractor}
@@ -357,7 +379,11 @@ export default function QuizzesScreen() {
         onEndReached={fetchNextPage}
         onEndReachedThreshold={0.4}
         ItemSeparatorComponent={ItemSeparator}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: 32,
+        }}
       />
 
       {/* Quiz Attempt Bottom Sheet */}

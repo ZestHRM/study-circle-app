@@ -1,17 +1,12 @@
 import { useConfirmDialog } from "@/components/confirm-dialog-provider";
-import {
-  MaterialCard,
-  MaterialFilterType,
-  MaterialsHeader,
-  isNotesReady,
-  isQuizReady,
-} from "@/components/materials";
+import { MaterialCard, MaterialsHeader } from "@/components/materials";
 import { AppHeaderBar } from "@/components/ui/app-header-bar";
 import { AppScreen } from "@/components/ui/app-screen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
 import { APP_COLORS } from "@/constants/colors";
 import { useDeleteStudyMaterial, useStudyMaterialsInfinite } from "@/hooks";
+import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
 import { type StudyMaterial } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
@@ -20,8 +15,8 @@ import { Alert, FlatList, RefreshControl, View } from "react-native";
 export default function MaterialsScreen() {
   const router = useRouter();
   const confirm = useConfirmDialog();
-  const [activeFilter, setActiveFilter] =
-    React.useState<MaterialFilterType>("all");
+  const [selectedSubjectId, setSelectedSubjectId] = React.useState<string>("");
+  const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
 
   const {
     materials,
@@ -33,20 +28,33 @@ export default function MaterialsScreen() {
     refetch,
   } = useStudyMaterialsInfinite();
 
+  const { subjects } = useSubjectsQuery();
+
   const deleteMaterialMutation = useDeleteStudyMaterial();
 
   const filteredMaterials = React.useMemo(() => {
-    if (activeFilter === "notes_ready") {
-      return materials.filter((m) => isNotesReady(m));
-    }
-    if (activeFilter === "quiz_ready") {
-      return materials.filter((m) => isQuizReady(m));
-    }
-    if (activeFilter === "processing") {
-      return materials.filter((m) => !isNotesReady(m));
-    }
-    return materials;
-  }, [materials, activeFilter]);
+    return materials.filter((m) => {
+      if (selectedSubjectId) {
+        const mSubjectId = String(m.subjectId ?? m.subject?.id ?? "");
+        if (mSubjectId !== selectedSubjectId) return false;
+      }
+
+      if (selectedDate) {
+        if (m.createdAt) {
+          const itemDateStr = new Date(m.createdAt).toISOString().split("T")[0];
+          const filterDateStr = selectedDate.toISOString().split("T")[0];
+          if (itemDateStr !== filterDateStr) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [materials, selectedSubjectId, selectedDate]);
+
+  const handleClearFilters = React.useCallback(() => {
+    setSelectedSubjectId("");
+    setSelectedDate(null);
+  }, []);
 
   const handleOpenAddDialog = React.useCallback(() => {
     router.push("/materials/upload");
@@ -76,20 +84,6 @@ export default function MaterialsScreen() {
     [confirm, deleteMaterialMutation],
   );
 
-  const handleReadNotes = React.useCallback(
-    (material: StudyMaterial) => {
-      router.push(`/materials/${material.id}` as any);
-    },
-    [router],
-  );
-
-  const handleTakeQuiz = React.useCallback(
-    (material: StudyMaterial) => {
-      router.push(`/materials/${material.id}` as any);
-    },
-    [router],
-  );
-
   const keyExtractor = React.useCallback((item: StudyMaterial) => item.id, []);
 
   const ItemSeparator = React.useCallback(() => <View className="h-3.5" />, []);
@@ -98,31 +92,36 @@ export default function MaterialsScreen() {
     ({ item }: { item: StudyMaterial }) => (
       <MaterialCard
         material={item}
-        onReadNotes={handleReadNotes}
-        onTakeQuiz={handleTakeQuiz}
         onDelete={handleDeleteMaterial}
         isDeleting={deleteMaterialMutation.isPending}
       />
     ),
-    [
-      handleReadNotes,
-      handleTakeQuiz,
-      handleDeleteMaterial,
-      deleteMaterialMutation.isPending,
-    ],
+    [handleDeleteMaterial, deleteMaterialMutation.isPending],
   );
 
   const headerElement = React.useMemo(
     () => (
       <MaterialsHeader
         onUploadPress={handleOpenAddDialog}
-        onPasteTextPress={handleOpenAddDialog}
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
         totalMaterialsCount={materials.length}
+        selectedSubjectId={selectedSubjectId}
+        onSubjectChange={setSelectedSubjectId}
+        subjects={subjects}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        onClearFilters={handleClearFilters}
       />
     ),
-    [handleOpenAddDialog, activeFilter, setActiveFilter, materials.length],
+    [
+      handleOpenAddDialog,
+      materials.length,
+      selectedSubjectId,
+      setSelectedSubjectId,
+      subjects,
+      selectedDate,
+      setSelectedDate,
+      handleClearFilters,
+    ],
   );
 
   const footerElement = React.useMemo(
@@ -139,28 +138,32 @@ export default function MaterialsScreen() {
     [isFetchingNextPage, hasNextPage, filteredMaterials.length],
   );
 
+  const hasActiveFilters = Boolean(selectedSubjectId || selectedDate);
+
   const emptyElement = React.useMemo(
     () =>
       !isLoading ? (
         <EmptyState
           icon="file-text"
           title={
-            activeFilter === "all"
+            !hasActiveFilters
               ? "No Study Materials Yet"
               : "No Matching Materials"
           }
           description={
-            activeFilter === "all"
+            !hasActiveFilters
               ? "Upload your first PDF or document to generate AI notes and practice quizzes automatically."
-              : `No materials found under '${activeFilter.replace("_", " ")}'. Try switching filters or uploading a new file.`
+              : "No materials found matching your selected subject or date filters. Try clearing filters."
           }
-          actionLabel="Upload First Material +"
+          actionLabel={
+            hasActiveFilters ? "Clear All Filters" : "Upload First Material +"
+          }
           actionVariant="quiz"
-          onAction={handleOpenAddDialog}
+          onAction={hasActiveFilters ? handleClearFilters : handleOpenAddDialog}
           className="mt-4"
         />
       ) : null,
-    [isLoading, activeFilter, handleOpenAddDialog],
+    [isLoading, hasActiveFilters, handleClearFilters, handleOpenAddDialog],
   );
 
   const refreshControlElement = React.useMemo(

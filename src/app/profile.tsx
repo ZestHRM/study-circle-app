@@ -8,7 +8,10 @@ import {
 } from "@/components/profile";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { APP_COLORS } from "@/constants/colors";
 import { useAuth } from "@/lib/auth";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as React from "react";
@@ -177,6 +180,33 @@ export default function ProfileScreen() {
             headerIconBgClass="bg-emerald-500/15"
             rows={locationRows}
           />
+
+          {/* Subscription & Plans */}
+          <Card className="p-4 gap-3 rounded-2xl border border-stone-200 dark:border-stone-800">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2.5 flex-1 pr-2">
+                <View className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/60 items-center justify-center">
+                  <Icon name="award" size={20} color={APP_COLORS.brandPurple} />
+                </View>
+                <View className="flex-1">
+                  <Text variant="h4" className="font-extrabold text-sm">
+                    Subscription & Plans
+                  </Text>
+                  <Text variant="muted" className="text-xs" numberOfLines={1}>
+                    Current: {user?.subscriptionTier ?? "Free Plan"}
+                  </Text>
+                </View>
+              </View>
+
+              <Button
+                size="sm"
+                variant="quiz"
+                title="View Plans →"
+                onPress={() => router.push("/subscriptions" as any)}
+                className="rounded-xl"
+              />
+            </View>
+          </Card>
 
           {/* Account & App Options */}
           <ProfileSecurityCard />

@@ -25,6 +25,10 @@ import {
   type StudyMaterial,
 } from "@/services";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+  isNotesReady as isNotesReadyHelper,
+  isQuizReady as isQuizReadyHelper,
+} from "@/lib/utils/material-status";
 import * as React from "react";
 import { Alert, Linking, ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -381,7 +385,7 @@ export default function UploadMaterialScreen() {
         Alert.alert("Quiz Error", msg);
       }
     } else {
-      router.push("/(tabs)/quizzes");
+      router.push("/(tabs)/quizzes" as any);
     }
   }, [explicitQuizId, startAttemptMutation, router]);
 
@@ -396,21 +400,12 @@ export default function UploadMaterialScreen() {
 
   const isNotesReady = React.useMemo(() => {
     if (!processedMaterial) return false;
-    return Boolean(
-      processedMaterial.notesId ||
-        (Array.isArray(processedMaterial.notes) &&
-          processedMaterial.notes.length > 0) ||
-        Boolean(processedMaterial.processedNotes)
-    );
+    return isNotesReadyHelper(processedMaterial);
   }, [processedMaterial]);
 
   const isQuizReady = React.useMemo(() => {
     if (!processedMaterial) return false;
-    return Boolean(
-      explicitQuizId ||
-        (Array.isArray(processedMaterial.quizzes) &&
-          processedMaterial.quizzes.length > 0)
-    );
+    return Boolean(explicitQuizId) || isQuizReadyHelper(processedMaterial);
   }, [processedMaterial, explicitQuizId]);
 
   return (

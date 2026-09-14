@@ -30,7 +30,9 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
 }: {
   onCheckIn?: () => void;
 }) {
-  const [selectedRange, setSelectedRange] = React.useState<"7d" | "30d" | "90d">("7d");
+  const [selectedRange, setSelectedRange] = React.useState<
+    "7d" | "30d" | "90d"
+  >("7d");
 
   const selectedDays = React.useMemo(() => {
     switch (selectedRange) {
@@ -44,7 +46,10 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
     }
   }, [selectedRange]);
 
-  const { startDate, endDate } = React.useMemo(() => getDateRange(selectedDays), [selectedDays]);
+  const { startDate, endDate } = React.useMemo(
+    () => getDateRange(selectedDays),
+    [selectedDays],
+  );
   const chartDataQuery = useDashboardChartData({ startDate, endDate });
 
   const error = chartDataQuery.isError
@@ -56,65 +61,94 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
   const chartData: DashboardCheckInChartPoint[] = chartDataQuery.data ?? [];
   const isLoading = chartDataQuery.isLoading;
 
-  const { totalTasks, totalHours, daysWithCheckins, hasTrackedValues, checkInRate, avgTasks } =
-    React.useMemo(() => {
-      const tasks = chartData.reduce((sum, item) => sum + item.tasksCompleted, 0);
-      const hours = chartData.reduce((sum, item) => sum + item.hoursStudied, 0);
-      const days = chartData.filter((item) => item.hasCheckin).length;
-      const tracked = tasks > 0 || hours > 0;
-      const totalD = chartData.length;
-      const rate = totalD > 0 ? Math.round((days / totalD) * 100) : 0;
-      const avgT = days > 0 ? Number((tasks / days).toFixed(1)) : 0;
-      return {
-        totalTasks: tasks,
-        totalHours: hours,
-        daysWithCheckins: days,
-        hasTrackedValues: tracked,
-        checkInRate: rate,
-        avgTasks: avgT,
-      };
-    }, [chartData]);
+  const {
+    totalTasks,
+    totalHours,
+    daysWithCheckins,
+    hasTrackedValues,
+    checkInRate,
+    avgTasks,
+  } = React.useMemo(() => {
+    const tasks = chartData.reduce((sum, item) => sum + item.tasksCompleted, 0);
+    const hours = chartData.reduce((sum, item) => sum + item.hoursStudied, 0);
+    const days = chartData.filter((item) => item.hasCheckin).length;
+    const tracked = tasks > 0 || hours > 0;
+    const totalD = chartData.length;
+    const rate = totalD > 0 ? Math.round((days / totalD) * 100) : 0;
+    const avgT = days > 0 ? Number((tasks / days).toFixed(1)) : 0;
+    return {
+      totalTasks: tasks,
+      totalHours: hours,
+      daysWithCheckins: days,
+      hasTrackedValues: tracked,
+      checkInRate: rate,
+      avgTasks: avgT,
+    };
+  }, [chartData]);
 
   const visibleChartData = chartData;
 
-  const { barData, lineData, maxTasks, secondaryMaxValue, chartWidth } = React.useMemo(() => {
-    const maxT = Math.max(...visibleChartData.map((item) => item.tasksCompleted), 1);
-    const maxH = Math.max(...visibleChartData.map((item) => item.hoursStudied), 1);
-    const labelStep = visibleChartData.length <= 10 ? 1 : visibleChartData.length <= 31 ? 5 : 10;
+  const { barData, lineData, maxTasks, secondaryMaxValue, chartWidth } =
+    React.useMemo(() => {
+      const maxT = Math.max(
+        ...visibleChartData.map((item) => item.tasksCompleted),
+        1,
+      );
+      const maxH = Math.max(
+        ...visibleChartData.map((item) => item.hoursStudied),
+        1,
+      );
+      const labelStep =
+        visibleChartData.length <= 10
+          ? 1
+          : visibleChartData.length <= 31
+            ? 5
+            : 10;
 
-    const bData = visibleChartData.map((item, index) => {
-      const labelDate = new Date(item.date);
-      const shortLabel =
-        selectedDays <= 7
-          ? labelDate.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-          : labelDate.toLocaleDateString(undefined, { day: "numeric" });
+      const bData = visibleChartData.map((item, index) => {
+        const labelDate = new Date(item.date);
+        const shortLabel =
+          selectedDays <= 7
+            ? labelDate.toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              })
+            : labelDate.toLocaleDateString(undefined, { day: "numeric" });
+        return {
+          value: item.tasksCompleted,
+          frontColor: "#2563EB",
+          labelWidth: selectedDays <= 7 ? 38 : 24,
+          labelTextStyle: { color: "#78716C", fontSize: 10 },
+          label:
+            index % labelStep === 0 || index === visibleChartData.length - 1
+              ? shortLabel
+              : "",
+        };
+      });
+
+      const lData = visibleChartData.map((item) => ({
+        value: item.hoursStudied,
+      }));
+      const secMax = Math.max(maxH, 1);
+      const cWidth = Math.max(300, visibleChartData.length * 28 + 48);
+
       return {
-        value: item.tasksCompleted,
-        frontColor: "#2563EB",
-        labelWidth: selectedDays <= 7 ? 38 : 24,
-        labelTextStyle: { color: "#78716C", fontSize: 10 },
-        label: index % labelStep === 0 || index === visibleChartData.length - 1 ? shortLabel : "",
+        barData: bData,
+        lineData: lData,
+        maxTasks: maxT,
+        secondaryMaxValue: secMax,
+        chartWidth: cWidth,
       };
-    });
-
-    const lData = visibleChartData.map((item) => ({ value: item.hoursStudied }));
-    const secMax = Math.max(maxH, 1);
-    const cWidth = Math.max(300, visibleChartData.length * 28 + 48);
-
-    return {
-      barData: bData,
-      lineData: lData,
-      maxTasks: maxT,
-      secondaryMaxValue: secMax,
-      chartWidth: cWidth,
-    };
-  }, [visibleChartData, selectedDays]);
+    }, [visibleChartData, selectedDays]);
 
   const handleCheckIn = React.useCallback(() => {
     if (onCheckIn) {
       onCheckIn();
     } else {
-      Alert.alert("Check-in", "Check-in flow will be available in the mobile app soon.");
+      Alert.alert(
+        "Check-in",
+        "Check-in flow will be available in the mobile app soon.",
+      );
     }
   }, [onCheckIn]);
 
@@ -127,10 +161,16 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
             <Feather name="bar-chart-2" size={18} color="#2563EB" />
           </View>
           <View className="flex-1">
-            <Text variant="h3" className="text-base font-bold text-stone-900 dark:text-stone-100">
+            <Text
+              variant="h3"
+              className="text-base font-bold text-stone-900 dark:text-stone-100"
+            >
               Tasks vs Study Hours
             </Text>
-            <Text variant="caption" className="text-[11px] text-stone-500 font-medium">
+            <Text
+              variant="caption"
+              className="text-[11px] text-stone-500 font-medium"
+            >
               Daily task completion & study time
             </Text>
           </View>
@@ -152,7 +192,9 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
               >
                 <Text
                   className={`text-xs font-bold ${
-                    isActive ? "text-white" : "text-stone-600 dark:text-stone-400"
+                    isActive
+                      ? "text-white"
+                      : "text-stone-600 dark:text-stone-400"
                   }`}
                 >
                   {opt.label}
@@ -186,7 +228,8 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
               No Study Data Yet
             </Text>
             <Text variant="muted" className="text-xs text-center px-4">
-              Complete daily check-ins to track your tasks and study hours over time.
+              Complete daily check-ins to track your tasks and study hours over
+              time.
             </Text>
           </View>
           <Button
@@ -206,7 +249,8 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
             No tracked study hours yet
           </Text>
           <Text variant="muted" className="text-xs text-center px-4">
-            Check-ins exist, but tasks and study hours were zero. Update your check-ins to plot data.
+            Check-ins exist, but tasks and study hours were zero. Update your
+            check-ins to plot data.
           </Text>
         </View>
       ) : null}
@@ -216,37 +260,61 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
           {/* Key Stats Bar */}
           <View className="flex-row items-center justify-between bg-stone-50 dark:bg-stone-950/60 p-3 rounded-2xl border border-stone-200/60 dark:border-stone-800">
             <View className="items-center flex-1">
-              <Text variant="h2" className="text-lg font-black text-blue-600 dark:text-blue-400">
+              <Text
+                variant="h2"
+                className="text-lg font-black text-blue-600 dark:text-blue-400"
+              >
                 {totalTasks}
               </Text>
-              <Text variant="caption" className="text-[10px] font-semibold text-stone-500 uppercase">
+              <Text
+                variant="caption"
+                className="text-[10px] font-semibold text-stone-500 uppercase"
+              >
                 Tasks
               </Text>
             </View>
             <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
             <View className="items-center flex-1">
-              <Text variant="h2" className="text-lg font-black text-purple-600 dark:text-purple-400">
+              <Text
+                variant="h2"
+                className="text-lg font-black text-purple-600 dark:text-purple-400"
+              >
                 {totalHours.toFixed(1)}h
               </Text>
-              <Text variant="caption" className="text-[10px] font-semibold text-stone-500 uppercase">
+              <Text
+                variant="caption"
+                className="text-[10px] font-semibold text-stone-500 uppercase"
+              >
                 Hours
               </Text>
             </View>
             <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
             <View className="items-center flex-1">
-              <Text variant="h2" className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+              <Text
+                variant="h2"
+                className="text-lg font-black text-emerald-600 dark:text-emerald-400"
+              >
                 {avgTasks}
               </Text>
-              <Text variant="caption" className="text-[10px] font-semibold text-stone-500 uppercase">
+              <Text
+                variant="caption"
+                className="text-[10px] font-semibold text-stone-500 uppercase"
+              >
                 Avg Tasks
               </Text>
             </View>
             <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
             <View className="items-center flex-1">
-              <Text variant="h2" className="text-lg font-black text-amber-600 dark:text-amber-400">
+              <Text
+                variant="h2"
+                className="text-lg font-black text-amber-600 dark:text-amber-400"
+              >
                 {checkInRate}%
               </Text>
-              <Text variant="caption" className="text-[10px] font-semibold text-stone-500 uppercase">
+              <Text
+                variant="caption"
+                className="text-[10px] font-semibold text-stone-500 uppercase"
+              >
                 Rate
               </Text>
             </View>
@@ -290,7 +358,11 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
                   noOfSections: 4,
                   yAxisOffset: 0,
                   yAxisLabelWidth: 38,
-                  yAxisTextStyle: { color: "#10B981", fontSize: 10, fontWeight: "600" },
+                  yAxisTextStyle: {
+                    color: "#10B981",
+                    fontSize: 10,
+                    fontWeight: "600",
+                  },
                   yAxisColor: "transparent",
                   yAxisThickness: 0,
                   formatYLabel: (label: string) => {
@@ -322,7 +394,9 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
                 formatYLabel={(label) => {
                   const numeric = Number(label);
                   if (!Number.isFinite(numeric)) return "0";
-                  return maxTasks <= 2 ? numeric.toFixed(1).replace(/\.0$/, "") : `${Math.round(numeric)}`;
+                  return maxTasks <= 2
+                    ? numeric.toFixed(1).replace(/\.0$/, "")
+                    : `${Math.round(numeric)}`;
                 }}
               />
             </ScrollView>

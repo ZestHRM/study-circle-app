@@ -1,4 +1,8 @@
 import { authApi, type AuthResponse, type LoginPayload, type SignupPayload, type User } from '@/lib/api';
+import {
+  registerForPushNotificationsAsync,
+  syncPushTokenWithBackend,
+} from '@/services/notification-service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as SecureStore from 'expo-secure-store';
 import * as React from 'react';
@@ -70,6 +74,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(response.token);
     setUser(response.user);
     queryClient.setQueryData(AUTH_QUERY_KEYS.me(response.token), response.user);
+
+    try {
+      const pushResult = await registerForPushNotificationsAsync();
+      const pushToken = pushResult.fcmToken || pushResult.expoPushToken;
+      if (pushToken) {
+        void syncPushTokenWithBackend(pushToken, response.token);
+      }
+    } catch (err) {
+      console.warn('[AuthProvider] Failed to sync push token after authentication:', err);
+    }
   }, [queryClient]);
 
   const meQuery = useQuery({

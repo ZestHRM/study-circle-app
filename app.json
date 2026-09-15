@@ -64,6 +64,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7aa736bc-eddb-4483-82ef-5233855afaea"
+      }
+    },
+    "owner": "sonu-zest"
   }
 }

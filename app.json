@@ -57,7 +57,9 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-build-properties",
+      "./plugins/withDisableUserScriptSandboxing"
     ],
     "experiments": {
       "typedRoutes": true,

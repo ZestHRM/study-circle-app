@@ -32,10 +32,6 @@
       "package": "com.studycircleai.app",
       "googleServicesFile": "./google-services.json"
     },
-    "notification": {
-      "icon": "./assets/images/icon.png",
-      "color": "#4F46E5"
-    },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"

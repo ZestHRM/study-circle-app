@@ -20,7 +20,7 @@ export const CreateFirstSubjectOnboarding = React.memo(
     const [selectedMood, setSelectedMood] = React.useState<string>("okay");
 
     return (
-      <AppScreen edges={[]} contentContainerClassName="pb-12">
+      <AppScreen edges={[]} contentContainerClassName="pb-12 px-4">
         <AppHeaderBar logoPosition="left" />
 
         <View className="gap-5 pt-4 pb-6">

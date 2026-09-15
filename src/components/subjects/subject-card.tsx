@@ -1,6 +1,7 @@
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
+import { getSubjectTheme } from "@/constants/subject-themes";
 import * as React from "react";
 import { Pressable, View } from "react-native";
 
@@ -31,12 +32,16 @@ export interface SubjectCardProps {
 export const SubjectCard = React.memo(function SubjectCard({
   name,
   course,
-  colorHex = "#2563EB",
-  bgHex = "#DBEAFE",
-  iconName = "book-open-variant",
+  colorHex,
+  bgHex,
+  iconName,
   metrics = {},
   onPress,
 }: SubjectCardProps) {
+  const theme = React.useMemo(() => getSubjectTheme(name), [name]);
+  const finalColorHex = colorHex || theme.colorHex;
+  const finalBgHex = bgHex || theme.bgHex;
+  const finalIconName = iconName || theme.iconName;
   const materials = metrics.materialsCount ?? 0;
   const pyqs = metrics.pyqCount ?? 0;
   const notes = metrics.notesCount ?? 0;
@@ -59,25 +64,25 @@ export const SubjectCard = React.memo(function SubjectCard({
   return (
     <Pressable
       onPress={onPress}
-      className="bg-white dark:bg-stone-900 rounded-2xl px-4 py-3.5 mb-3 border border-stone-200/90 dark:border-stone-800 shadow-2xs active:opacity-90 transition-all"
+      className="bg-card rounded-2xl px-4 py-3.5 mb-3 border border-border shadow-2xs active:opacity-90 transition-all"
     >
       {/* Header Row */}
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-3 flex-1 pr-2">
           <View
-            style={{ backgroundColor: bgHex }}
-            className="w-10 h-10 rounded-xl items-center justify-center border border-stone-100 dark:border-stone-800"
+            style={{ backgroundColor: finalBgHex }}
+            className="w-10 h-10 rounded-xl items-center justify-center border border-border"
           >
             <Icon
-              name={iconName}
+              name={finalIconName}
               size={20}
-              color={colorHex}
+              color={finalColorHex}
             />
           </View>
           <View className="flex-1 justify-center">
             <Text
               variant="h3"
-              className="text-base font-extrabold text-stone-900 dark:text-stone-100 tracking-tight"
+              className="text-base font-extrabold text-foreground tracking-tight"
               numberOfLines={1}
             >
               {name}
@@ -85,7 +90,7 @@ export const SubjectCard = React.memo(function SubjectCard({
             {course ? (
               <Text
                 variant="caption"
-                className="text-xs text-stone-500 font-medium mt-0.5"
+                className="text-xs text-muted-foreground font-medium mt-0.5"
                 numberOfLines={1}
               >
                 {course}
@@ -98,45 +103,45 @@ export const SubjectCard = React.memo(function SubjectCard({
       </View>
 
       {/* Metrics Row - Balanced & Clean */}
-      <View className="flex-row items-center justify-between pt-2.5 mt-2.5 border-t border-stone-100 dark:border-stone-800/80">
+      <View className="flex-row items-center justify-between pt-2.5 mt-2.5 border-t border-border">
         {/* Materials */}
         <View className="flex-row items-center gap-1.5 flex-1 justify-start">
           <Icon name="file-text" size={13} color={APP_COLORS.stone600} />
           <View>
-            <Text className="text-xs font-extrabold text-stone-900 dark:text-stone-100">
+            <Text className="text-xs font-extrabold text-foreground">
               {materials}
             </Text>
-            <Text className="text-[10px] text-stone-400 font-medium">Materials</Text>
+            <Text className="text-[10px] text-muted-foreground font-medium">Materials</Text>
           </View>
         </View>
 
-        <View className="w-[1px] h-5 bg-stone-200 dark:bg-stone-800 mx-1" />
+        <View className="w-[1px] h-5 bg-border mx-1" />
 
         {/* PYQs */}
         <View className="flex-row items-center gap-1.5 flex-1 justify-center">
           <Icon name="list" size={13} color={APP_COLORS.stone600} />
           <View>
-            <Text className="text-xs font-extrabold text-stone-900 dark:text-stone-100">
+            <Text className="text-xs font-extrabold text-foreground">
               {pyqs}
             </Text>
-            <Text className="text-[10px] text-stone-400 font-medium">PYQs</Text>
+            <Text className="text-[10px] text-muted-foreground font-medium">PYQs</Text>
           </View>
         </View>
 
-        <View className="w-[1px] h-5 bg-stone-200 dark:bg-stone-800 mx-1" />
+        <View className="w-[1px] h-5 bg-border mx-1" />
 
         {/* Notes */}
         <View className="flex-row items-center gap-1.5 flex-1 justify-center">
           <Icon name="edit-3" size={13} color={APP_COLORS.stone600} />
           <View>
-            <Text className="text-xs font-extrabold text-stone-900 dark:text-stone-100">
+            <Text className="text-xs font-extrabold text-foreground">
               {notes}
             </Text>
-            <Text className="text-[10px] text-stone-400 font-medium">Notes</Text>
+            <Text className="text-[10px] text-muted-foreground font-medium">Notes</Text>
           </View>
         </View>
 
-        <View className="w-[1px] h-5 bg-stone-200 dark:bg-stone-800 mx-1" />
+        <View className="w-[1px] h-5 bg-border mx-1" />
 
         {/* Last Active Timestamp (Time on top, Date on bottom) */}
         <View className="flex-row items-center gap-1.5 flex-1 justify-end">
@@ -144,7 +149,7 @@ export const SubjectCard = React.memo(function SubjectCard({
           <View className="items-end">
             {timeStr ? (
               <Text
-                className="text-xs font-extrabold text-stone-900 dark:text-stone-100"
+                className="text-xs font-extrabold text-foreground"
                 numberOfLines={1}
               >
                 {timeStr}
@@ -153,8 +158,8 @@ export const SubjectCard = React.memo(function SubjectCard({
             <Text
               className={`text-[10px] ${
                 timeStr
-                  ? "text-stone-400 font-medium"
-                  : "text-xs font-extrabold text-stone-900 dark:text-stone-100"
+                  ? "text-muted-foreground font-medium"
+                  : "text-xs font-extrabold text-foreground"
               }`}
               numberOfLines={1}
             >

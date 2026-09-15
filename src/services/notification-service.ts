@@ -136,7 +136,69 @@ export async function getInitialNotificationResponse(): Promise<Notifications.No
 
 export type RegisterDeviceTokenPayload = {
   deviceToken: string;
-  platform: "ANDROID" | "IOS" | string;
+  platform: "android" | "ios" | "web" | string;
+};
+
+export type NotificationType =
+  | "system"
+  | "study"
+  | "quiz"
+  | "circle"
+  | "subscription"
+  | "general"
+  | string;
+
+export type NotificationItem = {
+  id: number | string;
+  title?: string | Record<string, any>;
+  message?: string | Record<string, any>;
+  body?: string | Record<string, any>;
+  content?: string | Record<string, any>;
+  type?: NotificationType;
+  isRead?: boolean;
+  read?: boolean;
+  readAt?: string | null;
+  data?: Record<string, any> | null;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+
+export type GetNotificationsParams = {
+  page?: number;
+  limit?: number;
+};
+
+export type NotificationsListResponse = {
+  data?: NotificationItem[];
+  notifications?: NotificationItem[];
+  items?: NotificationItem[];
+  pagination?: {
+    totalItems?: number;
+    totalCount?: number;
+    totalPages?: number;
+    page?: number;
+    limit?: number;
+  };
+  totalCount?: number;
+  unreadCount?: number;
+};
+
+export type UnreadCountResponse = {
+  count?: number;
+  unreadCount?: number;
+  data?: {
+    count?: number;
+    unreadCount?: number;
+  };
+};
+
+export type MarkReadPayload = {
+  ids: (number | string)[] | "all";
+};
+
+export type DeleteNotificationsPayload = {
+  ids: (number | string)[] | "all";
 };
 
 /**
@@ -157,8 +219,9 @@ export async function syncPushTokenWithBackend(
     return false;
   }
 
-  const rawPlatform = Platform.OS.toUpperCase();
-  const platform = rawPlatform === "WEB" ? "ANDROID" : rawPlatform;
+  const rawPlatform = Platform.OS.toLowerCase();
+  const platform =
+    rawPlatform === "ios" ? "ios" : rawPlatform === "web" ? "web" : "android";
 
   const payload: RegisterDeviceTokenPayload = {
     deviceToken: token,
@@ -183,21 +246,100 @@ export async function syncPushTokenWithBackend(
     return true;
   } catch (err: any) {
     console.warn(
-      "[NotificationService] /notifications/register-device-token failed:",
+      "[NotificationService ERROR] /notifications/register-device-token failed:",
       err?.message || err,
     );
-    const fallbacks = ["/users/push-token", "/profile/push-token"];
-    for (const ep of fallbacks) {
-      try {
-        await RestClient(ep, "POST", payload, { token: authToken });
-        console.log(
-          `[NotificationService SUCCESS] Token registered with fallback endpoint ${ep}`,
-        );
-        return true;
-      } catch {
-        // try next
-      }
-    }
+    return false;
   }
-  return false;
 }
+
+/**
+ * API 1: Fetch paginated notifications list
+ * GET /notifications?page=1&limit=10
+ */
+export async function getNotifications(
+  params?: GetNotificationsParams,
+  token?: string | null,
+): Promise<NotificationsListResponse> {
+  const page = params?.page ?? 1;
+  const limit = params?.limit ?? 10;
+  return RestClient<NotificationsListResponse>(
+    "/notifications",
+    "GET",
+    { page, limit },
+    { token },
+  );
+}
+
+/**
+ * API 2: Delete notifications (by array of IDs or "all")
+ * DELETE /notifications
+ */
+export async function deleteNotifications(
+  payload: DeleteNotificationsPayload,
+  token?: string | null,
+): Promise<{ message?: string; success?: boolean }> {
+  return RestClient<{ message?: string; success?: boolean }>(
+    "/notifications",
+    "DELETE",
+    payload,
+    { token },
+  );
+}
+
+/**
+ * API 3: Mark notification(s) as read
+ * POST /notifications/read
+ */
+export async function markNotificationsAsRead(
+  payload: MarkReadPayload,
+  token?: string | null,
+): Promise<{ message?: string; success?: boolean }> {
+  return RestClient<{ message?: string; success?: boolean }>(
+    "/notifications/read",
+    "POST",
+    payload,
+    { token },
+  );
+}
+
+/**
+ * API 4: Get unread notifications count
+ * GET /notifications/unread-count
+ */
+export async function getUnreadNotificationsCount(
+  token?: string | null,
+): Promise<UnreadCountResponse> {
+  return RestClient<UnreadCountResponse>(
+    "/notifications/unread-count",
+    "GET",
+    {},
+    { token },
+  );
+}
+
+/**
+ * API 5: Register FCM Device Token
+ * POST /notifications/register-device-token
+ */
+export async function registerDeviceToken(
+  payload: RegisterDeviceTokenPayload,
+  token?: string | null,
+): Promise<{ message?: string; success?: boolean }> {
+  return RestClient<{ message?: string; success?: boolean }>(
+    "/notifications/register-device-token",
+    "POST",
+    payload,
+    { token },
+  );
+}
+
+export const notificationApi = {
+  getNotifications,
+  deleteNotifications,
+  markNotificationsAsRead,
+  getUnreadNotificationsCount,
+  registerDeviceToken,
+  syncPushTokenWithBackend,
+};
+

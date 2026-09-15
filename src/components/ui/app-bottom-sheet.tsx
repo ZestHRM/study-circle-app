@@ -4,6 +4,7 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetScrollView,
+  BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import * as React from "react";
 import { StyleSheet, View } from "react-native";
@@ -97,7 +98,7 @@ export function AppBottomSheet({
       backgroundStyle={sheetBackgroundStyle}
       enableDynamicSizing={false}
     >
-      <View style={styles.contentContainer}>
+      <BottomSheetView style={styles.contentContainer}>
         {title || description ? (
           <View style={styles.headerContainer}>
             {title ? (
@@ -111,12 +112,15 @@ export function AppBottomSheet({
           </View>
         ) : null}
         <View style={styles.bodyContainer}>{children}</View>
-      </View>
+      </BottomSheetView>
     </BottomSheet>
   );
 }
 
-export { BottomSheetScrollView as AppBottomSheetScrollView };
+export {
+  BottomSheetScrollView as AppBottomSheetScrollView,
+  BottomSheetView as AppBottomSheetView,
+};
 
 const styles = StyleSheet.create({
   contentContainer: {

@@ -1,7 +1,6 @@
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
-import { Feather } from "@expo/vector-icons";
 import * as React from "react";
 import { View } from "react-native";
 
@@ -9,7 +8,7 @@ export interface NoticeBoxProps {
   title?: string;
   message: string;
   variant?: "info" | "success" | "warning" | "error";
-  icon?: keyof typeof Feather.glyphMap;
+  icon?: string;
   className?: string;
 }
 
@@ -33,8 +32,8 @@ export const NoticeBox = React.memo(function NoticeBox({
   const containerStyles = {
     info: "bg-purple-50/70 dark:bg-purple-950/30 border-purple-200/80 dark:border-purple-900/40",
     success: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800",
-    warning: "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800",
-    error: "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800",
+    warning: "bg-warning-bg border-warning-border",
+    error: "bg-error-bg border-error-border",
   }[variant];
 
   const iconBgStyles = {
@@ -47,8 +46,8 @@ export const NoticeBox = React.memo(function NoticeBox({
   const textColorStyles = {
     info: "text-purple-950 dark:text-purple-200",
     success: "text-emerald-950 dark:text-emerald-200",
-    warning: "text-amber-950 dark:text-amber-200",
-    error: "text-red-950 dark:text-red-200",
+    warning: "text-warning-text",
+    error: "text-error-text",
   }[variant];
 
   return (

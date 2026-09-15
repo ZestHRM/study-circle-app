@@ -1,5 +1,5 @@
 import { AppScreen } from "@/components/ui/app-screen";
-import { AppTabBar } from "@/components/ui/app-tab-bar";
+import { SwipeableTabView } from "@/components/ui/swipeable-tab-view";
 import { Button } from "@/components/ui/button";
 import { CommonHeader } from "@/components/ui/common-header";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -11,6 +11,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
+import { getSubjectTheme } from "@/constants/subject-themes";
 import { useNotesInfiniteQuery } from "@/hooks/queries/use-notes";
 import { useQuizzesInfiniteQuery } from "@/hooks/queries/use-quizzes";
 import { useStudyMaterialsInfinite } from "@/hooks/queries/use-study-materials";
@@ -139,13 +140,11 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
     );
   }
 
-  const presetTheme =
-    PRESET_THEMES[currentSubjectIndex % PRESET_THEMES.length] ||
-    PRESET_THEMES[0];
+  const presetTheme = getSubjectTheme(subject.name, currentSubjectIndex);
 
   const colorHex = presetTheme.colorHex;
   const bgHex = presetTheme.bgHex;
-  const iconName = (presetTheme.icon || "flask-outline") as string;
+  const iconName = presetTheme.iconName as string;
   const course = subject.description || "General";
 
   return (
@@ -159,7 +158,7 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
         <View className="flex-row items-center gap-3.5 flex-1">
           <View
             style={{ backgroundColor: bgHex }}
-            className="w-14 h-14 rounded-2xl items-center justify-center border border-stone-200 dark:border-stone-800 shadow-sm"
+            className="w-14 h-14 rounded-2xl items-center justify-center border border-border shadow-xs"
           >
             <Icon name={iconName} size={28} color={colorHex} />
           </View>
@@ -168,7 +167,7 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
             <Text variant="h1" className="tracking-tight">
               {subject.name}
             </Text>
-            <View className="bg-stone-200 dark:bg-stone-800 px-2.5 py-0.5 rounded-full self-start mt-1">
+            <View className="bg-muted px-2.5 py-0.5 rounded-full self-start mt-1">
               <Text variant="subhead">{course}</Text>
             </View>
           </View>
@@ -177,11 +176,11 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
         <IdeasDoodle />
       </View>
 
-      {/* Reusable Tab Bar component */}
-      <AppTabBar<"overview" | "materials" | "pyqs">
+      {/* Swipeable & Clickable Tab Navigation */}
+      <SwipeableTabView<"overview" | "materials" | "pyqs">
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        className="mb-6"
+        tabBarClassName="mb-6"
         tabs={[
           { id: "overview", label: "Overview", icon: "grid" },
           {
@@ -199,27 +198,87 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
             badgeVariant: "purple",
           },
         ]}
-      />
+      >
+        {/* Tab 1: Overview */}
+        <View className="px-1 gap-6">
+          <View>
+            <SectionHeader
+              title="Recent materials"
+              actionLabel="See all"
+              onAction={() => router.push("/materials" as any)}
+            />
+            {isLoadingMaterials ? (
+              <Spinner variant="quiz" size="small" containerStyle={{ marginVertical: 16 }} />
+            ) : subjectMaterials.length === 0 ? (
+              <EmptyState
+                icon="file-text"
+                title="No materials uploaded yet"
+                description="Upload notes or past year papers to get started."
+                actionLabel="Upload First Material"
+                actionVariant="quiz"
+                onAction={handleUploadClick}
+              />
+            ) : (
+              <View className="gap-3">
+                {subjectMaterials.slice(0, 3).map((mat) => (
+                  <ListItemCard
+                    key={mat.id}
+                    title={mat.title}
+                    subtitle={`${mat.status} • ${formatRelativeOrShortDate(mat.createdAt)}`}
+                    iconName="file-text"
+                    iconBgClass="bg-blue-50 dark:bg-blue-950/40"
+                    iconColor={APP_COLORS.quizBlue}
+                    onPress={() => router.push(`/materials` as any)}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
 
-      {/* Materials / Quizzes Section */}
-      <View className="mb-6">
-        <SectionHeader
-          title={activeTab === "pyqs" ? "Quizzes & PYQs" : "Recent materials"}
-          actionLabel="See all"
-          onAction={() =>
-            router.push((activeTab === "pyqs" ? "/quizzes" : "/materials") as any)
-          }
-        />
-
-        {isLoadingMaterials ? (
-          <Spinner
-            variant="quiz"
-            size="small"
-            containerStyle={{ marginVertical: 16 }}
+        {/* Tab 2: Materials */}
+        <View className="px-1">
+          <SectionHeader
+            title="All Materials"
+            actionLabel="Upload"
+            onAction={handleUploadClick}
           />
-        ) : activeTab === "pyqs" ? (
-          /* Quizzes / PYQs List */
-          subjectQuizzes.length === 0 ? (
+          {isLoadingMaterials ? (
+            <Spinner variant="quiz" size="small" containerStyle={{ marginVertical: 16 }} />
+          ) : subjectMaterials.length === 0 ? (
+            <EmptyState
+              icon="file-text"
+              title="No materials uploaded yet"
+              description="No materials uploaded for this subject yet."
+              actionLabel="Upload Material"
+              actionVariant="quiz"
+              onAction={handleUploadClick}
+            />
+          ) : (
+            <View className="gap-3">
+              {subjectMaterials.map((mat) => (
+                <ListItemCard
+                  key={mat.id}
+                  title={mat.title}
+                  subtitle={`${mat.status} • ${formatRelativeOrShortDate(mat.createdAt)}`}
+                  iconName="file-text"
+                  iconBgClass="bg-blue-50 dark:bg-blue-950/40"
+                  iconColor={APP_COLORS.quizBlue}
+                  onPress={() => router.push(`/materials` as any)}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Tab 3: PYQs & Quizzes */}
+        <View className="px-1">
+          <SectionHeader
+            title="Quizzes & PYQs"
+            actionLabel="View All"
+            onAction={() => router.push("/pyqs" as any)}
+          />
+          {subjectQuizzes.length === 0 ? (
             <EmptyState
               icon="help-circle"
               title="No quizzes created yet"
@@ -236,42 +295,18 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
                   title={quiz.title}
                   subtitle={`${quiz.totalQuestions} Questions • ${quiz.difficultyLevel}`}
                   iconName="check-square"
-                  iconBgClass="bg-purple-50 dark:bg-purple-950/40"
-                  iconColor={APP_COLORS.brandPurple}
+                  iconBgClass="bg-blue-50 dark:bg-blue-950/40"
+                  iconColor={APP_COLORS.quizBlue}
                   onPress={() => router.push(`/quizzes` as any)}
                 />
               ))}
             </View>
-          )
-        ) : /* Real Study Materials List */
-        subjectMaterials.length === 0 ? (
-          <EmptyState
-            icon="file-text"
-            title="No materials uploaded yet"
-            description="No materials uploaded for this subject yet. Upload notes or past year papers to get started."
-            actionLabel="Upload First Material"
-            actionVariant="quiz"
-            onAction={handleUploadClick}
-          />
-        ) : (
-          <View className="gap-3">
-            {subjectMaterials.map((mat) => (
-              <ListItemCard
-                key={mat.id}
-                title={mat.title}
-                subtitle={`${mat.status} • ${formatRelativeOrShortDate(mat.createdAt)}`}
-                iconName="file-text"
-                iconBgClass="bg-blue-50 dark:bg-blue-950/40"
-                iconColor={APP_COLORS.quizBlue}
-                onPress={() => router.push(`/materials` as any)}
-              />
-            ))}
-          </View>
-        )}
-      </View>
+          )}
+        </View>
+      </SwipeableTabView>
 
       {/* Your AI Study Tools Section */}
-      <View className="mb-6">
+      <View className="mb-6 mt-6">
         <Text variant="h3" className="mb-3">
           Your AI study tools
         </Text>
@@ -282,9 +317,8 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
             countText={`${subjectNotes.length} created`}
             description="Clear, structured notes from your materials."
             iconName="file-text"
-            iconBgClass="bg-blue-50 dark:bg-blue-950/40"
-            iconColor={APP_COLORS.quizBlue}
-            onPress={() => router.push("/notes" as any)}
+            iconBgClass="bg-primary/10 border border-primary/20"
+            iconColor="primary"
           />
 
           <FeatureCard
@@ -292,11 +326,10 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
             countText={`${subjectQuizzes.length} available`}
             description="Turn your materials into custom quizzes."
             iconName="help-circle"
-            iconBgClass="bg-amber-50 dark:bg-amber-950/40"
-            iconColor={APP_COLORS.warning}
+            iconBgClass="bg-warning/10 border border-warning/20"
+            iconColor="warning"
             badgeLabel="Active"
             badgeIconName="award"
-            onPress={() => router.push("/quizzes" as any)}
           />
         </View>
       </View>

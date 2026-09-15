@@ -18,11 +18,11 @@ import {
   useSubjectsQuery,
 } from "@/hooks/queries";
 import { type Quiz, type QuizAttempt } from "@/services";
+import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import * as React from "react";
 import {
-  Alert,
   FlatList,
   Linking,
   Pressable,
@@ -106,7 +106,7 @@ export default function QuizzesScreen() {
   const handleStartQuiz = React.useCallback(
     async (quiz: Quiz) => {
       if (quiz.totalQuestions <= 0) {
-        Alert.alert("No Questions", "This quiz has no questions yet.");
+        showInfoToast("No Questions", "This quiz has no questions yet.");
         return;
       }
 
@@ -120,7 +120,7 @@ export default function QuizzesScreen() {
           error instanceof Error
             ? error.message
             : "Failed to start quiz attempt right now.";
-        Alert.alert("Start Failed", message);
+        showErrorToast("Start Failed", message);
       } finally {
         setStartingQuizId(null);
       }

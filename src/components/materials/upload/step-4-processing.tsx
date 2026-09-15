@@ -9,7 +9,7 @@ import { APP_COLORS } from "@/constants/colors";
 import type { PickedFileValues } from "@/schemas";
 import type { StudyMaterialQuizStatus, StudyMaterialStatus } from "@/services";
 import * as React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { ScreenFooterBadge } from "./screen-footer-badge";
 import { SubjectBannerCard } from "./subject-banner-card";
 
@@ -72,15 +72,14 @@ export const Step4Processing = React.memo(function Step4Processing({
   const [activeProgress, setActiveProgress] = React.useState(25);
 
   React.useEffect(() => {
-    setActiveProgress(25);
     const interval = setInterval(() => {
       setActiveProgress((prev) =>
         prev < 92 ? prev + Math.floor(Math.random() * 5 + 3) : 92,
       );
-    }, 600);
+    }, 800);
 
     return () => clearInterval(interval);
-  }, [materialStatus, quizStatus, viewState]);
+  }, []);
 
   const stepsConfig = React.useMemo<StepperItemConfig[]>(
     () => [
@@ -171,10 +170,7 @@ export const Step4Processing = React.memo(function Step4Processing({
               <Icon name="file-text" size="sm" color="error" />
             </View>
             <View className="flex-1">
-              <Text
-                variant="h4"
-                numberOfLines={1}
-              >
+              <Text variant="h4" numberOfLines={1}>
                 {displayFileName}
               </Text>
               <Text variant="caption">
@@ -246,9 +242,7 @@ export const Step4Processing = React.memo(function Step4Processing({
               </View>
 
               <View className="flex-1 pb-4">
-                <Text variant="h4">
-                  {step.title}
-                </Text>
+                <Text variant="h4">{step.title}</Text>
                 <Text variant="muted" className="mt-0.5">
                   {step.isDone
                     ? step.completedSubtitle
@@ -271,12 +265,12 @@ export const Step4Processing = React.memo(function Step4Processing({
         })}
       </Card>
 
-      {/* Estimated Time Pill Card */}
+      {/* Background Processing Info Card */}
       <Card className="rounded-2xl p-3.5 border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20 flex-row items-center gap-3">
-        <Icon name="clock" size="sm" color="primary" />
+        <Icon name="bell" size="sm" color="primary" />
         <Text variant="caption" className="flex-1 font-medium">
-          Estimated time: 3–5 min. You can leave — we'll notify you when
-          everything is ready.
+          Processing in background. You can safely leave — we'll notify you as
+          soon as everything is ready.
         </Text>
       </Card>
 

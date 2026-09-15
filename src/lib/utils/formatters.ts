@@ -103,6 +103,17 @@ export function formatDayDate(dateInput?: string | number | Date | null): string
   });
 }
 
+export function formatFullDate(dateInput?: string | number | Date | null): string {
+  const parsed = dateInput ? new Date(dateInput) : new Date();
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  return parsed.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function formatRelativeOrShortDate(dateStr?: string | null): string {
   if (!dateStr) return "Recent";
   const parsed = new Date(dateStr);
@@ -122,6 +133,16 @@ export function formatRelativeOrShortDate(dateStr?: string | null): string {
 
   return formatShortDate(dateStr);
 }
+
+export const formatRelativeTime = formatRelativeOrShortDate;
+
+export function formatHours(sumHours: number): string {
+  if (!sumHours || sumHours <= 0) return "0h";
+  const hours = Math.floor(sumHours);
+  const mins = Math.round((sumHours - hours) * 60);
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
 
 export function decodeHtmlEntities(content: string): string {
   return content

@@ -1,9 +1,13 @@
 import { useAuth } from "@/lib/auth";
 import { openOfficialRazorpaySDK } from "@/lib/razorpay-sdk";
+import {
+  showErrorToast,
+  showInfoToast,
+  showSuccessToast,
+} from "@/lib/utils/toast";
 import { subscriptionsApi, type SubscriptionPlan } from "@/services";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
-import { Alert } from "react-native";
 
 export function useSubscriptionPlansQuery() {
   const { token } = useAuth();
@@ -66,9 +70,10 @@ export function useSubscribeMutation() {
       );
 
       const orderId =
-        subRes.orderId ||
-        subRes.subscriptionId ||
         subRes.id ||
+        subRes.subscriptionId ||
+        subRes.orderId ||
+        subRes.data?.id ||
         subRes.data?.orderId;
       const keyId = subRes.keyId;
 
@@ -88,12 +93,8 @@ export function useSubscribeMutation() {
           keyId: keyId,
         });
       } catch (err: any) {
-        const errorText = String(err?.message || err || "").toLowerCase();
-        if (
-          errorText.includes("cancel") ||
-          errorText.includes("closed") ||
-          errorText.includes("back")
-        ) {
+        const errorText = String(err?.message || err || "");
+        if (errorText === "PAYMENT_CANCELLED") {
           setStepState("cancelled");
           setStepMessage("Payment was cancelled.");
           throw new Error("CANCELLED");
@@ -125,20 +126,15 @@ export function useSubscribeMutation() {
         queryKey: ["subscription-plans"],
       });
 
-      Alert.alert(
+      showSuccessToast(
         "🎉 Subscription Activated!",
-        `Thank you for subscribing to ${data.plan.name}.\nPayment ID: ${data.sdkResult.paymentId}`,
-        [
-          {
-            text: "OK",
-            onPress: () => resetState(),
-          },
-        ],
+        `Thank you for subscribing to ${data.plan.name}. Payment ID: ${data.sdkResult.paymentId}`,
       );
+      resetState();
     },
     onError: (err: any) => {
       if (err?.message === "CANCELLED") {
-        Alert.alert("Payment Cancelled", "You cancelled the payment process.");
+        showInfoToast("Payment Cancelled", "You cancelled the payment process.");
         return;
       }
 
@@ -146,7 +142,7 @@ export function useSubscribeMutation() {
       setStepMessage(err.message || "Payment processing failed.");
 
       console.warn("[useSubscribeMutation] Error:", err);
-      Alert.alert(
+      showErrorToast(
         "Payment Failed",
         err.message || "Payment could not be completed. Please try again.",
       );

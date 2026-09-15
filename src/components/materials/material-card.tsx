@@ -53,7 +53,7 @@ export const MaterialCard = React.memo(function MaterialCard({
 
           <Text
             variant="h4"
-            className="text-sm font-bold text-stone-900 dark:text-stone-100"
+            className="text-sm font-bold text-foreground"
             numberOfLines={1}
           >
             {material.title}
@@ -63,13 +63,13 @@ export const MaterialCard = React.memo(function MaterialCard({
         <Icon name="chevron-right" size={18} color={APP_COLORS.stone400} />
       </View>
 
-      <View className="flex-row items-center justify-between pt-1 border-t border-stone-100 dark:border-stone-800/60 mt-0.5">
+      <View className="flex-row items-center justify-between pt-1 border-t border-border mt-0.5">
         <MaterialStatusBadges material={material} className="flex-1 pr-2" />
 
         <Pressable
           onPress={handleDeletePress}
           disabled={isDeleting}
-          className="w-7 h-7 rounded-lg bg-stone-100 dark:bg-stone-800 items-center justify-center active:opacity-70"
+          className="w-7 h-7 rounded-lg bg-muted items-center justify-center active:opacity-70"
           hitSlop={8}
         >
           <Icon name="trash-2" size={13} color={APP_COLORS.error} />

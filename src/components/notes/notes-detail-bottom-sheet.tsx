@@ -1,15 +1,16 @@
-import {
-  AppBottomSheet,
-  AppBottomSheetScrollView,
-} from "@/components/ui/app-bottom-sheet";
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
+import { Button, ErrorState, Icon, Spinner, Text } from "@/components/ui";
 import { APP_COLORS } from "@/constants/colors";
 import { useFileDownload } from "@/hooks";
-import { Feather } from "@expo/vector-icons";
 import * as React from "react";
-import { Spinner } from "@/components/ui/spinner";
-import { View } from "react-native";
+import {
+  Animated,
+  Modal,
+  PanResponder,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { HtmlNotesView } from "./html-notes-view";
 
 interface NotesDetailBottomSheetProps {
@@ -44,6 +45,40 @@ export const NotesDetailBottomSheet = React.memo(
   }: NotesDetailBottomSheetProps) {
     const { isDownloading, downloadFile } = useFileDownload();
 
+    const translateY = React.useRef(new Animated.Value(0)).current;
+
+    const panResponder = React.useRef(
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          return gestureState.dy > 5;
+        },
+        onPanResponderMove: (_, gestureState) => {
+          if (gestureState.dy > 0) {
+            translateY.setValue(gestureState.dy);
+          }
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy > 70 || gestureState.vy > 0.5) {
+            Animated.timing(translateY, {
+              toValue: 600,
+              duration: 180,
+              useNativeDriver: true,
+            }).start(() => {
+              translateY.setValue(0);
+              onClose();
+            });
+          } else {
+            Animated.spring(translateY, {
+              toValue: 0,
+              useNativeDriver: true,
+              bounciness: 4,
+            }).start();
+          }
+        },
+      }),
+    ).current;
+
     const formattedDate = React.useMemo(() => {
       if (!createdAt) return "Recent";
       const parsed = new Date(createdAt);
@@ -58,7 +93,7 @@ export const NotesDetailBottomSheet = React.memo(
     const handleDownload = React.useCallback(async () => {
       await downloadFile({
         url: pdfUrl,
-        title,
+        title: title || "AI Study Notes",
         subjectName,
         content,
       });
@@ -71,84 +106,145 @@ export const NotesDetailBottomSheet = React.memo(
       }
     }, [onClose, onTakeQuiz]);
 
+    if (!open) return null;
+
     return (
-      <AppBottomSheet
-        open={open}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) onClose();
-        }}
-        snapPoints={["90%"]}
-        initialIndex={0}
-        enablePanDownToClose={true}
-        enableContentPanningGesture={true}
-        title={title || "AI Generated Notes"}
-        description={`Subject: ${subjectName} • ${formattedDate}`}
+      <Modal
+        visible={open}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={onClose}
+        statusBarTranslucent={true}
       >
-        {isLoading ? (
-          <Spinner
-            variant="terracotta"
-            size="large"
-            message="Fetching AI Notes..."
-            containerStyle={{ paddingVertical: 64 }}
-          />
-        ) : isError ? (
-          <View className="py-12 items-center justify-center gap-3">
-            <Feather name="alert-circle" size={24} color={APP_COLORS.error} />
-            <Text className="text-sm font-bold text-stone-900 dark:text-stone-100">
-              Unable to Load Notes
-            </Text>
-            {onRetry ? (
-              <Button variant="outline" title="Retry" onPress={onRetry} />
-            ) : null}
-          </View>
-        ) : (
-          <AppBottomSheetScrollView
-            style={{ flex: 1 }}
-            showsVerticalScrollIndicator={true}
-            nestedScrollEnabled={true}
-            keyboardShouldPersistTaps="handled"
-            bounces={true}
-            contentContainerStyle={{ gap: 16, paddingTop: 4, paddingBottom: 120 }}
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "flex-end",
+          }}
+        >
+          {/* Backdrop Touch Dismiss Area */}
+          <Pressable style={{ flex: 1 }} onPress={onClose} />
+
+          {/* Sheet Main Container with Drag Translation */}
+          <Animated.View
+            style={{
+              height: "90%",
+              width: "100%",
+              transform: [{ translateY }],
+            }}
           >
-            <HtmlNotesView content={content} />
-          </AppBottomSheetScrollView>
-        )}
+            <SafeAreaView
+              edges={["bottom"]}
+              style={{
+                height: "100%",
+                width: "100%",
+                backgroundColor: APP_COLORS.white,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+              }}
+              className="bg-card"
+            >
+              {/* Header Bar with Interactive Drag Handle */}
+              <View
+                {...panResponder.panHandlers}
+                className="px-5 pt-2.5 pb-3 border-b border-border flex-row items-center justify-between bg-card"
+              >
+                <View className="flex-1">
+                  {/* Visual Drag Handle Pill */}
+                  <View className="w-12 h-1.5 bg-border rounded-full self-center mb-2.5" />
 
+                  <Text variant="h3" numberOfLines={1}>
+                    {title || "AI Generated Notes"}
+                  </Text>
+                  <Text variant="caption" className="mt-0.5">
+                    Subject: {subjectName} • {formattedDate}
+                  </Text>
+                </View>
 
-        {/* Footer Action Buttons */}
-        <View className="flex-row items-center gap-2 pt-3 border-t border-stone-200 dark:border-stone-800">
-          <Button
-            variant="terracotta"
-            icon="download"
-            loading={isDownloading}
-            loadingText="Downloading..."
-            title="Download Notes"
-            className="flex-1 h-11 justify-center items-center"
-            onPress={handleDownload}
-          />
+                <Pressable
+                  onPress={onClose}
+                  className="w-9 h-9 rounded-full bg-muted items-center justify-center active:opacity-75 ml-2"
+                  hitSlop={8}
+                >
+                  <Icon name="x" size={18} color={APP_COLORS.stone600} />
+                </Pressable>
+              </View>
 
-          {onTakeQuiz ? (
-            <Button
-              variant="quiz"
-              icon="zap"
-              title={isQuizReady ? "Take Quiz" : "Quiz Pending"}
-              disabled={!isQuizReady}
-              className="flex-1 h-11 justify-center items-center"
-              onPress={handleTakeQuizPress}
-            />
-          ) : (
-            <Button
-              variant="outline"
-              title="Close"
-              className="flex-1 h-11 justify-center items-center"
-              onPress={onClose}
-            />
-          )}
+              {/* Scrollable Content Body - Native ScrollView that ALWAYS SCROLLS smoothly */}
+              <View style={{ flex: 1 }}>
+                {isLoading ? (
+                  <View className="flex-1 items-center justify-center p-8">
+                    <Spinner
+                      variant="terracotta"
+                      size="large"
+                      message="Fetching AI Notes..."
+                      center
+                    />
+                  </View>
+                ) : isError ? (
+                  <ErrorState
+                    icon="alert-circle"
+                    title="Unable to Load Notes"
+                    description="Could not load note content at this time."
+                    actionLabel={onRetry ? "Retry" : undefined}
+                    actionIcon="rotate-ccw"
+                    actionVariant="outline"
+                    onAction={onRetry}
+                  />
+                ) : (
+                  <ScrollView
+                    style={{ flex: 1 }}
+                    showsVerticalScrollIndicator={true}
+                    keyboardShouldPersistTaps="handled"
+                    bounces={true}
+                  >
+                    <View className="p-5">
+                      <HtmlNotesView content={content} />
+                    </View>
+                  </ScrollView>
+                )}
+              </View>
+
+              {/* Fixed Action Buttons Footer Bar - Pinned at bottom of screen */}
+              <View className="px-5 py-3.5 bg-card border-t border-border flex-row items-center gap-3">
+                <Button
+                  variant="terracotta"
+                  icon="download"
+                  loading={isDownloading}
+                  loadingText="Downloading..."
+                  title="Download Notes"
+                  className="flex-1 h-12 justify-center items-center rounded-2xl"
+                  onPress={handleDownload}
+                />
+
+                {onTakeQuiz ? (
+                  <Button
+                    variant="quiz"
+                    icon="zap"
+                    title={isQuizReady ? "Take Quiz" : "Quiz Pending"}
+                    disabled={!isQuizReady}
+                    className="flex-1 h-12 justify-center items-center rounded-2xl"
+                    onPress={handleTakeQuizPress}
+                  />
+                ) : (
+                  <Button
+                    variant="outline"
+                    title="Close"
+                    className="flex-1 h-12 justify-center items-center rounded-2xl"
+                    onPress={onClose}
+                  />
+                )}
+              </View>
+            </SafeAreaView>
+          </Animated.View>
         </View>
-      </AppBottomSheet>
+      </Modal>
     );
   },
 );
 
-// Alias for backward compatibility
 export const FullScreenNotesModal = NotesDetailBottomSheet;

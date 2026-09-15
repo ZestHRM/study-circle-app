@@ -12,7 +12,7 @@ import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { addNoteSchema } from "@/schemas";
 
@@ -63,10 +63,7 @@ export function AddNoteDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editingNote?: Note | null;
-  onSubmit: (payload: {
-    content: string;
-    subjectId: number;
-  }) => Promise<void>;
+  onSubmit: (payload: { content: string; subjectId: number }) => Promise<void>;
   submitting: boolean;
 }) {
   const router = useRouter();
@@ -205,11 +202,7 @@ export function AddNoteDialog({
                 }}
                 className="self-start flex-row items-center gap-1.5 bg-[#F3E8FF] px-3.5 py-1.5 h-8.5 rounded-full mt-1"
               >
-                <Feather
-                  name="plus"
-                  size={14}
-                  color={APP_COLORS.primaryDark}
-                />
+                <Feather name="plus" size={14} color={APP_COLORS.primaryDark} />
                 <Text variant="subhead" style={{ color: "#7C3AED" }}>
                   Create New Subject
                 </Text>

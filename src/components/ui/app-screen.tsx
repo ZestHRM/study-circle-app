@@ -37,7 +37,8 @@ export function AppScreen({
   keyboardShouldPersistTaps = "handled",
 }: AppScreenProps) {
   const hasEdges = Boolean(
-    edges && (Array.isArray(edges) ? edges.length > 0 : Object.keys(edges).length > 0)
+    edges &&
+    (Array.isArray(edges) ? edges.length > 0 : Object.keys(edges).length > 0),
   );
 
   const innerContent = (
@@ -59,7 +60,10 @@ export function AppScreen({
           {children}
         </ScrollView>
       ) : (
-        <View style={{ flex: 1 }} className={cn("flex-1", contentContainerClassName)}>
+        <View
+          style={{ flex: 1 }}
+          className={cn("flex-1", contentContainerClassName)}
+        >
           {children}
         </View>
       )}
@@ -79,10 +83,7 @@ export function AppScreen({
   }
 
   return (
-    <View
-      style={{ flex: 1 }}
-      className={cn("flex-1 bg-background", className)}
-    >
+    <View style={{ flex: 1 }} className={cn("flex-1 bg-background", className)}>
       {innerContent}
     </View>
   );

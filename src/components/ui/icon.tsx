@@ -18,13 +18,15 @@ export type IconColorPreset =
   | "muted"
   | "success"
   | "warning"
-  | "error";
+  | "error"
+  | "purple"
+  | "emerald";
 
 export interface IconProps extends Omit<LucideProps, "size" | "color"> {
   as?: LucideIcon;
   name?: string;
   size?: IconSizePreset | number;
-  color?: IconColorPreset | string;
+  color?: IconColorPreset | string | any;
   style?: TextStyle | ViewStyle | any;
   className?: string;
 }
@@ -46,8 +48,10 @@ const COLOR_MAP: Record<IconColorPreset, string> = {
   dark: APP_COLORS.stone900,
   muted: APP_COLORS.stone500,
   success: APP_COLORS.success,
-  warning: APP_COLORS.warning,
+  warning: APP_COLORS.orangeAccent,
   error: APP_COLORS.error,
+  purple: APP_COLORS.brandPurple,
+  emerald: APP_COLORS.emerald600,
 };
 
 function getLucideIcon(name?: string): LucideIcon {
@@ -123,7 +127,7 @@ export const Icon = React.memo(function Icon({
   as: IconComponent,
   name,
   size = "md",
-  color,
+  color = "primary",
   className,
   style,
   ...props
@@ -135,7 +139,7 @@ export const Icon = React.memo(function Icon({
   const iconSize = typeof size === "number" ? size : SIZE_MAP[size] ?? 20;
   const iconColor = color
     ? COLOR_MAP[color as IconColorPreset] ?? color
-    : APP_COLORS.stone900;
+    : undefined;
 
   return (
     <StyledLucideIcon

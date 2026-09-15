@@ -26,15 +26,15 @@ export interface MaterialsHeaderProps {
 const BENEFITS = [
   {
     icon: "file-text",
-    iconColor: "#059669",
+    iconColor: APP_COLORS.emerald600,
     bgClass: "bg-emerald-50 dark:bg-emerald-950/40",
     title: "AI notes",
     desc: "Well structured & easy to follow",
   },
   {
     icon: "lightbulb",
-    iconColor: "#D97706",
-    bgClass: "bg-amber-50 dark:bg-amber-950/40",
+    iconColor: APP_COLORS.warningDark,
+    bgClass: "bg-warning-bg",
     title: "Key concepts",
     desc: "Focus on what matters",
   },
@@ -189,7 +189,7 @@ export const MaterialsHeader = React.memo(function MaterialsHeader({
                 showAllOption={true}
                 allOptionLabel="All Subjects"
                 placeholder="Filter by Subject..."
-                triggerClassName="h-11 px-3 rounded-xl text-xs bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700"
+                triggerClassName="h-11 px-3 rounded-xl text-xs bg-card border-border"
               />
             </View>
           ) : null}
@@ -207,8 +207,8 @@ export const MaterialsHeader = React.memo(function MaterialsHeader({
         </View>
 
         {hasActiveFilters ? (
-          <View className="flex-row items-center gap-1.5 flex-wrap pt-1 border-t border-stone-100 dark:border-stone-800">
-            <Text className="text-[11px] font-bold text-stone-400 dark:text-stone-500">
+          <View className="flex-row items-center gap-1.5 flex-wrap pt-1 border-t border-border">
+            <Text className="text-[11px] font-bold text-muted-foreground">
               Active:
             </Text>
             {isSubjectActive ? (

@@ -17,15 +17,19 @@ export const openOfficialRazorpaySDK = async (
   options: OpenRazorpayOptions,
 ): Promise<{ paymentId: string; orderId?: string; signature?: string }> => {
   const key =
-    options.keyId ||
-    process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID ||
-    "rzp_test_RThSFento4BogD";
+    options.keyId || process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID;
+
+  if (!key) {
+    throw new Error(
+      "Razorpay Key ID missing. Please ensure backend returns keyId in /subscriptions/subscribe API response.",
+    );
+  }
 
   const currency = (options.currency || "INR").toUpperCase();
 
-  // Razorpay SDK validates order_id against Razorpay backend.
-  // Only include order_id if it's a real order created via Razorpay API (not local test timestamp order_xxx)
-  const isValidRazorpayOrderId =
+  const isSubscriptionId =
+    options.orderId && options.orderId.startsWith("sub_");
+  const isOrderId =
     options.orderId &&
     options.orderId.startsWith("order_") &&
     !options.orderId.includes("TEST") &&
@@ -40,7 +44,8 @@ export const openOfficialRazorpaySDK = async (
     key: key,
     amount: Math.round(options.amount * 100), // Amount in paise/cents
     name: "Study Circle",
-    ...(isValidRazorpayOrderId ? { order_id: options.orderId } : {}),
+    ...(isSubscriptionId ? { subscription_id: options.orderId } : {}),
+    ...(isOrderId ? { order_id: options.orderId } : {}),
     prefill: {
       email: options.userEmail || "",
       contact: options.userContact || "",
@@ -56,18 +61,23 @@ export const openOfficialRazorpaySDK = async (
     const rawData = data as any;
     const paymentId = rawData?.razorpay_payment_id || rawData?.payment_id;
     if (!paymentId) {
-      throw new Error("Payment was cancelled or payment ID was not generated.");
+      throw new Error("PAYMENT_CANCELLED");
     }
 
     return {
       paymentId: String(paymentId),
-      orderId: rawData?.razorpay_order_id || options.orderId,
+      orderId:
+        rawData?.razorpay_subscription_id ||
+        rawData?.razorpay_order_id ||
+        options.orderId,
       signature: rawData?.razorpay_signature || "",
     };
   } catch (error: any) {
-    let errorMsg = "Payment was cancelled or failed.";
-    if (typeof error === "string") {
-      errorMsg = error;
+    console.warn("[Razorpay SDK] Raw error caught:", error);
+
+    let errorMsg = "";
+    if (error?.error?.description) {
+      errorMsg = error.error.description;
     } else if (error?.description) {
       try {
         const parsed =
@@ -75,7 +85,10 @@ export const openOfficialRazorpaySDK = async (
           error.description.startsWith("{")
             ? JSON.parse(error.description)
             : null;
-        errorMsg = parsed?.error?.description || error.description;
+        errorMsg =
+          parsed?.error?.description ||
+          parsed?.error?.reason ||
+          error.description;
       } catch (e) {
         errorMsg = error.description;
       }
@@ -83,8 +96,23 @@ export const openOfficialRazorpaySDK = async (
       errorMsg = error.reason;
     } else if (error?.message) {
       errorMsg = error.message;
+    } else if (typeof error === "string") {
+      errorMsg = error;
+    } else {
+      errorMsg = "Razorpay payment checkout failed.";
     }
-    console.warn("[Razorpay SDK] Payment Cancelled or Failed:", errorMsg);
+
+    const lower = String(errorMsg).toLowerCase();
+    const isExplicitCancel =
+      (lower.includes("cancel") || lower.includes("closed")) &&
+      !lower.includes("failed") &&
+      !lower.includes("bad_request");
+
+    if (isExplicitCancel) {
+      errorMsg = "PAYMENT_CANCELLED";
+    }
+
+    console.warn("[Razorpay SDK] Formatted Error Message:", errorMsg);
     throw new Error(errorMsg);
   }
 };

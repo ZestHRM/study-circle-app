@@ -34,15 +34,15 @@ export const EmptyState = React.memo(function EmptyState({
 }: EmptyStateProps) {
   return (
     <View
-      className={`bg-white dark:bg-stone-900 rounded-2xl p-7 items-center justify-center gap-3 border border-stone-200/80 dark:border-stone-800 shadow-xs my-2 ${className}`}
+      className={`bg-card text-card-foreground rounded-2xl p-7 items-center justify-center gap-3 border border-border shadow-xs my-2 ${className}`}
     >
-      <View className="w-14 h-14 rounded-full bg-[#FEEAE3] dark:bg-stone-800 items-center justify-center">
+      <View className="w-14 h-14 rounded-full bg-muted items-center justify-center">
         <Icon name={icon} size={24} color={APP_COLORS.primary} />
       </View>
-      <Text className="text-sm font-bold text-stone-900 dark:text-stone-100 text-center">
+      <Text className="text-sm font-bold text-foreground text-center">
         {title}
       </Text>
-      <Text className="text-xs text-stone-500 dark:text-stone-400 text-center leading-5 px-2">
+      <Text className="text-xs text-muted-foreground text-center leading-5 px-2">
         {description}
       </Text>
       {actionLabel && onAction && (

@@ -12,6 +12,7 @@ export function useDashboardStreak() {
     queryKey: ["dashboard", "streak", user?.id],
     queryFn: async () => dashboardApi.getStreak(),
     enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 }
 
@@ -22,6 +23,7 @@ export function useDashboardRecentActivity() {
     queryKey: ["dashboard", "recent-activity", user?.id],
     queryFn: async () => dashboardApi.getRecentActivity(),
     enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 }
 
@@ -35,6 +37,7 @@ export function useDashboardChartData(params: {
     queryKey: ["dashboard", "chart-data", user?.id, params.startDate, params.endDate],
     queryFn: async () => dashboardApi.getChartData(params),
     enabled: Boolean(user) && Boolean(params.startDate) && Boolean(params.endDate),
+    staleTime: 1000 * 60 * 2,
   });
 }
 
@@ -45,24 +48,28 @@ export function useDashboardCounts() {
     queryKey: ["dashboard", "count", "study-materials", user?.id],
     queryFn: async () => dashboardApi.getStudyMaterialsCount(),
     enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 
   const examMaterialsQuery = useQuery({
     queryKey: ["dashboard", "count", "exam-materials", user?.id],
     queryFn: async () => dashboardApi.getExamMaterialsCount(),
     enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 
   const quizzesQuery = useQuery({
     queryKey: ["dashboard", "count", "quizzes", user?.id],
     queryFn: async () => dashboardApi.getQuizzesCount(),
     enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 
   const studyCirclesQuery = useQuery({
     queryKey: ["dashboard", "count", "study-circles", user?.id],
     queryFn: async () => dashboardApi.getStudyCirclesCount(),
     enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 
   const isLoading =
@@ -87,6 +94,7 @@ export function useTodayCheckIn() {
     queryKey: ["dashboard", "today-checkin", user?.id],
     queryFn: async () => dashboardApi.getTodayCheckIn(),
     enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 }
 

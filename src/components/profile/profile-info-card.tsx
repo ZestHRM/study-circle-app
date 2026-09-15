@@ -1,20 +1,19 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Icon, type IconColorPreset } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { Feather } from "@expo/vector-icons";
 import * as React from "react";
 import { View } from "react-native";
 
 export interface ProfileInfoRow {
   label: string;
   value: string;
-  iconName: keyof typeof Feather.glyphMap;
+  iconName: string;
   verified?: boolean;
 }
 
 export interface ProfileInfoCardProps {
   title: string;
-  headerIcon: keyof typeof Feather.glyphMap;
+  headerIcon: string;
   headerIconColor?: IconColorPreset;
   headerIconBgClass?: string;
   rows: ProfileInfoRow[];

@@ -7,10 +7,11 @@ import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
 import { APP_COLORS } from "@/constants/colors";
 import { useDeleteStudyMaterial, useStudyMaterialsInfinite } from "@/hooks";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
+import { showErrorToast } from "@/lib/utils/toast";
 import { type StudyMaterial } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { Alert, FlatList, RefreshControl, View } from "react-native";
+import { FlatList, RefreshControl, View } from "react-native";
 
 export default function MaterialsScreen() {
   const router = useRouter();
@@ -78,7 +79,7 @@ export default function MaterialsScreen() {
           error instanceof Error
             ? error.message
             : "Unable to delete the study material right now.";
-        Alert.alert("Delete Failed", message);
+        showErrorToast("Delete Failed", message);
       }
     },
     [confirm, deleteMaterialMutation],

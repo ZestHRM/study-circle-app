@@ -1,9 +1,9 @@
 export const APP_COLORS = {
-  // Primary Brand Purple Colors
-  primary: '#582BE8',
-  primaryHover: '#4B22CF',
-  primaryLight: '#F4F3FF',
-  primaryDark: '#411CA4',
+  // Primary Brand Colors (Blue)
+  primary: '#2563EB',
+  primaryHover: '#1D4ED8',
+  primaryLight: '#EFF6FF',
+  primaryDark: '#1E40AF',
   brandPurple: '#582BE8',
   brandPurpleLight: '#F4F3FF',
   brandPurpleBorder: '#C7C3FF',
@@ -53,6 +53,8 @@ export const APP_COLORS = {
   warningLight: '#FFEDD5',
   error: '#EF4444',
   errorLight: '#FEE2E2',
+  errorDark: '#DC2626',
+  errorBorder: '#FCA5A5',
   infoBlue: '#3B82F6',
 
   // Background & Surface Tokens

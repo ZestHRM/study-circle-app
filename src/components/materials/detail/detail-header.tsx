@@ -14,7 +14,7 @@ export const DetailHeader = React.memo(function DetailHeader({
   onBack,
 }: DetailHeaderProps) {
   return (
-    <View className="flex-row items-center justify-between px-4 py-3 bg-white dark:bg-stone-950">
+    <View className="flex-row items-center justify-between px-4 py-3 bg-background">
       <Pressable
         onPress={onBack}
         hitSlop={12}

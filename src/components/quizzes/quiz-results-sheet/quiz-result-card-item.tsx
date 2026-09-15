@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import type { QuizAnswerCorrectness, QuizAnswerGrading } from "@/lib/api";
-import { Feather } from "@expo/vector-icons";
 import * as React from "react";
 import { View } from "react-native";
 
@@ -12,7 +12,7 @@ const CORRECTNESS_CONFIG: Record<
   {
     label: string;
     variant: "emerald" | "amber" | "destructive" | "outline";
-    icon: keyof typeof Feather.glyphMap;
+    icon: string;
     bgColor: string;
     borderColor: string;
   }
@@ -101,16 +101,16 @@ export const QuizResultCardItem = React.memo(function QuizResultCardItem({
       </View>
 
       {/* Question Text */}
-      <Text className="text-base font-bold text-stone-900 dark:text-stone-100 leading-6">
+      <Text variant="h3" className="leading-6">
         {result.question?.question}
       </Text>
 
       {/* User Answer Card */}
       <View className={`p-3 rounded-xl border ${correctness.bgColor} ${correctness.borderColor} gap-1`}>
-        <Text className="text-xs font-semibold text-stone-500 dark:text-stone-400">
+        <Text variant="muted" className="font-semibold">
           Your Answer:
         </Text>
-        <Text className="text-sm font-medium text-stone-900 dark:text-stone-100">
+        <Text variant="p" className="font-medium">
           {userAnswerText}
         </Text>
       </View>
@@ -129,13 +129,13 @@ export const QuizResultCardItem = React.memo(function QuizResultCardItem({
       {showExplanation ? (
         <View className="bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/60 rounded-xl p-3.5 gap-1.5 mt-1">
           <View className="flex-row items-center gap-2">
-            <Feather name="check-circle" size={15} color={APP_COLORS.primary} />
-            <Text className="text-xs font-bold text-purple-950 dark:text-purple-200">
+            <Icon name="check-circle" size={15} color={APP_COLORS.primary} />
+            <Text variant="subhead" className="font-bold">
               Correct Answer: {result.question?.answer ?? "N/A"}
             </Text>
           </View>
 
-          <Text className="text-xs text-stone-600 dark:text-stone-300 leading-5 pt-0.5">
+          <Text variant="p" className="text-xs leading-5 pt-0.5">
             <Text className="font-semibold">Explanation: </Text>
             {result.question?.explanation || "No explanation available."}
           </Text>

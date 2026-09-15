@@ -11,7 +11,7 @@ import { View } from "react-native";
 export interface Step2UploadTypeProps {
   selectedSubjectName?: string;
   submitError?: string | null;
-  onContinue: () => void;
+  onContinue: (uploadType: "STUDY_MATERIAL" | "PYQ") => void;
 }
 
 export type Step2UploadProps = Step2UploadTypeProps;
@@ -24,6 +24,10 @@ export const Step2UploadType = React.memo(function Step2UploadType({
   const [selectedUploadType, setSelectedUploadType] = React.useState<
     "STUDY_MATERIAL" | "PYQ"
   >("STUDY_MATERIAL");
+
+  const handleContinuePress = React.useCallback(() => {
+    onContinue(selectedUploadType);
+  }, [onContinue, selectedUploadType]);
 
   return (
     <View className="gap-5">
@@ -39,9 +43,9 @@ export const Step2UploadType = React.memo(function Step2UploadType({
 
       {/* Selected Subject Badge */}
       {selectedSubjectName ? (
-        <View className="flex-row items-center gap-2 bg-blue-50 dark:bg-blue-950/40 px-3.5 py-2 rounded-xl border border-blue-200 dark:border-blue-900/60 align-self-start">
+        <View className="flex-row items-center gap-2 bg-primary/10 px-3.5 py-2 rounded-xl border border-primary/20 align-self-start">
           <Icon name="book-open" size="xs" color="primary" />
-          <Text variant="caption" className="font-semibold text-blue-900 dark:text-blue-200">
+          <Text variant="caption" className="font-semibold text-primary">
             Subject: {selectedSubjectName}
           </Text>
         </View>
@@ -71,7 +75,7 @@ export const Step2UploadType = React.memo(function Step2UploadType({
           subtitle="Important questions + why they matter"
           icon="clipboard"
           iconColor="warning"
-          badge={<Badge label="Paid plan" icon="lock" variant="amber" />}
+          badge={<Badge label="Coming Soon" icon="clock" variant="amber" />}
           features={[
             { text: "Upload past year papers (PYQs)", iconColor: "warning" },
             {
@@ -85,7 +89,7 @@ export const Step2UploadType = React.memo(function Step2UploadType({
       {/* Info Notice Box */}
       <NoticeBox
         variant="info"
-        message="PYQ analysis is available on a paid plan. Learn how StudyCircleAI helps you prepare faster."
+        message="PYQ analysis module is coming soon. Select Study Material to upload notes and generate AI quizzes."
       />
 
       {submitError ? (
@@ -100,7 +104,7 @@ export const Step2UploadType = React.memo(function Step2UploadType({
         icon="arrow-right"
         iconPosition="right"
         title="Continue"
-        onPress={onContinue}
+        onPress={handleContinuePress}
         className="w-full h-13 rounded-2xl justify-center items-center shadow-md"
       />
     </View>

@@ -1,6 +1,4 @@
-import { Icon } from "@/components/ui/icon";
-import { Spinner } from "@/components/ui/spinner";
-import { Text } from "@/components/ui/text";
+import { ErrorState, Icon, Spinner, Text } from "@/components/ui";
 import { APP_COLORS } from "@/constants/colors";
 import type { Quiz } from "@/services";
 import { useRouter } from "expo-router";
@@ -11,6 +9,7 @@ interface QuizTabProps {
   quiz: Quiz | null;
   isLoading: boolean;
   quizReady: boolean;
+  quizFailed?: boolean;
   isPro: boolean;
   isForbidden: boolean;
   onStartQuiz: (quiz: Quiz) => void;
@@ -23,6 +22,7 @@ export const QuizTab = React.memo(function QuizTab({
   quiz,
   isLoading,
   quizReady,
+  quizFailed = false,
   isPro,
   isForbidden,
   onStartQuiz,
@@ -82,7 +82,7 @@ export const QuizTab = React.memo(function QuizTab({
   if (isLoading) {
     return (
       <View
-        className="flex-1 bg-white dark:bg-stone-950 items-center justify-center"
+        className="flex-1 bg-background items-center justify-center"
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       >
         <Spinner variant="quiz" size="large" message="Loading quiz..." center />
@@ -94,13 +94,13 @@ export const QuizTab = React.memo(function QuizTab({
   if (isForbidden || !isPro) {
     return (
       <ScrollView
-        className="flex-1 bg-slate-50 dark:bg-stone-950"
+        className="flex-1 bg-background"
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Soft Lavender Card Container matching UI image */}
-        <View className="bg-[#F5F3FF] dark:bg-purple-950/30 border border-purple-200/60 dark:border-purple-900/40 rounded-3xl p-5 gap-4 items-center">
+        <View className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200/60 dark:border-purple-900/40 rounded-3xl p-5 gap-4 items-center">
           {/* Top Illustration: Clipboard + Crown Badge */}
           <View className="items-center justify-center my-2 relative">
             <View className="w-20 h-20 rounded-3xl bg-purple-100 dark:bg-purple-900/50 items-center justify-center border border-purple-200 dark:border-purple-800">
@@ -133,11 +133,11 @@ export const QuizTab = React.memo(function QuizTab({
           </View>
 
           {/* Locked Sample Questions Box */}
-          <View className="w-full bg-white dark:bg-stone-900 rounded-2xl border border-purple-100 dark:border-purple-900/50 overflow-hidden divide-y divide-purple-50 dark:divide-stone-800">
+          <View className="w-full bg-card rounded-2xl border border-border overflow-hidden divide-y divide-border">
             {sampleQuestions.map((item: { id: string; q: string }) => (
               <View
                 key={item.id}
-                className="flex-row items-center justify-between px-4 py-3 bg-purple-50/20 dark:bg-stone-900"
+                className="flex-row items-center justify-between px-4 py-3 bg-card"
               >
                 <View className="flex-row items-center gap-3 flex-1 pr-2">
                   <Text
@@ -200,11 +200,21 @@ export const QuizTab = React.memo(function QuizTab({
     );
   }
 
+  if (quizFailed) {
+    return (
+      <ErrorState
+        icon="alert-triangle"
+        title="Quiz Generation Failed"
+        description="AI couldn't generate practice questions for this material. Please try re-uploading the document."
+      />
+    );
+  }
+
   // ── Pro User with Quiz Ready — Start Quiz Screen ──
   if (!quizReady) {
     return (
       <View
-        className="flex-1 bg-white dark:bg-stone-950 items-center justify-center px-8 gap-5"
+        className="flex-1 bg-background items-center justify-center px-8 gap-5"
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       >
         <View className="w-16 h-16 rounded-2xl bg-purple-100 dark:bg-purple-950/40 items-center justify-center">
@@ -232,7 +242,7 @@ export const QuizTab = React.memo(function QuizTab({
   if (!quiz) {
     return (
       <View
-        className="flex-1 bg-white dark:bg-stone-950 items-center justify-center px-8 gap-4"
+        className="flex-1 bg-background items-center justify-center px-8 gap-4"
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       >
         <Icon name="search" size={32} color={APP_COLORS.stone300} />
@@ -248,13 +258,13 @@ export const QuizTab = React.memo(function QuizTab({
 
   return (
     <ScrollView
-      className="flex-1 bg-slate-50 dark:bg-stone-950"
+      className="flex-1 bg-background"
       style={{ flex: 1 }}
       contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 48 }}
       showsVerticalScrollIndicator={false}
     >
       {/* Hero */}
-      <View className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200/60 dark:border-stone-800 px-6 py-8 items-center gap-3">
+      <View className="bg-card rounded-3xl border border-border px-6 py-8 items-center gap-3">
         <View className="w-20 h-20 rounded-3xl bg-blue-100 dark:bg-blue-950/40 items-center justify-center">
           <Icon name="clipboard" size={38} color={APP_COLORS.quizBlue} />
         </View>

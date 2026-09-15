@@ -77,7 +77,7 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
       <CardHeader className="p-0 flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
           <View className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950/60 items-center justify-center">
-            <Icon name="zap" size={18} color="#EA580C" />
+            <Icon name="zap" size={18} color="warning" />
           </View>
           <CardTitle className="text-lg font-extrabold">Study Streak</CardTitle>
         </View>
@@ -104,7 +104,7 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
                   <Text variant="caption" className="font-bold text-orange-700 dark:text-orange-300">
                     Current Streak
                   </Text>
-                  <Icon name="zap" size={14} color="#EA580C" />
+                  <Icon name="zap" size={14} color="warning" />
                 </View>
                 <Text variant="h1" className="text-2xl font-black text-orange-600 dark:text-orange-400 mt-1">
                   {currentStreak} <Text className="text-xs font-bold text-orange-500">Days</Text>
@@ -117,7 +117,7 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
                   <Text variant="caption" className="font-bold text-amber-700 dark:text-amber-300">
                     Personal Best
                   </Text>
-                  <Icon name="award" size={14} color="#D97706" />
+                  <Icon name="award" size={14} color="warning" />
                 </View>
                 <Text variant="h1" className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
                   {bestStreak} <Text className="text-xs font-bold text-amber-500">Days</Text>
@@ -153,10 +153,10 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
                         size={14}
                         color={
                           day.hasActivity
-                            ? APP_COLORS.white
+                            ? "white"
                             : day.isToday
-                            ? "#EA580C"
-                            : APP_COLORS.stone400
+                            ? "warning"
+                            : "muted"
                         }
                       />
                     </View>
@@ -206,7 +206,7 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
                       className="flex-row items-center justify-between px-3 py-2 rounded-xl bg-stone-100/80 dark:bg-stone-800/60"
                     >
                       <View className="flex-row items-center gap-2">
-                        <Icon name="check-circle" size={13} color={APP_COLORS.success} />
+                        <Icon name="check-circle" size={13} color="success" />
                         <Text variant="subhead" className="text-xs font-semibold">
                           {formatShortDate(act.date)}
                         </Text>

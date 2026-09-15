@@ -2,6 +2,7 @@ import {
   SubscriptionCard,
   SubscriptionControls,
 } from "@/components/subscriptions";
+import { AppScreen } from "@/components/ui/app-screen";
 import { Button } from "@/components/ui/button";
 import { CommonHeader } from "@/components/ui/common-header";
 import { HeroBanner } from "@/components/ui/hero-banner";
@@ -14,11 +15,11 @@ import {
   useSubscriptionPlansQuery,
 } from "@/hooks/queries/use-subscriptions";
 import { useAuth } from "@/lib/auth";
+import { showInfoToast } from "@/lib/utils/toast";
 import type { SubscriptionPlan } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { Alert, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View } from "react-native";
 
 export default function SubscriptionsScreen() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function SubscriptionsScreen() {
       if (subscribeMutation.isProcessing) return;
 
       if (plan.name.toLowerCase() === currentTierName.toLowerCase()) {
-        Alert.alert(
+        showInfoToast(
           "Current Active Plan",
           `You are already subscribed to the ${plan.name}.`,
         );
@@ -61,107 +62,103 @@ export default function SubscriptionsScreen() {
   );
 
   return (
-    <SafeAreaView
-      className="bg-stone-50 dark:bg-stone-950 flex-1 relative"
-      edges={["top"]}
+    <AppScreen
+      header={
+        <CommonHeader
+          title="Subscription Plans"
+          onBack={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/(tabs)");
+            }
+          }}
+        />
+      }
+      scrollable={true}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: 12,
+        paddingBottom: 48,
+      }}
     >
-      <CommonHeader
-        title="Subscription Plans"
-        onBack={() => {
-          if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.replace("/(tabs)");
-          }
-        }}
-      />
+      <View className="mx-auto w-full max-w-md gap-5">
+        {/* Theme-Matched Hero Banner */}
+        <HeroBanner
+          title="Unlock AI Study Power"
+          titleHighlight=" 🚀"
+          subtitle="Choose the perfect plan to boost your study speed, generate unlimited AI quizzes & notes."
+          imageSource={require("../../assets/images/student-study-hero.png")}
+          imageWidth={125}
+          imageHeight={105}
+        />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: 48,
-        }}
-      >
-        <View className="mx-auto w-full max-w-md gap-5">
-          {/* Theme-Matched Hero Banner */}
-          <HeroBanner
-            title="Unlock AI Study Power"
-            titleHighlight=" 🚀"
-            subtitle="Choose the perfect plan to boost your study speed, generate unlimited AI quizzes & notes."
-            imageSource={require("../../assets/images/student-study-hero.png")}
-            imageWidth={125}
-            imageHeight={105}
-          />
+        {/* Reusable Toggle Controls */}
+        <SubscriptionControls
+          billingCycle={billingCycle}
+          onBillingCycleChange={setBillingCycle}
+          currency={currency}
+          onCurrencyChange={setCurrency}
+        />
 
-          {/* Reusable Toggle Controls */}
-          <SubscriptionControls
-            billingCycle={billingCycle}
-            onBillingCycleChange={setBillingCycle}
-            currency={currency}
-            onCurrencyChange={setCurrency}
-          />
+        {/* Loading or Error States */}
+        {isLoading ? (
+          <View className="py-12 items-center">
+            <Spinner
+              size="large"
+              variant="quiz"
+              message="Loading subscription plans..."
+            />
+          </View>
+        ) : isError ? (
+          <View className="py-8 items-center gap-3">
+            <Text variant="error" className="text-sm">
+              Failed to load subscription plans.
+            </Text>
+            <Button
+              size="sm"
+              variant="outline"
+              title="Retry"
+              onPress={() => void refetch()}
+            />
+          </View>
+        ) : (
+          /* Subscription Plans Cards List */
+          <View className="gap-4">
+            {plans.map((plan) => {
+              const isCurrent =
+                plan.name.toLowerCase() === currentTierName.toLowerCase();
 
-          {/* Loading or Error States */}
-          {isLoading ? (
-            <View className="py-12 items-center">
-              <Spinner
-                size="large"
-                variant="quiz"
-                message="Loading subscription plans..."
-              />
-            </View>
-          ) : isError ? (
-            <View className="py-8 items-center gap-3">
-              <Text variant="error" className="text-sm">
-                Failed to load subscription plans.
-              </Text>
-              <Button
-                size="sm"
-                variant="outline"
-                title="Retry"
-                onPress={() => void refetch()}
-              />
-            </View>
-          ) : (
-            /* Subscription Plans Cards List */
-            <View className="gap-4">
-              {plans.map((plan) => {
-                const isCurrent =
-                  plan.name.toLowerCase() === currentTierName.toLowerCase();
+              return (
+                <SubscriptionCard
+                  key={plan.name}
+                  plan={plan}
+                  billingCycle={billingCycle}
+                  currency={currency}
+                  isCurrent={isCurrent}
+                  onSubscribe={handleSubscribe}
+                />
+              );
+            })}
+          </View>
+        )}
 
-                return (
-                  <SubscriptionCard
-                    key={plan.name}
-                    plan={plan}
-                    billingCycle={billingCycle}
-                    currency={currency}
-                    isCurrent={isCurrent}
-                    onSubscribe={handleSubscribe}
-                  />
-                );
-              })}
-            </View>
-          )}
-
-          {/* Guarantee & Support Footer */}
-          <View className="p-4 rounded-2xl bg-stone-100/70 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-800 gap-2 items-center">
-            <View className="flex-row items-center gap-1.5">
-              <Icon name="shield" size={14} color={APP_COLORS.emerald600} />
-              <Text
-                variant="caption"
-                className="font-bold text-stone-600 dark:text-stone-400"
-              >
-                Secure SSL Payment • Cancel Anytime
-              </Text>
-            </View>
-            <Text variant="muted" className="text-[11px] text-center">
-              Questions about plans? Contact us at support@usestudycircle.ai
+        {/* Guarantee & Support Footer */}
+        <View className="p-4 rounded-2xl bg-stone-100/70 dark:bg-stone-800/50 border border-stone-200/60 dark:border-stone-800 gap-2 items-center">
+          <View className="flex-row items-center gap-1.5">
+            <Icon name="shield" size={14} color={APP_COLORS.emerald600} />
+            <Text
+              variant="caption"
+              className="font-bold text-stone-600 dark:text-stone-400"
+            >
+              Secure SSL Payment • Cancel Anytime
             </Text>
           </View>
+          <Text variant="muted" className="text-[11px] text-center">
+            Questions about plans? Contact us at support@usestudycircle.ai
+          </Text>
         </View>
-      </ScrollView>
+      </View>
 
       {/* Payment Processing Overlay Modal */}
       {subscribeMutation.isProcessing && (
@@ -177,6 +174,6 @@ export default function SubscriptionsScreen() {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -20,9 +20,10 @@ import {
   useUpdateNote,
 } from "@/hooks/queries";
 import { type Note } from "@/services";
+import { showErrorToast, showSuccessToast } from "@/lib/utils/toast";
 import { useFocusEffect } from "expo-router";
 import * as React from "react";
-import { Alert, FlatList, RefreshControl, View } from "react-native";
+import { FlatList, RefreshControl, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const PAGE_SIZE = 10;
@@ -114,13 +115,13 @@ export default function NotesScreen() {
 
       try {
         await deleteNoteMutation.mutateAsync(note.id);
-        Alert.alert("Success", "Note deleted successfully.");
+        showSuccessToast("Success", "Note deleted successfully.");
       } catch (error) {
         const message =
           error instanceof Error
             ? error.message
             : "Unable to delete the note right now.";
-        Alert.alert("Delete Failed", message);
+        showErrorToast("Delete Failed", message);
       }
     },
     [confirm, deleteNoteMutation],

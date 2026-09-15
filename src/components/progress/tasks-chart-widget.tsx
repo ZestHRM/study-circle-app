@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { UI_STYLES } from "@/constants/styles";
 import { useDashboardChartData } from "@/hooks/queries/use-dashboard";
 import { type DashboardCheckInChartPoint } from "@/lib/api";
-import { Feather } from "@expo/vector-icons";
+import { showInfoToast } from "@/lib/utils/toast";
 import * as React from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 
 function getDateRange(days: number) {
@@ -145,7 +146,7 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
     if (onCheckIn) {
       onCheckIn();
     } else {
-      Alert.alert(
+      showInfoToast(
         "Check-in",
         "Check-in flow will be available in the mobile app soon.",
       );
@@ -157,8 +158,8 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
       {/* Widget Header Row */}
       <View className={UI_STYLES.rowBetween}>
         <View className="flex-row items-center gap-3 flex-1 pr-2">
-          <View className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 items-center justify-center border border-blue-200 dark:border-blue-900/60">
-            <Feather name="bar-chart-2" size={18} color="#2563EB" />
+          <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center border border-primary/20">
+            <Icon name="bar-chart-2" size={18} color="primary" />
           </View>
           <View className="flex-1">
             <Text
@@ -220,8 +221,8 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
 
       {!isLoading && !error && daysWithCheckins === 0 ? (
         <View className="items-center py-6 gap-3">
-          <View className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 items-center justify-center border border-blue-100 dark:border-blue-900/60">
-            <Feather name="check-square" size={24} color="#2563EB" />
+          <View className="w-14 h-14 rounded-2xl bg-primary/10 items-center justify-center border border-primary/20">
+            <Icon name="check-square" size={24} color="primary" />
           </View>
           <View className="items-center gap-1">
             <Text variant="h3" className="text-base font-bold text-center">

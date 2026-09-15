@@ -1,4 +1,5 @@
 import { useAuth } from "@/lib/auth";
+import { showSuccessToast } from "@/lib/utils/toast";
 import { notesApi, type StudyMaterial } from "@/services";
 import {
   keepPreviousData,
@@ -8,7 +9,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import * as React from "react";
-import { Alert } from "react-native";
 
 export function useNotesQuery(params: {
   page: number;
@@ -140,7 +140,7 @@ export function useCreateNote() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["notes"] });
-      Alert.alert("Success", "Note created successfully.");
+      showSuccessToast("Success", "Note created successfully.");
     },
   });
 }
@@ -162,7 +162,7 @@ export function useUpdateNote() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["notes"] });
-      Alert.alert("Success", "Note updated successfully.");
+      showSuccessToast("Success", "Note updated successfully.");
     },
   });
 }
@@ -227,6 +227,24 @@ export function useStudyMaterialNotesQuery(
     queryFn: async () => {
       if (!token) return null;
 
+      const objInput = typeof materialInput === "object" && materialInput !== null ? (materialInput as any) : null;
+
+      // Strategy 0: Direct embedded notes content on material object
+      const embeddedContent =
+        objInput?.notes?.[0]?.content ||
+        (Array.isArray(objInput?.notes) ? objInput?.notes[0]?.content : null) ||
+        objInput?.processedNotes ||
+        objInput?.notesContent;
+
+      if (embeddedContent && typeof embeddedContent === "string" && embeddedContent.trim().length > 0) {
+        return {
+          content: embeddedContent,
+          title: objInput?.title || "Notes Detail",
+          subjectName: objInput?.subject?.name || "General",
+          createdAt: objInput?.createdAt,
+        };
+      }
+
       // Strategy 1: Try explicit notes ID if available
       if (explicitNotesId) {
         try {
@@ -235,10 +253,11 @@ export function useStudyMaterialNotesQuery(
           if (rawNote?.content) {
             return {
               content: rawNote.content,
-              title: rawNote.studyMaterial?.title || "Notes Detail",
+              title: rawNote.studyMaterial?.title || objInput?.title || "Notes Detail",
               subjectName:
                 rawNote.subject?.name ||
-                rawNote.studyMaterial?.subject?.name,
+                rawNote.studyMaterial?.subject?.name ||
+                objInput?.subject?.name,
               createdAt: rawNote.createdAt,
             };
           }
@@ -250,21 +269,34 @@ export function useStudyMaterialNotesQuery(
       // Strategy 2: Search notes list by materialId
       if (materialId) {
         try {
-          const listRes = await notesApi.list(token, { page: 1, limit: 50 });
+          const listRes = await notesApi.list(token, { page: 1, limit: 100 });
           const rawList = listRes?.data || (Array.isArray(listRes) ? listRes : []);
           const found = rawList.find(
-            (n: any) => n.studyMaterialId === materialId,
+            (n: any) => n.studyMaterialId === materialId || n.id === materialId,
           );
           if (found?.id) {
+            if (found.content && found.content.trim().length > 0) {
+              return {
+                content: found.content,
+                title: found.studyMaterial?.title || objInput?.title || "Notes Detail",
+                subjectName:
+                  found.subject?.name ||
+                  (found.studyMaterial as any)?.subject?.name ||
+                  objInput?.subject?.name,
+                createdAt: found.createdAt,
+              };
+            }
+
             const detailRes = await notesApi.getById(token, found.id);
             const rawDetail = detailRes?.data || detailRes;
             if (rawDetail?.content) {
               return {
                 content: rawDetail.content,
-                title: rawDetail.studyMaterial?.title || "Notes Detail",
+                title: rawDetail.studyMaterial?.title || objInput?.title || "Notes Detail",
                 subjectName:
                   rawDetail.subject?.name ||
-                  rawDetail.studyMaterial?.subject?.name,
+                  rawDetail.studyMaterial?.subject?.name ||
+                  objInput?.subject?.name,
                 createdAt: rawDetail.createdAt,
               };
             }
@@ -280,10 +312,11 @@ export function useStudyMaterialNotesQuery(
           if (rawDirect?.content) {
             return {
               content: rawDirect.content,
-              title: rawDirect.studyMaterial?.title || "Notes Detail",
+              title: rawDirect.studyMaterial?.title || objInput?.title || "Notes Detail",
               subjectName:
                 rawDirect.subject?.name ||
-                rawDirect.studyMaterial?.subject?.name,
+                rawDirect.studyMaterial?.subject?.name ||
+                objInput?.subject?.name,
               createdAt: rawDirect.createdAt,
             };
           }
@@ -296,9 +329,9 @@ export function useStudyMaterialNotesQuery(
       if (fileContent && fileContent.trim()) {
         return {
           content: fileContent,
-          title: (materialInput as any)?.title || "Notes Detail",
-          subjectName: (materialInput as any)?.subject?.name || "General",
-          createdAt: (materialInput as any)?.createdAt,
+          title: objInput?.title || "Notes Detail",
+          subjectName: objInput?.subject?.name || "General",
+          createdAt: objInput?.createdAt,
         };
       }
 

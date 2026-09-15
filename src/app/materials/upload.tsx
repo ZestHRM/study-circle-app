@@ -1,5 +1,4 @@
-import { NotesDetailBottomSheet } from "@/components/notes";
-import { StartQuizSheet } from "@/components/quizzes";
+import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import {
   Step1SubjectPicker,
   Step2UploadType,
@@ -7,6 +6,8 @@ import {
   Step4Ready,
   UploadHeader,
 } from "@/components/materials";
+import { NotesDetailBottomSheet } from "@/components/notes";
+import { StartQuizSheet } from "@/components/quizzes";
 import {
   useCreateSubject,
   useFileDownload,
@@ -16,21 +17,25 @@ import {
   useSubjectsQuery,
 } from "@/hooks";
 import { useAuth } from "@/lib/auth";
-import { step1SubjectSchema, step2TitleSchema, step2MaterialSchema } from "@/schemas";
 import {
-  ApiError,
+  isNotesReady as isNotesReadyHelper,
+  isQuizReady as isQuizReadyHelper,
+} from "@/lib/utils/material-status";
+import { showErrorToast } from "@/lib/utils/toast";
+import {
+  step1SubjectSchema,
+  step2MaterialSchema,
+  step2TitleSchema,
+} from "@/schemas";
+import {
   getErrorMessage,
   studyMaterialsApi,
   type QuizAttempt,
   type StudyMaterial,
 } from "@/services";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  isNotesReady as isNotesReadyHelper,
-  isQuizReady as isQuizReadyHelper,
-} from "@/lib/utils/material-status";
 import * as React from "react";
-import { Alert, Linking, ScrollView, StatusBar, View } from "react-native";
+import { Linking, ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type FormValues = {
@@ -42,6 +47,7 @@ type FormErrors = Partial<Record<keyof FormValues | "file", string>>;
 
 export default function UploadMaterialScreen() {
   const router = useRouter();
+  const confirm = useConfirmDialog();
   const params = useLocalSearchParams<{
     fileUri?: string;
     fileName?: string;
@@ -118,10 +124,33 @@ export default function UploadMaterialScreen() {
     selectedSubjectName ||
     "";
 
+  const explicitQuizId = React.useMemo(() => {
+    if (!processedMaterial) return null;
+    return (
+      processedMaterial.quizId ||
+      (Array.isArray(processedMaterial.quizzes) &&
+        processedMaterial.quizzes.length > 0 &&
+        processedMaterial.quizzes[0]?.id) ||
+      (processedMaterial as any).quiz?.id ||
+      null
+    );
+  }, [processedMaterial]);
+
+  const isNotesReady = React.useMemo(() => {
+    if (!processedMaterial) return false;
+    return isNotesReadyHelper(processedMaterial);
+  }, [processedMaterial]);
+
+  const isQuizReady = React.useMemo(() => {
+    if (!processedMaterial) return false;
+    return Boolean(explicitQuizId) || isQuizReadyHelper(processedMaterial);
+  }, [processedMaterial, explicitQuizId]);
 
   // Poll for material processing status in Step 3 and Step 4
   React.useEffect(() => {
     if (!createdMaterialId || !token) return;
+    if ((isBackendReady || isNotesReady) && isQuizReady) return;
+    if (processingError) return;
 
     let isMounted = true;
 
@@ -132,20 +161,6 @@ export default function UploadMaterialScreen() {
           createdMaterialId as string,
         );
         if (!isMounted) return;
-
-        console.log("[AI Notes Polling Status Response]:", {
-          id: material.id,
-          status: material.status,
-          quizStatus: material.quizStatus,
-          notesId: material.notesId,
-          hasNotes: Boolean(material.processedNotes),
-          files: material.files?.map((f) => ({
-            id: f.id,
-            status: f.status,
-            quizStatus: f.quizStatus,
-          })),
-          rawResponse: material,
-        });
 
         const isNotesStatusReady =
           material.status === "NOTES_GENERATED" ||
@@ -189,13 +204,20 @@ export default function UploadMaterialScreen() {
 
     const interval = setInterval(() => {
       void checkStatus();
-    }, 1000);
+    }, 2500);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [createdMaterialId, token]);
+  }, [
+    createdMaterialId,
+    token,
+    isBackendReady,
+    isNotesReady,
+    isQuizReady,
+    processingError,
+  ]);
 
   const handleReupload = React.useCallback(() => {
     setCreatedMaterialId(null);
@@ -263,10 +285,17 @@ export default function UploadMaterialScreen() {
     setStep(2);
   }, [values.subjectId]);
 
-  const handleContinueToStep3 = React.useCallback(() => {
-    setErrors({});
-    setStep(3);
-  }, []);
+  const handleContinueFromStep2 = React.useCallback(
+    (uploadType: "STUDY_MATERIAL" | "PYQ") => {
+      if (uploadType === "PYQ") {
+        router.push("/pyqs" as any);
+      } else {
+        setErrors({});
+        setStep(3);
+      }
+    },
+    [router],
+  );
 
   const handlePickFile = React.useCallback(async () => {
     setSubmitError(null);
@@ -282,7 +311,6 @@ export default function UploadMaterialScreen() {
     }
   }, [filePicker, values.title]);
 
-
   const handleRemoveFile = React.useCallback(() => {
     filePicker.removeFile();
   }, [filePicker]);
@@ -293,10 +321,14 @@ export default function UploadMaterialScreen() {
 
     const newErrors: FormErrors = {};
     if (!titleResult.success) {
-      newErrors.title = titleResult.error.issues[0]?.message ?? "Please enter a material title.";
+      newErrors.title =
+        titleResult.error.issues[0]?.message ??
+        "Please enter a material title.";
     }
     if (!fileResult.success) {
-      newErrors.file = fileResult.error.issues[0]?.message ?? "Please select a document to upload.";
+      newErrors.file =
+        fileResult.error.issues[0]?.message ??
+        "Please select a document to upload.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -330,7 +362,10 @@ export default function UploadMaterialScreen() {
         router.back();
       }
     } catch (error) {
-      const message = getErrorMessage(error, "Failed to upload study material.");
+      const message = getErrorMessage(
+        error,
+        "Failed to upload study material.",
+      );
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -340,18 +375,6 @@ export default function UploadMaterialScreen() {
   const handleReadNotes = React.useCallback(() => {
     setShowNotesSheet(true);
   }, []);
-
-  const explicitQuizId = React.useMemo(() => {
-    if (!processedMaterial) return null;
-    return (
-      processedMaterial.quizId ||
-      (Array.isArray(processedMaterial.quizzes) &&
-        processedMaterial.quizzes.length > 0 &&
-        processedMaterial.quizzes[0]?.id) ||
-      (processedMaterial as any).quiz?.id ||
-      null
-    );
-  }, [processedMaterial]);
 
   const handleTakeQuiz = React.useCallback(async () => {
     if (explicitQuizId) {
@@ -366,28 +389,24 @@ export default function UploadMaterialScreen() {
         const msg =
           err?.data?.message || err?.message || "Failed to start quiz attempt.";
         if (err?.status === 403 || msg.toLowerCase().includes("upgrade")) {
-          Alert.alert(
-            "Gold Plan Required",
-            "Access denied. Upgrade your plan to access interactive quizzes.",
-            [
-              { text: "Cancel", style: "cancel" },
-              {
-                text: "Upgrade Plan",
-                onPress: () =>
-                  void Linking.openURL(
-                    "https://app.usestudycircle.ai/billings",
-                  ),
-              },
-            ],
-          );
+          const confirmed = await confirm({
+            title: "Gold Plan Required",
+            description:
+              "Access denied. Upgrade your plan to access interactive quizzes.",
+            confirmText: "Upgrade Plan",
+            cancelText: "Cancel",
+          });
+          if (confirmed) {
+            void Linking.openURL("https://app.usestudycircle.ai/billings");
+          }
           return;
         }
-        Alert.alert("Quiz Error", msg);
+        showErrorToast("Quiz Error", msg);
       }
     } else {
       router.push("/(tabs)/quizzes" as any);
     }
-  }, [explicitQuizId, startAttemptMutation, router]);
+  }, [explicitQuizId, startAttemptMutation, router, confirm]);
 
   const handleDownloadOriginalFile = React.useCallback(async () => {
     const pdfUrl = processedMaterial?.files?.[0]?.url || filePicker.file?.uri;
@@ -397,16 +416,6 @@ export default function UploadMaterialScreen() {
       content: processedMaterial?.processedNotes,
     });
   }, [downloadFile, processedMaterial, filePicker.file, values.title]);
-
-  const isNotesReady = React.useMemo(() => {
-    if (!processedMaterial) return false;
-    return isNotesReadyHelper(processedMaterial);
-  }, [processedMaterial]);
-
-  const isQuizReady = React.useMemo(() => {
-    if (!processedMaterial) return false;
-    return Boolean(explicitQuizId) || isQuizReadyHelper(processedMaterial);
-  }, [processedMaterial, explicitQuizId]);
 
   return (
     <SafeAreaView
@@ -461,7 +470,7 @@ export default function UploadMaterialScreen() {
             <Step2UploadType
               selectedSubjectName={displaySubjectName}
               submitError={submitError}
-              onContinue={handleContinueToStep3}
+              onContinue={handleContinueFromStep2}
             />
           )}
 
@@ -482,7 +491,6 @@ export default function UploadMaterialScreen() {
               onUpload={handleFinalUpload}
             />
           )}
-
 
           {step === 4 && (
             <Step4Ready
@@ -509,7 +517,6 @@ export default function UploadMaterialScreen() {
               onReupload={handleReupload}
             />
           )}
-
         </ScrollView>
       </View>
 

@@ -1,40 +1,13 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Text } from "@/components/ui/text";
-import { ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ComingSoonView } from "@/components/ui/coming-soon-view";
+import * as React from "react";
 
 export default function CirclesScreen() {
   return (
-    <SafeAreaView className="bg-background flex-1" edges={["top"]}>
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 8,
-          paddingBottom: 24,
-        }}
-      >
-        <View className="mx-auto w-full max-w-md">
-          <Card>
-            <CardHeader>
-              <CardTitle>Circles</CardTitle>
-              <CardDescription>Coming Soon</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Text className="text-muted-foreground text-sm">
-                Study circles will be available soon. You will be able to join
-                groups, collaborate with peers, and track circle activities
-                here.
-              </Text>
-            </CardContent>
-          </Card>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <ComingSoonView
+      title="Study Circles"
+      subtitle="Connect with classmates, form study groups, and master subjects together in real time."
+      badgeText="CIRCLES MODULE • COMING SOON"
+      iconName="users"
+    />
   );
 }

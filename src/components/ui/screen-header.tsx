@@ -1,6 +1,5 @@
 import * as React from "react";
 import { View } from "react-native";
-import { Feather } from "@expo/vector-icons";
 import { Button, ButtonProps } from "./button";
 import { Text } from "./text";
 
@@ -9,7 +8,7 @@ export interface ScreenHeaderProps {
   subtitle?: string;
   welcomeText?: string;
   actionLabel?: string;
-  actionIcon?: keyof typeof Feather.glyphMap;
+  actionIcon?: string;
   onAction?: () => void;
   actionVariant?: ButtonProps["variant"];
   extra?: React.ReactNode;

@@ -1,4 +1,5 @@
 import { PRESET_THEMES, SubjectCard } from "@/components/subjects";
+import { getSubjectTheme } from "@/constants/subject-themes";
 import { AppHeaderBar } from "@/components/ui/app-header-bar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -63,7 +64,7 @@ export default function SubjectsScreen() {
 
     return subjects.map((subj: Subject, idx: number) => {
       const sId = String(subj.id);
-      const presetTheme = PRESET_THEMES[idx % PRESET_THEMES.length];
+      const presetTheme = getSubjectTheme(subj.name, idx);
 
       const subjMaterials = materials.filter(
         (m) => String(m.subjectId) === sId || String(m.subject?.id) === sId,
@@ -91,7 +92,7 @@ export default function SubjectsScreen() {
         course: subj.description || "General",
         colorHex: presetTheme.colorHex,
         bgHex: presetTheme.bgHex,
-        iconName: presetTheme.icon as any,
+        iconName: presetTheme.iconName as any,
         metrics: {
           materialsCount: subjMaterials.length,
           pyqCount: subjQuizzes.length,

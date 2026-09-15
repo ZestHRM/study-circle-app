@@ -194,7 +194,14 @@ export const RestClient = async <T = unknown>(
     });
 
     const text = await response.text();
-    const data = text ? JSON.parse(text) : null;
+    let data: any = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
+      }
+    }
 
     if (!response.ok) {
       const msg = getErrorMessage(data, "Something went wrong");

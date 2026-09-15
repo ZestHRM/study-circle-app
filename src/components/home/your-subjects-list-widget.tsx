@@ -2,36 +2,11 @@ import { Icon } from "@/components/ui/icon";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Text } from "@/components/ui/text";
-import { UI_STYLES } from "@/constants/styles";
+import { getSubjectTheme } from "@/constants/subject-themes";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
-import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as React from "react";
 import { Pressable, View } from "react-native";
-
-const PRESET_SUBJECT_STYLES = [
-  {
-    iconName: "book" as const,
-    colorHex: "#2563EB",
-    bgClass: "bg-blue-100 dark:bg-blue-950/60",
-    barClass: "bg-blue-600 dark:bg-blue-500",
-    defaultProgress: 68,
-  },
-  {
-    iconName: "feather" as const,
-    colorHex: "#65A30D",
-    bgClass: "bg-lime-100 dark:bg-lime-950/60",
-    barClass: "bg-lime-600 dark:bg-lime-500",
-    defaultProgress: 52,
-  },
-  {
-    iconName: "book-open" as const,
-    colorHex: "#E11D48",
-    bgClass: "bg-rose-100 dark:bg-rose-950/60",
-    barClass: "bg-rose-500 dark:bg-rose-400",
-    defaultProgress: 37,
-  },
-];
 
 export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget() {
   const { subjects } = useSubjectsQuery();
@@ -41,7 +16,7 @@ export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget
   }, []);
 
   const handleSubjectPress = React.useCallback((id: number | string) => {
-    router.push(`/subjects/${id}`);
+    router.push(`/(tabs)/subjects` as any);
   }, []);
 
   if (!subjects || subjects.length === 0) {
@@ -62,8 +37,8 @@ export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget
       {/* Subjects Progress List */}
       <View className="gap-3">
         {displayList.map((item, idx) => {
-          const style = PRESET_SUBJECT_STYLES[idx % PRESET_SUBJECT_STYLES.length];
-          const progressPercent = style.defaultProgress;
+          const theme = getSubjectTheme(item.name, idx);
+          const progressPercent = idx === 0 ? 68 : idx === 1 ? 52 : 37;
 
           return (
             <Pressable
@@ -73,16 +48,17 @@ export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget
             >
               {/* Left Icon Badge */}
               <View
-                className={`w-11 h-11 rounded-full items-center justify-center ${style.bgClass}`}
+                style={{ backgroundColor: theme.bgHex }}
+                className="w-11 h-11 rounded-full items-center justify-center"
               >
-                <Feather name={style.iconName} size={20} color={style.colorHex} />
+                <Icon name={theme.iconName} size={20} color={theme.colorHex} />
               </View>
 
               {/* Subject Title & Progress Bar */}
               <View className="flex-1 gap-1.5">
                 <Text
                   variant="h3"
-                  className="text-base font-extrabold text-stone-900 dark:text-stone-100"
+                  className="text-base font-extrabold"
                   numberOfLines={1}
                 >
                   {item.name}
@@ -91,13 +67,13 @@ export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget
                 <ProgressBar
                   value={progressPercent}
                   size="lg"
-                  barClassName={style.barClass}
+                  barClassName="bg-blue-600 dark:bg-blue-500"
                 />
               </View>
 
               {/* Percentage & Chevron Right */}
               <View className="flex-row items-center gap-2 pl-2">
-                <Text className="text-sm font-bold text-stone-700 dark:text-stone-300">
+                <Text variant="subhead" className="font-bold">
                   {progressPercent}%
                 </Text>
                 <Icon name="chevron-right" size={18} color="muted" />

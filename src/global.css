@@ -6,10 +6,8 @@
   --foreground: 0 0% 3.9%;
   --card: 0 0% 100%;
   --card-foreground: 0 0% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 98%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 96.1%;
   --secondary-foreground: 0 0% 9%;
   --muted: 0 0% 96.1%;
@@ -20,8 +18,24 @@
   --destructive-foreground: 0 0% 98%;
   --border: 0 0% 89.8%;
   --input: 0 0% 89.8%;
-  --ring: 0 0% 3.9%;
+  --ring: 221 83% 53%;
   --radius: 0.625rem;
+
+  /* App Specific Status & Theme Colors */
+  --error: 0 84.2% 60.2%;
+  --error-bg: 0 93.3% 94.1%;
+  --error-text: 0 72.2% 50.6%;
+  --error-border: 0 92.5% 84.1%;
+
+  --warning: 37.7 92.1% 50.2%;
+  --warning-bg: 34.3 100% 91.8%;
+  --warning-text: 35.5 91.7% 32.9%;
+  --warning-border: 35.8 95.8% 71.6%;
+
+  --brand-purple: 254 79% 54%;
+  --quiz-blue: 221 83% 53%;
+  --terracotta: 13 67% 53%;
+
   --font-display:
     Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji,
     Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
@@ -42,8 +56,8 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
@@ -54,7 +68,19 @@
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --ring: 217 91% 60%;
+
+    /* Dark Mode Status Overrides */
+    --error: 0 84.2% 60.2%;
+    --error-bg: 0 70% 20%;
+    --error-text: 0 90.6% 70.6%;
+    --error-border: 0 62.8% 30%;
+
+
+    --warning: 37.7 92.1% 50.2%;
+    --warning-bg: 35 62.8% 12.6%;
+    --warning-text: 37.7 92.1% 65%;
+    --warning-border: 35 62.8% 25%;
   }
 }
 
@@ -78,6 +104,20 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+
+  --color-error: hsl(var(--error));
+  --color-error-bg: hsl(var(--error-bg));
+  --color-error-text: hsl(var(--error-text));
+  --color-error-border: hsl(var(--error-border));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-bg: hsl(var(--warning-bg));
+  --color-warning-text: hsl(var(--warning-text));
+  --color-warning-border: hsl(var(--warning-border));
+
+  --color-brand-purple: hsl(var(--brand-purple));
+  --color-quiz-blue: hsl(var(--quiz-blue));
+  --color-terracotta: hsl(var(--terracotta));
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

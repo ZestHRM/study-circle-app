@@ -58,12 +58,14 @@ export const Step4Ready = React.memo(function Step4Ready({
       return;
     }
 
-    if (isBackendReady || isNotesReady) {
+    if ((isBackendReady || isNotesReady) && isQuizReady) {
+      setViewState(3);
+    } else if (isBackendReady || isNotesReady) {
       setViewState(2);
     } else {
       setViewState(1);
     }
-  }, [isFailed, isBackendReady, isNotesReady]);
+  }, [isFailed, isBackendReady, isNotesReady, isQuizReady]);
 
   const handleMoveToComplete = React.useCallback(() => {
     setViewState(3);

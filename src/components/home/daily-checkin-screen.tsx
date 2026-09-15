@@ -6,9 +6,10 @@ import { MoodSelector } from "@/components/ui/mood-selector";
 import { Text } from "@/components/ui/text";
 import { CENTRAL_MOOD_OPTIONS, MoodItem } from "@/constants/moods";
 import { useCreateDashboardCheckIn } from "@/hooks/queries/use-dashboard";
+import { showSuccessToast } from "@/lib/utils/toast";
 import { router } from "expo-router";
 import * as React from "react";
-import { Alert, Image, View } from "react-native";
+import { Image, View } from "react-native";
 
 export function DailyCheckinScreen() {
   const createCheckInMutation = useCreateDashboardCheckIn();
@@ -39,18 +40,12 @@ export function DailyCheckinScreen() {
       },
       {
         onSuccess: () => {
-          Alert.alert("Success 🎉", "Daily check-in submitted successfully!", [
-            {
-              text: "OK",
-              onPress: () => {
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace("/(tabs)");
-                }
-              },
-            },
-          ]);
+          showSuccessToast("Success 🎉", "Daily check-in submitted successfully!");
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace("/(tabs)");
+          }
         },
       },
     );

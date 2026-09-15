@@ -17,7 +17,7 @@ export interface FeatureCardProps {
   badgeIconName?: string;
   badgeBgClass?: string;
   badgeTextColor?: string;
-  onPress: () => void;
+  onPress?: () => void;
   className?: string;
 }
 
@@ -29,11 +29,11 @@ export const FeatureCard = React.memo(function FeatureCard({
   countText,
   description,
   iconName,
-  iconBgClass = "bg-blue-50 dark:bg-blue-950/40",
-  iconColor = APP_COLORS.quizBlue,
+  iconBgClass = "bg-primary/10 border border-primary/20",
+  iconColor = "primary",
   badgeLabel,
   badgeIconName,
-  badgeBgClass = "bg-amber-100 dark:bg-amber-900/50",
+  badgeBgClass = "bg-warning/10 border border-warning/20",
   badgeTextColor = "text-amber-800 dark:text-amber-300",
   onPress,
   className,
@@ -61,7 +61,7 @@ export const FeatureCard = React.memo(function FeatureCard({
             )}
           >
             {badgeIconName ? (
-              <Icon name={badgeIconName} size={10} color={APP_COLORS.warningDark} />
+              <Icon name={badgeIconName} size={10} color="warning" />
             ) : null}
             <Text
               variant="caption"
@@ -85,9 +85,11 @@ export const FeatureCard = React.memo(function FeatureCard({
         </Text>
       </View>
 
-      <View className="items-end mt-2">
-        <Icon name="chevron-right" size={16} color={APP_COLORS.stone400} />
-      </View>
+      {onPress ? (
+        <View className="items-end mt-2">
+          <Icon name="chevron-right" size={16} color="muted" />
+        </View>
+      ) : null}
     </Card>
   );
 });

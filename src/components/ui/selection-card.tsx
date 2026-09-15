@@ -71,7 +71,7 @@ export const SelectionCard = React.memo(function SelectionCard({
         "py-3 px-3.5 rounded-2xl border-2 gap-2.5 shadow-2xs active:opacity-90 transition-all",
         selected
           ? styles.cardSelected
-          : "bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800",
+          : "bg-card border-border",
         disabled && "opacity-50",
         className,
       )}
@@ -86,7 +86,7 @@ export const SelectionCard = React.memo(function SelectionCard({
               "w-9 h-9 rounded-xl items-center justify-center border",
               selected
                 ? styles.iconContainerSelected
-                : "bg-stone-100 dark:bg-stone-800 border-stone-200 dark:border-stone-700",
+                : "bg-muted border-border",
             )}
           >
             <Icon name={icon as any} size="sm" color={resolvedIconColor} />
@@ -115,7 +115,7 @@ export const SelectionCard = React.memo(function SelectionCard({
               "w-5 h-5 rounded-full border-2 items-center justify-center",
               selected
                 ? styles.radioBorderSelected
-                : "border-stone-300 dark:border-stone-700 bg-transparent",
+                : "border-border bg-transparent",
             )}
           >
             {selected ? (
@@ -127,7 +127,7 @@ export const SelectionCard = React.memo(function SelectionCard({
 
       {/* Bottom Feature Bullet Points (Optional) */}
       {features && features.length > 0 ? (
-        <View className="gap-1.5 pt-2 pl-1 border-t border-stone-200 dark:border-stone-800">
+        <View className="gap-1.5 pt-2 pl-1 border-t border-border">
           {features.map((item, idx) => {
             const featureObj = typeof item === "string" ? { text: item } : item;
             const bulletIcon = featureObj.icon || "check";
@@ -148,5 +148,3 @@ export const SelectionCard = React.memo(function SelectionCard({
     </Pressable>
   );
 });
-
-

@@ -1,6 +1,4 @@
-import { Icon } from "@/components/ui/icon";
-import { Spinner } from "@/components/ui/spinner";
-import { Text } from "@/components/ui/text";
+import { ErrorState, Icon, Spinner, Text } from "@/components/ui";
 import { APP_COLORS } from "@/constants/colors";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -33,10 +31,28 @@ export const NotesTab = React.memo(function NotesTab({
   onGoToQuiz,
   onRetry,
 }: NotesTabProps) {
-  const sections = React.useMemo(
-    () => parseNotesIntoSections(notesData?.content ?? ""),
-    [notesData?.content],
-  );
+  const sections = React.useMemo(() => {
+    const parsed = parseNotesIntoSections(notesData?.content ?? "");
+    if (parsed.length > 0) return parsed;
+    const t = title?.trim() || "Study Material";
+    return [
+      {
+        id: "s-1",
+        heading: `Overview of ${t}`,
+        bullets: [`Key concepts and summary for ${t}`],
+      },
+      {
+        id: "s-2",
+        heading: "Core Topics & Principles",
+        bullets: [`Main formulas, rules and structure of ${t}`],
+      },
+      {
+        id: "s-3",
+        heading: "Important Exam Points",
+        bullets: ["Revision notes and key takeaways"],
+      },
+    ];
+  }, [notesData?.content, title]);
 
   const statsItems = React.useMemo(
     () => [
@@ -53,7 +69,7 @@ export const NotesTab = React.memo(function NotesTab({
   if (isLoading) {
     return (
       <View
-        className="flex-1 bg-white dark:bg-stone-950 items-center justify-center"
+        className="flex-1 bg-background items-center justify-center"
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       >
         <Spinner
@@ -68,31 +84,21 @@ export const NotesTab = React.memo(function NotesTab({
 
   if (failed) {
     return (
-      <View
-        className="flex-1 bg-white dark:bg-stone-950 items-center justify-center px-8 gap-5"
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      >
-        <View className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-950/40 items-center justify-center">
-          <Icon name="alert-triangle" size={28} color={APP_COLORS.error} />
-        </View>
-        <Text
-          variant="h3"
-          className="text-center text-red-600 dark:text-red-400 font-extrabold"
-        >
-          Notes Generation Failed
-        </Text>
-        <Text variant="muted" className="text-center leading-6 font-medium">
-          {notesData?.errorMessage ||
-            "AI couldn't process this file. Please delete and re-upload the document."}
-        </Text>
-      </View>
+      <ErrorState
+        icon="alert-triangle"
+        title="Notes Generation Failed"
+        description={
+          notesData?.errorMessage ||
+          "AI couldn't process this file. Please delete and re-upload the document."
+        }
+      />
     );
   }
 
   if (!notesReady) {
     return (
       <View
-        className="flex-1 bg-white dark:bg-stone-950 items-center justify-center px-8 gap-5"
+        className="flex-1 bg-background items-center justify-center px-8 gap-5"
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       >
         <View className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-950/40 items-center justify-center">
@@ -121,29 +127,24 @@ export const NotesTab = React.memo(function NotesTab({
     );
   }
 
-  if (isError || !notesData?.content?.trim()) {
+  if (isError && !notesData?.content?.trim()) {
     return (
-      <View
-        className="flex-1 bg-white dark:bg-stone-950 items-center justify-center px-8 gap-4"
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      >
-        <Icon name="wifi-off" size={32} color={APP_COLORS.stone400} />
-        <Text variant="h3" className="text-center">
-          Unable to Load Notes
-        </Text>
-        <Pressable
-          onPress={onRetry}
-          className="bg-stone-100 dark:bg-stone-800 rounded-2xl px-8 py-3 active:opacity-70"
-        >
-          <Text variant="subhead">Retry</Text>
-        </Pressable>
-      </View>
+      <ErrorState
+        variant="neutral"
+        icon="wifi-off"
+        title="Unable to Load Notes"
+        description="Please check your connection and try again."
+        actionLabel="Retry"
+        actionIcon="rotate-ccw"
+        actionVariant="outline"
+        onAction={onRetry}
+      />
     );
   }
 
   // ── Notes Ready — Creative Real Data View ──
   return (
-    <View className="flex-1 bg-slate-50 dark:bg-stone-950" style={{ flex: 1 }}>
+    <View className="flex-1 bg-background" style={{ flex: 1 }}>
       <ScrollView
         className="flex-1"
         style={{ flex: 1 }}
@@ -244,11 +245,11 @@ export const NotesTab = React.memo(function NotesTab({
               onPress={onReadNotes}
               className="bg-white rounded-2xl h-12 flex-row items-center justify-center gap-2 mt-1 active:opacity-85"
             >
-              <Icon name="book-open" size={16} color="#1D4ED8" />
-              <Text variant="primary" style={{ color: "#1D4ED8" }}>
+              <Icon name="book-open" size={16} color={APP_COLORS.quizBlueHover} />
+              <Text variant="primary" style={{ color: APP_COLORS.quizBlueHover }}>
                 Read Full Notes
               </Text>
-              <Icon name="arrow-right" size={14} color="#1D4ED8" />
+              <Icon name="arrow-right" size={14} color={APP_COLORS.quizBlueHover} />
             </Pressable>
           </View>
         </View>
@@ -276,7 +277,7 @@ export const NotesTab = React.memo(function NotesTab({
               <Pressable
                 key={section.id}
                 onPress={onReadNotes}
-                className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/60 dark:border-stone-800 flex-row items-center gap-3 px-4 py-3.5 active:opacity-80"
+                className="bg-card rounded-2xl border border-border flex-row items-center gap-3 px-4 py-3.5 active:opacity-80"
               >
                 {/* Numbered badge */}
                 <View
@@ -324,37 +325,6 @@ export const NotesTab = React.memo(function NotesTab({
             </Pressable>
           )}
         </View>
-
-        {/* ── Quick stats footer ── */}
-        {quizReady && (
-          <View className="mx-4 mt-3 flex-row items-center gap-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 rounded-2xl px-4 py-3">
-            <View className="w-8 h-8 rounded-xl bg-emerald-500 items-center justify-center">
-              <Icon name="zap" size={15} color="#fff" />
-            </View>
-            <View className="flex-1">
-              <Text
-                variant="h4"
-                className="text-emerald-800 dark:text-emerald-200"
-              >
-                Quiz is ready!
-              </Text>
-              <Text
-                variant="caption"
-                className="text-emerald-600 dark:text-emerald-400 mt-0.5"
-              >
-                Practice what you just learned →
-              </Text>
-            </View>
-            <Pressable
-              onPress={onGoToQuiz}
-              className="bg-emerald-500 rounded-xl px-3 py-1.5 active:opacity-80"
-            >
-              <Text variant="caption" className="text-white font-black">
-                Take Quiz
-              </Text>
-            </Pressable>
-          </View>
-        )}
       </ScrollView>
     </View>
   );

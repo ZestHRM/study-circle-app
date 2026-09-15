@@ -4,8 +4,9 @@ import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import type { StudyMaterial } from "@/services";
 import * as React from "react";
-import { Alert, Linking, Pressable, ScrollView, View } from "react-native";
+import { Linking, Pressable, ScrollView, View } from "react-native";
 import { isFailed, isNotesReady, isQuizReady } from "@/lib/utils/material-status";
+import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
 
 interface MaterialTabProps {
   material: StudyMaterial | null;
@@ -22,7 +23,7 @@ function MRow({
 }) {
   return (
     <View className="flex-row items-center gap-3">
-      <View className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-stone-800 items-center justify-center">
+      <View className="w-8 h-8 rounded-xl bg-muted items-center justify-center">
         <Icon name={icon as any} size={14} color={APP_COLORS.stone500} />
       </View>
       <Text variant="caption" style={{ width: 72 }}>
@@ -80,7 +81,7 @@ export const MaterialTab = React.memo(function MaterialTab({
 
   const handleOpenFile = React.useCallback(async () => {
     if (!fileUrl) {
-      Alert.alert("No Link", "File URL is not available.");
+      showInfoToast("No Link", "File URL is not available.");
       return;
     }
     try {
@@ -91,19 +92,19 @@ export const MaterialTab = React.memo(function MaterialTab({
         await Linking.openURL(fileUrl);
       }
     } catch {
-      Alert.alert("Error", "Could not open uploaded file.");
+      showErrorToast("Error", "Could not open uploaded file.");
     }
   }, [fileUrl]);
 
   return (
     <ScrollView
-      className="flex-1 bg-slate-50 dark:bg-stone-950"
+      className="flex-1 bg-background"
       style={{ flex: 1 }}
       contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 48 }}
       showsVerticalScrollIndicator={false}
     >
       {/* ── Main Uploaded File Card ── */}
-      <View className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 p-4 gap-4 shadow-xs">
+      <View className="bg-card rounded-2xl border border-border p-4 gap-4 shadow-xs">
         <View className="flex-row items-center gap-3">
           <View
             className={`w-14 h-14 rounded-2xl items-center justify-center ${
@@ -137,7 +138,7 @@ export const MaterialTab = React.memo(function MaterialTab({
           </View>
         </View>
 
-        <View className="h-px bg-stone-100 dark:bg-stone-800" />
+        <View className="h-px bg-border" />
 
         {/* Details Rows */}
         <View className="gap-3">
@@ -177,7 +178,7 @@ export const MaterialTab = React.memo(function MaterialTab({
             onPress={handleOpenFile}
             className="w-full bg-blue-600 rounded-xl py-3 flex-row items-center justify-center gap-2 active:opacity-85 mt-1"
           >
-            <Icon name="file-text" size={16} color="#FFFFFF" />
+            <Icon name="file-text" size={16} color={APP_COLORS.white} />
             <Text variant="subhead" className="text-white font-bold">
               Open Uploaded File →
             </Text>
@@ -187,7 +188,7 @@ export const MaterialTab = React.memo(function MaterialTab({
 
       {/* ── Extracted Document Content Preview ── */}
       {extractedContent ? (
-        <View className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 p-4 gap-3">
+        <View className="bg-card rounded-2xl border border-border p-4 gap-3">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <Icon name="align-left" size={15} color={APP_COLORS.stone600} />
@@ -200,7 +201,7 @@ export const MaterialTab = React.memo(function MaterialTab({
             </View>
             <Badge label="OCR Extracted" variant="outline" />
           </View>
-          <View className="bg-slate-50 dark:bg-stone-950 rounded-xl p-3.5 border border-stone-100 dark:border-stone-800 max-h-60">
+          <View className="bg-background rounded-xl p-3.5 border border-border max-h-60">
             <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>
               <Text variant="caption" className="leading-relaxed">
                 {extractedContent}
@@ -211,7 +212,7 @@ export const MaterialTab = React.memo(function MaterialTab({
       ) : null}
 
       {/* ── AI Generation Status ── */}
-      <View className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200/80 dark:border-stone-800 overflow-hidden">
+      <View className="bg-card rounded-2xl border border-border overflow-hidden">
         <View className="px-4 pt-4 pb-2">
           <Text
             variant="caption"
@@ -226,7 +227,7 @@ export const MaterialTab = React.memo(function MaterialTab({
           ready={isNotesReady(material)}
           failed={isFailed(material)}
         />
-        <View className="h-px bg-stone-100 dark:bg-stone-800 mx-4" />
+        <View className="h-px bg-border mx-4" />
         <AiStatusRow
           icon="zap"
           label="Practice Quiz"

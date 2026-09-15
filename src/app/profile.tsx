@@ -1,4 +1,3 @@
-import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import {
   ProfileHero,
   ProfileInfoCard,
@@ -7,26 +6,24 @@ import {
   ProfileStats,
 } from "@/components/profile";
 import { AppLogo } from "@/components/ui/app-logo";
+import { AppScreen } from "@/components/ui/app-screen";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { APP_COLORS } from "@/constants/colors";
 import { useAuth } from "@/lib/auth";
+import { showSuccessToast } from "@/lib/utils/toast";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as React from "react";
-import { Alert, BackHandler, ScrollView, StatusBar, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Alert, BackHandler, Platform, View } from "react-native";
 
 export default function ProfileScreen() {
   const { user, token, signOut } = useAuth();
   const router = useRouter();
-  const confirm = useConfirmDialog();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
 
   React.useEffect(() => {
     if (!token) {
-      router.replace("/sign-in");
+      router.replace("/(auth)/sign-in" as any);
     }
   }, [token, router]);
 
@@ -53,15 +50,27 @@ export default function ProfileScreen() {
     try {
       setIsSigningOut(true);
       await signOut();
+      showSuccessToast("Signed Out", "You have been logged out successfully.");
     } catch (error) {
       console.warn("SignOut error:", error);
     } finally {
       setIsSigningOut(false);
-      router.replace("/sign-in");
+      router.replace("/(auth)/sign-in" as any);
     }
   }, [signOut, router]);
 
   const onRequestSignOut = React.useCallback(() => {
+    if (Platform.OS === "web") {
+      const confirmed =
+        typeof window !== "undefined"
+          ? window.confirm("Are you sure you want to log out of your Study Circle account?")
+          : true;
+      if (confirmed) {
+        void onSignOut();
+      }
+      return;
+    }
+
     Alert.alert(
       "Sign Out Confirmation",
       "Are you sure you want to log out of your Study Circle account?",
@@ -78,6 +87,7 @@ export default function ProfileScreen() {
           },
         },
       ],
+      { cancelable: true },
     );
   }, [onSignOut]);
 
@@ -96,8 +106,8 @@ export default function ProfileScreen() {
         verified: Boolean(user?.email),
       },
       {
-        label: "Phone Number",
-        value: user?.phone || "Not linked",
+        label: "Phone",
+        value: user?.phone || "Not provided",
         iconName: "phone",
       },
     ],
@@ -106,19 +116,18 @@ export default function ProfileScreen() {
 
   const academicRows = React.useMemo<ProfileInfoRow[]>(
     () => [
-      { label: "Institute", value: user?.institute || "N/A", iconName: "home" },
       {
-        label: "Education Level",
-        value: user?.level || "N/A",
-        iconName: "layers",
+        label: "Institute / University",
+        value: user?.institute || "Study Circle",
+        iconName: "book-open",
       },
       {
-        label: "Class / Standard",
-        value: user?.classOrStandard || "N/A",
-        iconName: "bookmark",
+        label: "Target Exam / Field",
+        value: (user as any)?.targetExam || "General Learning",
+        iconName: "target",
       },
     ],
-    [user?.institute, user?.level, user?.classOrStandard],
+    [user?.institute, (user as any)?.targetExam],
   );
 
   const locationRows = React.useMemo<ProfileInfoRow[]>(() => {
@@ -136,102 +145,87 @@ export default function ProfileScreen() {
   }, [user?.city, user?.state, user?.country, user?.zipcode]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background relative" edges={["top"]}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#ffffff"
-        translucent={false}
-      />
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 48 }}
-      >
-        {/* Hero Header */}
+    <AppScreen
+      scrollable={true}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 48 }}
+    >
+      <View className="mx-auto w-full max-w-md gap-4">
+        {/* Profile Hero Header */}
         <ProfileHero user={user} />
 
-        <View className="px-4 gap-5">
-          {/* Quick Stats Summary Grid */}
-          <ProfileStats user={user} />
+        {/* Real-time Stats Cards */}
+        <ProfileStats user={user} />
 
-          {/* Personal Information */}
-          <ProfileInfoCard
-            title="Personal Information"
-            headerIcon="user"
-            headerIconColor="primary"
-            headerIconBgClass="bg-purple-500/15"
-            rows={personalRows}
-          />
+        {/* Personal Details */}
+        <ProfileInfoCard
+          title="Personal Information"
+          headerIcon="user"
+          headerIconColor="primary"
+          headerIconBgClass="bg-blue-500/15"
+          rows={personalRows}
+        />
 
-          {/* Academic Profile */}
-          <ProfileInfoCard
-            title="Academic Profile"
-            headerIcon="book-open"
-            headerIconColor="warning"
-            headerIconBgClass="bg-amber-500/15"
-            rows={academicRows}
-          />
+        {/* Academic Profile */}
+        <ProfileInfoCard
+          title="Academic Profile"
+          headerIcon="book-open"
+          headerIconColor="terracotta"
+          headerIconBgClass="bg-orange-500/15"
+          rows={academicRows}
+        />
 
-          {/* Location & Address */}
-          <ProfileInfoCard
-            title="Location & Address"
-            headerIcon="map"
-            headerIconColor="success"
-            headerIconBgClass="bg-emerald-500/15"
-            rows={locationRows}
-          />
+        {/* Location Info */}
+        <ProfileInfoCard
+          title="Location Details"
+          headerIcon="map-pin"
+          headerIconColor="quiz"
+          headerIconBgClass="bg-purple-500/15"
+          rows={locationRows}
+        />
 
-          {/* Subscription & Plans */}
-          <Card className="p-4 gap-3 rounded-2xl border border-stone-200 dark:border-stone-800">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2.5 flex-1 pr-2">
-                <View className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/60 items-center justify-center">
-                  <Icon name="award" size={20} color={APP_COLORS.brandPurple} />
-                </View>
-                <View className="flex-1">
-                  <Text variant="h4" className="font-extrabold text-sm">
-                    Subscription & Plans
-                  </Text>
-                  <Text variant="muted" className="text-xs" numberOfLines={1}>
-                    Current: {user?.subscriptionTier ?? "Free Plan"}
-                  </Text>
-                </View>
-              </View>
-
-              <Button
-                size="sm"
-                variant="quiz"
-                title="View Plans →"
-                onPress={() => router.push("/subscriptions" as any)}
-                className="rounded-xl"
-              />
+        {/* Subscription Status Card */}
+        <Card className="rounded-3xl p-4 gap-3 bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-900/40">
+          <View className="flex-row items-center justify-between">
+            <View className="gap-1 flex-1 pr-2">
+              <Text variant="subhead" className="font-bold">
+                Subscription Plan
+              </Text>
+              <Text variant="muted">
+                Active Tier: {user?.subscriptionTier || "Free Plan"}
+              </Text>
             </View>
-          </Card>
-
-          {/* Account & App Options */}
-          <ProfileSecurityCard />
-
-          {/* Sign Out Card */}
-
-          <Button
-            variant="destructive"
-            icon="log-out"
-            title={isSigningOut ? "Signing out..." : "Sign Out of Account"}
-            loading={isSigningOut}
-            disabled={isSigningOut}
-            onPress={onRequestSignOut}
-            className="w-full h-12 rounded-2xl justify-center items-center shadow-2xs"
-          />
-
-          {/* App Brand Footer */}
-          <View className="items-center justify-center gap-2 pt-2 pb-4">
-            <AppLogo size={36} />
-            <Text variant="caption" className="font-medium">
-              Study Circle • Version 1.0.0
-            </Text>
+            <Button
+              size="sm"
+              variant="quiz"
+              title="View Plans →"
+              onPress={() => router.push("/subscriptions" as any)}
+              className="rounded-xl"
+            />
           </View>
+        </Card>
+
+        {/* Account & App Options */}
+        <ProfileSecurityCard />
+
+        {/* Sign Out Card */}
+        <Button
+          variant="destructive"
+          icon="log-out"
+          title={isSigningOut ? "Signing out..." : "Sign Out of Account"}
+          loading={isSigningOut}
+          disabled={isSigningOut}
+          onPress={onRequestSignOut}
+          className="w-full h-12 rounded-2xl justify-center items-center shadow-2xs"
+        />
+
+        {/* App Brand Footer */}
+        <View className="items-center justify-center gap-2 pt-2 pb-4">
+          <AppLogo size={36} />
+          <Text variant="caption" className="font-medium">
+            Study Circle • Version 1.0.0
+          </Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </AppScreen>
   );
 }

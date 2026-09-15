@@ -1,17 +1,17 @@
 import { StudyStreakWidget } from "@/components/progress/study-streak-widget";
 import { TasksChartWidget } from "@/components/progress/tasks-chart-widget";
 import { AppHeaderBar } from "@/components/ui/app-header-bar";
+import { AppScreen } from "@/components/ui/app-screen";
 import { Card } from "@/components/ui/card";
 import { HeroBanner } from "@/components/ui/hero-banner";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { useDashboardStreak } from "@/hooks/queries/use-dashboard";
 import { useQuizzesInfiniteQuery } from "@/hooks/queries/use-quizzes";
 import { useStudyMaterialsInfinite } from "@/hooks/queries/use-study-materials";
-import { Feather } from "@expo/vector-icons";
 import * as React from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { RefreshControl, View } from "react-native";
 
 export default function ProgressScreen() {
   const { materials, refetch: refetchMaterials } = useStudyMaterialsInfinite({
@@ -47,81 +47,80 @@ export default function ProgressScreen() {
     );
   }, [materials.length, quizzes.length]);
 
+  const refreshControlElement = React.useMemo(
+    () => (
+      <RefreshControl
+        refreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        tintColor={APP_COLORS.quizBlue}
+      />
+    ),
+    [isRefreshing, handleRefresh],
+  );
+
   return (
-    <SafeAreaView
-      className="bg-stone-50 dark:bg-stone-950 flex-1"
-      edges={["top"]}
+    <AppScreen
+      header={<AppHeaderBar logoPosition="left" />}
+      scrollable={true}
+      refreshControl={refreshControlElement}
+      contentContainerStyle={{
+        paddingHorizontal: 18,
+        paddingTop: 6,
+        paddingBottom: 48,
+      }}
     >
-      <AppHeaderBar logoPosition="left" />
+      <View className="mx-auto w-full max-w-md gap-4">
+        <HeroBanner
+          title="Study Analytics &\n"
+          titleHighlight="Learning Progress 📈"
+          subtitle="Track your daily study habits, quiz scores & course completion in real-time."
+        />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 18,
-          paddingTop: 6,
-          paddingBottom: 48,
-        }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor={APP_COLORS.quizBlue}
-          />
-        }
-      >
-        <View className="mx-auto w-full max-w-md gap-4">
-          <HeroBanner
-            title="Study Analytics &\n"
-            titleHighlight="Learning Progress 📈"
-            subtitle="Track your daily study habits, quiz scores & course completion in real-time."
-          />
-
-          <View className="flex-row items-center gap-2.5">
-            <Card className="flex-1 p-3.5 gap-2 border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20">
-              <View className="flex-row items-center justify-between">
-                <View className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/60 items-center justify-center">
-                  <Feather name="trending-up" size={16} color="#2563EB" />
-                </View>
-                <Text
-                  variant="h1"
-                  className="text-xl font-extrabold text-blue-600 dark:text-blue-400"
-                >
-                  {overallAccuracy}%
-                </Text>
+        <View className="flex-row items-center gap-2.5">
+          <Card className="flex-1 p-3.5 gap-2 border border-primary/20 bg-primary/10">
+            <View className="flex-row items-center justify-between">
+              <View className="w-8 h-8 rounded-xl bg-primary/10 items-center justify-center">
+                <Icon name="trending-up" size={16} color="primary" />
               </View>
               <Text
-                variant="caption"
-                className="text-stone-600 dark:text-stone-300 font-semibold text-xs"
+                variant="h1"
+                className="text-xl font-extrabold text-blue-600 dark:text-blue-400"
               >
-                Completion Rate
+                {overallAccuracy}%
               </Text>
-            </Card>
+            </View>
+            <Text
+              variant="caption"
+              className="text-stone-600 dark:text-stone-300 font-semibold text-xs"
+            >
+              Completion Rate
+            </Text>
+          </Card>
 
-            <Card className="flex-1 p-3.5 gap-2 border border-orange-200/80 dark:border-orange-900/60 bg-orange-50/50 dark:bg-orange-950/20">
-              <View className="flex-row items-center justify-between">
-                <View className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-900/60 items-center justify-center">
-                  <Feather name="zap" size={16} color="#EA580C" />
-                </View>
-                <Text
-                  variant="h1"
-                  className="text-xl font-extrabold text-orange-600 dark:text-orange-400"
-                >
-                  {currentStreak}d
-                </Text>
+          <Card className="flex-1 p-3.5 gap-2 border border-warning/20 bg-warning/10">
+            <View className="flex-row items-center justify-between">
+              <View className="w-8 h-8 rounded-xl bg-warning/10 items-center justify-center">
+                <Icon name="zap" size={16} color="warning" />
               </View>
               <Text
-                variant="caption"
-                className="text-stone-600 dark:text-stone-300 font-semibold text-xs"
+                variant="h1"
+                className="text-xl font-extrabold text-orange-600 dark:text-orange-400"
               >
-                Current Streak
+                {currentStreak}d
               </Text>
-            </Card>
-          </View>
-
-          <TasksChartWidget />
-          <StudyStreakWidget />
+            </View>
+            <Text
+              variant="caption"
+              className="text-stone-600 dark:text-stone-300 font-semibold text-xs"
+            >
+              Current Streak
+            </Text>
+          </Card>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        <TasksChartWidget />
+        <StudyStreakWidget />
+      </View>
+    </AppScreen>
   );
 }

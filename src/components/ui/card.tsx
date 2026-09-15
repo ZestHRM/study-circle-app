@@ -23,13 +23,13 @@ export function Card({
   ...props
 }: CardProps) {
   const baseCardStyles = cn(
-    "bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 rounded-2xl p-4 shadow-2xs",
+    "bg-card text-card-foreground border border-border rounded-2xl p-4 shadow-2xs",
     onPress && "active:opacity-95",
     className,
   );
 
   return (
-    <TextClassContext.Provider value="text-stone-900 dark:text-stone-100">
+    <TextClassContext.Provider value="text-foreground">
       {onPress ? (
         <Pressable
           onPress={onPress}
@@ -62,7 +62,7 @@ export function CardTitle({
   return (
     <Text
       variant="h3"
-      className={cn("font-bold text-stone-900 dark:text-stone-100", className)}
+      className={cn("font-bold text-foreground", className)}
       {...props}
     />
   );
@@ -75,7 +75,7 @@ export function CardDescription({
   return (
     <Text
       variant="muted"
-      className={cn("text-xs text-stone-500 dark:text-stone-400", className)}
+      className={cn("text-xs text-muted-foreground", className)}
       {...props}
     />
   );
@@ -94,7 +94,7 @@ export function CardFooter({
 }: React.ComponentProps<typeof View>) {
   return (
     <View
-      className={cn("flex-row items-center justify-between pt-2 border-t border-stone-100 dark:border-stone-800/80", className)}
+      className={cn("flex-row items-center justify-between pt-2 border-t border-border", className)}
       {...props}
     />
   );

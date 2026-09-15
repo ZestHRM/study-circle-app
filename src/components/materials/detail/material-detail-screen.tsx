@@ -12,10 +12,11 @@ import { useAuth } from "@/lib/auth";
 import type { Quiz, QuizAttempt } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { Alert, StatusBar, View } from "react-native";
-import { isFailed, isNotesReady, isQuizReady } from "@/lib/utils/material-status";
+import { StatusBar, View } from "react-native";
+import { isFailed, isNotesReady, isQuizReady, isQuizFailed } from "@/lib/utils/material-status";
+import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
+import { SwipeableTabView } from "@/components/ui/swipeable-tab-view";
 import { DetailHeader } from "./detail-header";
-import { DetailTabBar } from "./detail-tab-bar";
 import { MaterialTab } from "./material-tab";
 import { NotesTab } from "./notes-tab";
 import { QuizTab } from "./quiz-tab";
@@ -98,6 +99,7 @@ export function MaterialDetailScreen({
 
   const notesReady = material ? isNotesReady(material) : false;
   const quizReady = material ? isQuizReady(material) : false;
+  const quizFailed = material ? isQuizFailed(material) : false;
   const failed = material ? isFailed(material) : false;
   const title = material?.title ?? "Study Material";
   const subject = material?.subject?.name ?? "General";
@@ -106,7 +108,7 @@ export function MaterialDetailScreen({
   const handleStartQuiz = React.useCallback(
     async (quiz: Quiz) => {
       if (!quiz || quiz.totalQuestions <= 0) {
-        Alert.alert("No Questions", "This quiz has no questions yet.");
+        showInfoToast("No Questions", "This quiz has no questions yet.");
         return;
       }
       try {
@@ -114,7 +116,7 @@ export function MaterialDetailScreen({
         const attempt = await startAttemptMutation.mutateAsync(quiz.id);
         setSelectedQuizAttempt(attempt);
       } catch (e) {
-        Alert.alert(
+        showErrorToast(
           "Error",
           e instanceof Error ? e.message : "Failed to start quiz.",
         );
@@ -173,47 +175,50 @@ export function MaterialDetailScreen({
     <AppScreen edges={["top"]} header={headerElement} scrollable={false}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      {/* Tab Navigation */}
-      <DetailTabBar
+      {/* Swipeable & Clickable Tab Navigation */}
+      <SwipeableTabView<TabType>
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        isPro={isPro}
-      />
-
-      {/* Active Tab Screen Content */}
-      <View className="flex-1" style={{ flex: 1 }}>
-        {activeTab === "material" && (
-          <MaterialTab material={material ?? null} />
-        )}
-        {activeTab === "notes" && (
-          <NotesTab
-            notesData={notesData}
-            isLoading={isNotesLoading}
-            isError={isNotesError}
-            notesReady={notesReady}
-            failed={failed}
-            quizReady={quizReady}
-            title={title}
-            subject={subject}
-            onReadNotes={handleReadNotes}
-            onGoToQuiz={handleGoToQuiz}
-            onRetry={refetchNotes}
-          />
-        )}
-        {activeTab === "quiz" && (
-          <QuizTab
-            quiz={materialQuiz}
-            isLoading={isQuizzesLoading}
-            quizReady={quizReady}
-            isPro={isPro}
-            isForbidden={isForbidden}
-            onStartQuiz={handleStartQuiz}
-            isStarting={startAttemptMutation.isPending}
-            startingQuizId={startingQuizId}
-            materialTitle={title}
-          />
-        )}
-      </View>
+        onTabChange={setActiveTab}
+        dynamicHeight={false}
+        tabs={[
+          { id: "material", label: "Material", icon: "file-text" },
+          { id: "notes", label: "AI Notes", icon: "star" },
+          {
+            id: "quiz",
+            label: "Quiz",
+            icon: isPro ? "zap" : "lock",
+            badge: isPro ? undefined : "Pro",
+            badgeVariant: "amber",
+          },
+        ]}
+      >
+        <MaterialTab material={material ?? null} />
+        <NotesTab
+          notesData={notesData}
+          isLoading={isNotesLoading}
+          isError={isNotesError}
+          notesReady={notesReady}
+          failed={failed}
+          quizReady={quizReady}
+          title={title}
+          subject={subject}
+          onReadNotes={handleReadNotes}
+          onGoToQuiz={handleGoToQuiz}
+          onRetry={refetchNotes}
+        />
+        <QuizTab
+          quiz={materialQuiz}
+          isLoading={isQuizzesLoading}
+          quizReady={quizReady}
+          quizFailed={quizFailed}
+          isPro={isPro}
+          isForbidden={isForbidden}
+          onStartQuiz={handleStartQuiz}
+          isStarting={startAttemptMutation.isPending}
+          startingQuizId={startingQuizId}
+          materialTitle={title}
+        />
+      </SwipeableTabView>
 
       {/* Notes Reader Bottom Sheet */}
       <NotesDetailBottomSheet
@@ -222,7 +227,13 @@ export function MaterialDetailScreen({
         title={notesData?.title ?? title}
         subjectName={notesData?.subjectName ?? subject}
         createdAt={notesData?.createdAt}
-        content={notesData?.content}
+        content={
+          notesData?.content ??
+          material?.files?.[0]?.content ??
+          (material as any)?.content ??
+          (material as any)?.extractedText ??
+          null
+        }
         pdfUrl={pdfUrl}
         isLoading={isNotesLoading}
         isError={isNotesError}

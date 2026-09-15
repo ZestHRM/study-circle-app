@@ -16,8 +16,8 @@ export const SubjectBannerCard = React.memo(function SubjectBannerCard({
   fileCount = 1,
 }: SubjectBannerCardProps) {
   return (
-    <Card className="rounded-3xl p-4.5 border-purple-200 dark:border-purple-900/60 bg-purple-50/60 dark:bg-purple-950/30 flex-row items-center gap-3.5 shadow-2xs">
-      <View className="w-11 h-11 rounded-2xl bg-purple-500/15 items-center justify-center border border-purple-200 dark:border-purple-800">
+    <Card className="rounded-3xl p-4.5 border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/30 flex-row items-center gap-3.5 shadow-2xs">
+      <View className="w-11 h-11 rounded-2xl bg-blue-500/15 items-center justify-center border border-blue-200 dark:border-blue-800">
         <Icon name="cpu" size="md" color="primary" />
       </View>
       <View className="flex-1">

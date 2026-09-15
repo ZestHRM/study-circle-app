@@ -1,3 +1,4 @@
+import { APP_COLORS } from "@/constants/colors";
 import * as React from "react";
 import { View } from "react-native";
 import { Icon, IconProps } from "./icon";
@@ -33,50 +34,50 @@ export const Badge = React.memo(function Badge({
         return {
           container: "bg-orange-100 dark:bg-orange-950/60",
           text: "text-orange-700 dark:text-orange-300",
-          iconColor: "#c2410c",
+          iconColor: APP_COLORS.warningDark,
         };
       case "blue":
         return {
           container: "bg-blue-100 dark:bg-blue-950/60",
           text: "text-blue-700 dark:text-blue-300",
-          iconColor: "#1d4ed8",
+          iconColor: APP_COLORS.quizBlueHover,
         };
       case "green":
       case "emerald":
         return {
           container: "bg-emerald-100 dark:bg-emerald-950/60",
           text: "text-emerald-700 dark:text-emerald-300",
-          iconColor: "#047857",
+          iconColor: APP_COLORS.successDark,
         };
       case "amber":
         return {
-          container: "bg-amber-100 dark:bg-amber-950/60",
-          text: "text-amber-700 dark:text-amber-300",
-          iconColor: "#b45309",
+          container: "bg-warning-bg",
+          text: "text-warning-text",
+          iconColor: APP_COLORS.warning,
         };
       case "purple":
         return {
           container: "bg-purple-100 dark:bg-purple-950/60",
           text: "text-purple-700 dark:text-purple-300",
-          iconColor: "#a855f7",
+          iconColor: APP_COLORS.purpleAccent,
         };
       case "destructive":
         return {
-          container: "bg-red-100 dark:bg-red-950/60",
-          text: "text-red-700 dark:text-red-300",
-          iconColor: "#b91c1c",
+          container: "bg-error-bg",
+          text: "text-error-text",
+          iconColor: APP_COLORS.error,
         };
       case "outline":
         return {
-          container: "border border-stone-200 dark:border-stone-800",
-          text: "text-stone-700 dark:text-stone-300",
-          iconColor: "#78716c",
+          container: "border border-border",
+          text: "text-muted-foreground",
+          iconColor: APP_COLORS.stone500,
         };
       default:
         return {
-          container: "bg-stone-100 dark:bg-stone-800",
-          text: "text-stone-500 dark:text-stone-400",
-          iconColor: "#a8a29e",
+          container: "bg-muted",
+          text: "text-muted-foreground",
+          iconColor: APP_COLORS.stone500,
         };
     }
   };

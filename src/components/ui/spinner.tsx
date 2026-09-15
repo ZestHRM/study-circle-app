@@ -56,7 +56,7 @@ export const Spinner = React.memo(function Spinner({
       className={`items-center justify-center gap-2 ${
         center ? "flex-1 justify-center items-center" : ""
       }`}
-      style={containerStyle}
+      style={[{ alignItems: "center", justifyContent: "center" }, containerStyle]}
     >
       <ActivityIndicator
         size={size}
@@ -65,7 +65,7 @@ export const Spinner = React.memo(function Spinner({
         {...props}
       />
       {message ? (
-        <Text variant="muted" className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+        <Text variant="muted" className="text-xs text-stone-500 dark:text-stone-400 font-medium text-center">
           {message}
         </Text>
       ) : null}

@@ -11,6 +11,8 @@ import { useEffect, useState } from "react";
 import { StatusBar, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
+import Toast from "react-native-toast-message";
 import { Uniwind } from "uniwind";
 
 SplashScreen.preventAutoHideAsync();
@@ -22,8 +24,8 @@ const LIGHT_THEME_VARS: Record<string, string> = {
   "--card-foreground": "0 0% 3.9%",
   "--popover": "0 0% 100%",
   "--popover-foreground": "0 0% 3.9%",
-  "--primary": "0 0% 9%",
-  "--primary-foreground": "0 0% 98%",
+  "--primary": "221 83% 53%",
+  "--primary-foreground": "0 0% 100%",
   "--secondary": "0 0% 96.1%",
   "--secondary-foreground": "0 0% 9%",
   "--muted": "0 0% 96.1%",
@@ -34,7 +36,7 @@ const LIGHT_THEME_VARS: Record<string, string> = {
   "--destructive-foreground": "0 0% 98%",
   "--border": "0 0% 89.8%",
   "--input": "0 0% 89.8%",
-  "--ring": "0 0% 3.9%",
+  "--ring": "221 83% 53%",
 };
 
 const DARK_THEME_VARS: Record<string, string> = {
@@ -44,8 +46,8 @@ const DARK_THEME_VARS: Record<string, string> = {
   "--card-foreground": "0 0% 98%",
   "--popover": "0 0% 3.9%",
   "--popover-foreground": "0 0% 98%",
-  "--primary": "0 0% 98%",
-  "--primary-foreground": "0 0% 9%",
+  "--primary": "217 91% 60%",
+  "--primary-foreground": "0 0% 100%",
   "--secondary": "0 0% 14.9%",
   "--secondary-foreground": "0 0% 98%",
   "--muted": "0 0% 14.9%",
@@ -56,7 +58,7 @@ const DARK_THEME_VARS: Record<string, string> = {
   "--destructive-foreground": "0 0% 98%",
   "--border": "0 0% 14.9%",
   "--input": "0 0% 14.9%",
-  "--ring": "0 0% 83.1%",
+  "--ring": "217 91% 60%",
 };
 
 Uniwind.updateCSSVariables("light", LIGHT_THEME_VARS);
@@ -96,6 +98,9 @@ export default function RootLayout() {
     );
   }, [colorScheme]);
 
+  // Initialize push notification listeners and channels
+  usePushNotifications(true);
+
   const activeTheme = colorScheme === "dark" ? DarkTheme : WhiteDefaultTheme;
 
   return (
@@ -119,8 +124,14 @@ export default function RootLayout() {
                       name="profile"
                       options={{ headerShown: true, title: "Profile" }}
                     />
+                    <Stack.Screen
+                      name="notifications"
+                      options={{ headerShown: false, title: "Notifications" }}
+                    />
+
                   </Stack>
                   <PortalHost />
+                  <Toast />
                 </View>
               </ConfirmDialogProvider>
             </AuthProvider>

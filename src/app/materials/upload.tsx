@@ -1,12 +1,13 @@
-import { NotesDetailBottomSheet } from "@/components/notes";
-import { StartQuizSheet } from "@/components/quizzes";
+import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import {
-  Step1Details,
-  Step2Upload,
-  Step3Processing,
+  Step1SubjectPicker,
+  Step2UploadType,
+  Step3FileUpload,
   Step4Ready,
   UploadHeader,
 } from "@/components/materials";
+import { NotesDetailBottomSheet } from "@/components/notes";
+import { StartQuizSheet } from "@/components/quizzes";
 import {
   useCreateSubject,
   useFileDownload,
@@ -16,16 +17,25 @@ import {
   useSubjectsQuery,
 } from "@/hooks";
 import { useAuth } from "@/lib/auth";
-import { step1MaterialSchema, step2MaterialSchema } from "@/schemas";
 import {
-  ApiError,
+  isNotesReady as isNotesReadyHelper,
+  isQuizReady as isQuizReadyHelper,
+} from "@/lib/utils/material-status";
+import { showErrorToast } from "@/lib/utils/toast";
+import {
+  step1SubjectSchema,
+  step2MaterialSchema,
+  step2TitleSchema,
+} from "@/schemas";
+import {
+  getErrorMessage,
   studyMaterialsApi,
   type QuizAttempt,
   type StudyMaterial,
 } from "@/services";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as React from "react";
-import { Alert, Linking, ScrollView, StatusBar, View } from "react-native";
+import { Linking, ScrollView, StatusBar, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type FormValues = {
@@ -37,6 +47,12 @@ type FormErrors = Partial<Record<keyof FormValues | "file", string>>;
 
 export default function UploadMaterialScreen() {
   const router = useRouter();
+  const confirm = useConfirmDialog();
+  const params = useLocalSearchParams<{
+    fileUri?: string;
+    fileName?: string;
+    fileType?: string;
+  }>();
   const { token } = useAuth();
   const filePicker = useFilePicker();
   const { downloadFile } = useFileDownload();
@@ -51,6 +67,24 @@ export default function UploadMaterialScreen() {
   const [errors, setErrors] = React.useState<FormErrors>({});
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+
+  // If a file was picked directly from materials list screen, pre-populate file & clean title
+  const isPrePopulatedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isPrePopulatedRef.current && params.fileUri && params.fileName) {
+      isPrePopulatedRef.current = true;
+      filePicker.setFile({
+        uri: params.fileUri,
+        name: params.fileName,
+        mimeType: params.fileType || "application/pdf",
+        size: null,
+      });
+      const cleanTitle = params.fileName
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[-_]/g, " ");
+      setValues((prev) => ({ ...prev, title: cleanTitle }));
+    }
+  }, [params.fileUri, params.fileName, params.fileType, filePicker]);
 
   // Processing & Polling State
   const [createdMaterialId, setCreatedMaterialId] = React.useState<
@@ -88,11 +122,35 @@ export default function UploadMaterialScreen() {
     processedMaterial?.subject?.name ||
     selectedSubject?.name ||
     selectedSubjectName ||
-    "General";
+    "";
 
-  // Poll for material processing status in Step 3
+  const explicitQuizId = React.useMemo(() => {
+    if (!processedMaterial) return null;
+    return (
+      processedMaterial.quizId ||
+      (Array.isArray(processedMaterial.quizzes) &&
+        processedMaterial.quizzes.length > 0 &&
+        processedMaterial.quizzes[0]?.id) ||
+      (processedMaterial as any).quiz?.id ||
+      null
+    );
+  }, [processedMaterial]);
+
+  const isNotesReady = React.useMemo(() => {
+    if (!processedMaterial) return false;
+    return isNotesReadyHelper(processedMaterial);
+  }, [processedMaterial]);
+
+  const isQuizReady = React.useMemo(() => {
+    if (!processedMaterial) return false;
+    return Boolean(explicitQuizId) || isQuizReadyHelper(processedMaterial);
+  }, [processedMaterial, explicitQuizId]);
+
+  // Poll for material processing status in Step 3 and Step 4
   React.useEffect(() => {
-    if (step !== 3 || !createdMaterialId || !token) return;
+    if (!createdMaterialId || !token) return;
+    if ((isBackendReady || isNotesReady) && isQuizReady) return;
+    if (processingError) return;
 
     let isMounted = true;
 
@@ -104,13 +162,19 @@ export default function UploadMaterialScreen() {
         );
         if (!isMounted) return;
 
-        console.log("[AI Notes Full Response]", material);
+        const isNotesStatusReady =
+          material.status === "NOTES_GENERATED" ||
+          material.status === "PROCESSED" ||
+          material.files?.some(
+            (f) => f.status === "NOTES_GENERATED" || f.status === "PROCESSED",
+          );
 
         const hasReadyNotes =
           Boolean(material.notesId) ||
           Boolean(material.processedNotes) ||
           (Array.isArray((material as any).notes) &&
-            (material as any).notes.length > 0);
+            (material as any).notes.length > 0) ||
+          isNotesStatusReady;
 
         const hasFailedFiles =
           material.status === "PROCESSING_FAILED" ||
@@ -132,7 +196,7 @@ export default function UploadMaterialScreen() {
           setProcessingError(failMessage);
         }
       } catch (err) {
-        // Silent catch for polling network glitches
+        console.error("[AI Notes Polling Error]:", err);
       }
     }
 
@@ -140,13 +204,20 @@ export default function UploadMaterialScreen() {
 
     const interval = setInterval(() => {
       void checkStatus();
-    }, 500);
+    }, 2500);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [step, createdMaterialId, token]);
+  }, [
+    createdMaterialId,
+    token,
+    isBackendReady,
+    isNotesReady,
+    isQuizReady,
+    processingError,
+  ]);
 
   const handleReupload = React.useCallback(() => {
     setCreatedMaterialId(null);
@@ -194,8 +265,7 @@ export default function UploadMaterialScreen() {
   );
 
   const handleContinueToStep2 = React.useCallback(() => {
-    const result = step1MaterialSchema.safeParse({
-      title: values.title,
+    const result = step1SubjectSchema.safeParse({
       subjectId: values.subjectId,
     });
 
@@ -213,34 +283,60 @@ export default function UploadMaterialScreen() {
 
     setErrors({});
     setStep(2);
-  }, [values.title, values.subjectId]);
+  }, [values.subjectId]);
+
+  const handleContinueFromStep2 = React.useCallback(
+    (uploadType: "STUDY_MATERIAL" | "PYQ") => {
+      if (uploadType === "PYQ") {
+        router.push("/pyqs" as any);
+      } else {
+        setErrors({});
+        setStep(3);
+      }
+    },
+    [router],
+  );
 
   const handlePickFile = React.useCallback(async () => {
     setSubmitError(null);
     const picked = await filePicker.pickFile();
     if (picked) {
       setErrors((prev) => (prev.file ? { ...prev, file: undefined } : prev));
+      if (!values.title.trim() && picked.name) {
+        const cleanTitle = picked.name
+          .replace(/\.[^/.]+$/, "")
+          .replace(/[-_]/g, " ");
+        setValues((prev) => ({ ...prev, title: cleanTitle }));
+      }
     }
-  }, [filePicker]);
+  }, [filePicker, values.title]);
 
   const handleRemoveFile = React.useCallback(() => {
     filePicker.removeFile();
   }, [filePicker]);
 
   const handleFinalUpload = React.useCallback(async () => {
-    const parseResult = step2MaterialSchema.safeParse({
-      file: filePicker.file,
-    });
+    const titleResult = step2TitleSchema.safeParse({ title: values.title });
+    const fileResult = step2MaterialSchema.safeParse({ file: filePicker.file });
 
-    if (!parseResult.success) {
-      const msg =
-        parseResult.error.issues[0]?.message ??
+    const newErrors: FormErrors = {};
+    if (!titleResult.success) {
+      newErrors.title =
+        titleResult.error.issues[0]?.message ??
+        "Please enter a material title.";
+    }
+    if (!fileResult.success) {
+      newErrors.file =
+        fileResult.error.issues[0]?.message ??
         "Please select a document to upload.";
-      setErrors((prev) => ({ ...prev, file: msg }));
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    const fileToUpload = parseResult.data.file;
+    const fileToUpload = fileResult.data?.file;
     if (!fileToUpload || !token) return;
 
     try {
@@ -257,19 +353,19 @@ export default function UploadMaterialScreen() {
         },
       });
 
+      console.log("[AI Notes Upload Create Response]:", result);
+
       if (result && typeof result === "object" && "id" in result) {
         setCreatedMaterialId(result.id);
-        setStep(3);
+        setStep(4);
       } else {
         router.back();
       }
     } catch (error) {
-      const message =
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : "Failed to upload study material.";
+      const message = getErrorMessage(
+        error,
+        "Failed to upload study material.",
+      );
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -279,18 +375,6 @@ export default function UploadMaterialScreen() {
   const handleReadNotes = React.useCallback(() => {
     setShowNotesSheet(true);
   }, []);
-
-  const explicitQuizId = React.useMemo(() => {
-    if (!processedMaterial) return null;
-    return (
-      processedMaterial.quizId ||
-      (Array.isArray(processedMaterial.quizzes) &&
-        processedMaterial.quizzes.length > 0 &&
-        processedMaterial.quizzes[0]?.id) ||
-      (processedMaterial as any).quiz?.id ||
-      null
-    );
-  }, [processedMaterial]);
 
   const handleTakeQuiz = React.useCallback(async () => {
     if (explicitQuizId) {
@@ -305,28 +389,24 @@ export default function UploadMaterialScreen() {
         const msg =
           err?.data?.message || err?.message || "Failed to start quiz attempt.";
         if (err?.status === 403 || msg.toLowerCase().includes("upgrade")) {
-          Alert.alert(
-            "Gold Plan Required",
-            "Access denied. Upgrade your plan to access interactive quizzes.",
-            [
-              { text: "Cancel", style: "cancel" },
-              {
-                text: "Upgrade Plan",
-                onPress: () =>
-                  void Linking.openURL(
-                    "https://app.usestudycircle.ai/billings",
-                  ),
-              },
-            ],
-          );
+          const confirmed = await confirm({
+            title: "Gold Plan Required",
+            description:
+              "Access denied. Upgrade your plan to access interactive quizzes.",
+            confirmText: "Upgrade Plan",
+            cancelText: "Cancel",
+          });
+          if (confirmed) {
+            void Linking.openURL("https://app.usestudycircle.ai/billings");
+          }
           return;
         }
-        Alert.alert("Quiz Error", msg);
+        showErrorToast("Quiz Error", msg);
       }
     } else {
-      router.push("/(tabs)/quizzes");
+      router.push("/(tabs)/quizzes" as any);
     }
-  }, [explicitQuizId, startAttemptMutation, router]);
+  }, [explicitQuizId, startAttemptMutation, router, confirm]);
 
   const handleDownloadOriginalFile = React.useCallback(async () => {
     const pdfUrl = processedMaterial?.files?.[0]?.url || filePicker.file?.uri;
@@ -336,25 +416,6 @@ export default function UploadMaterialScreen() {
       content: processedMaterial?.processedNotes,
     });
   }, [downloadFile, processedMaterial, filePicker.file, values.title]);
-
-  const isNotesReady = React.useMemo(() => {
-    if (!processedMaterial) return false;
-    return Boolean(
-      processedMaterial.notesId ||
-        (Array.isArray(processedMaterial.notes) &&
-          processedMaterial.notes.length > 0) ||
-        Boolean(processedMaterial.processedNotes)
-    );
-  }, [processedMaterial]);
-
-  const isQuizReady = React.useMemo(() => {
-    if (!processedMaterial) return false;
-    return Boolean(
-      explicitQuizId ||
-        (Array.isArray(processedMaterial.quizzes) &&
-          processedMaterial.quizzes.length > 0)
-    );
-  }, [processedMaterial, explicitQuizId]);
 
   return (
     <SafeAreaView
@@ -368,7 +429,16 @@ export default function UploadMaterialScreen() {
         translucent={false}
       />
       {/* Brand & Stepper Header Bar */}
-      <UploadHeader currentStep={step} />
+      <UploadHeader
+        currentStep={step}
+        onBack={() => {
+          if (step > 1) {
+            setStep((s) => (s - 1) as any);
+          } else {
+            router.back();
+          }
+        }}
+      />
 
       {/* Main Screen Content Body */}
       <View style={{ flex: 1 }} className="flex-1 bg-white dark:bg-stone-900">
@@ -383,15 +453,12 @@ export default function UploadMaterialScreen() {
           }}
         >
           {step === 1 && (
-            <Step1Details
-              title={values.title}
+            <Step1SubjectPicker
               subjectId={values.subjectId}
               subjects={subjects}
               isLoadingSubjects={isLoadingSubjects}
               isCreatingSubject={createSubjectMutation.isPending}
-              titleError={errors.title}
               subjectError={errors.subjectId}
-              onTitleChange={handleTitleChange}
               onSelectSubject={handleSelectSubject}
               onCreateSubject={handleCreateSubject}
               onBack={() => router.back()}
@@ -400,23 +467,37 @@ export default function UploadMaterialScreen() {
           )}
 
           {step === 2 && (
-            <Step2Upload
-              file={filePicker.file}
-              submitting={submitting}
-              fileError={errors.file || filePicker.error || undefined}
+            <Step2UploadType
+              selectedSubjectName={displaySubjectName}
               submitError={submitError}
-              onPickFile={handlePickFile}
-              onRemoveFile={handleRemoveFile}
-              onBack={() => setStep(1)}
-              onUpload={handleFinalUpload}
+              onContinue={handleContinueFromStep2}
             />
           )}
 
           {step === 3 && (
-            <Step3Processing
+            <Step3FileUpload
               materialTitle={values.title}
               subjectName={displaySubjectName}
               fileName={filePicker.file?.name}
+              file={filePicker.file}
+              submitting={submitting}
+              titleError={errors.title}
+              fileError={errors.file || filePicker.error || undefined}
+              submitError={submitError}
+              onTitleChange={handleTitleChange}
+              onPickFile={handlePickFile}
+              onRemoveFile={handleRemoveFile}
+              onEditSubject={() => setStep(1)}
+              onUpload={handleFinalUpload}
+            />
+          )}
+
+          {step === 4 && (
+            <Step4Ready
+              materialTitle={processedMaterial?.title || values.title}
+              subjectName={displaySubjectName}
+              fileName={filePicker.file?.name}
+              file={filePicker.file}
               materialStatus={
                 processedMaterial?.files?.[0]?.status ||
                 processedMaterial?.status
@@ -429,22 +510,11 @@ export default function UploadMaterialScreen() {
               isQuizReady={isQuizReady}
               processingError={processingError}
               isBackendReady={isBackendReady}
-              onCloseError={() => router.back()}
-              onReupload={handleReupload}
-              onAllStepsFinished={() => setStep(4)}
-            />
-          )}
-
-          {step === 4 && (
-            <Step4Ready
-              materialTitle={processedMaterial?.title || values.title}
-              subjectName={displaySubjectName}
-              fileName={filePicker.file?.name || "Document.pdf"}
-              isNotesReady={isNotesReady}
-              isQuizReady={isQuizReady}
               onReadNotes={handleReadNotes}
               onTakeQuiz={handleTakeQuiz}
               onViewOriginalFile={handleDownloadOriginalFile}
+              onViewSubject={() => router.push("/(tabs)/subjects")}
+              onReupload={handleReupload}
             />
           )}
         </ScrollView>

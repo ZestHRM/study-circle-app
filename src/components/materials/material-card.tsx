@@ -1,132 +1,80 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
-import { APP_COLORS } from '@/constants/colors';
-import { formatShortDate } from '@/lib/utils/formatters';
-import type { StudyMaterial } from '@/services';
-import { Feather } from '@expo/vector-icons';
-import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { MaterialStatusBadges } from "@/components/materials/material-status-badges";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
+import { APP_COLORS } from "@/constants/colors";
+import { formatShortDate } from "@/lib/utils/formatters";
+import type { StudyMaterial } from "@/services";
+import { useRouter } from "expo-router";
+import * as React from "react";
+import { Pressable, View } from "react-native";
 
-interface MaterialCardProps {
+export interface MaterialCardProps {
   material: StudyMaterial;
-  onReadNotes: (material: StudyMaterial) => void;
-  onTakeQuiz: (material: StudyMaterial) => void;
   onDelete: (material: StudyMaterial) => void;
   isDeleting?: boolean;
 }
 
-function isNotesReady(material: StudyMaterial): boolean {
-  return Boolean(
-    material.notesId ||
-      (material.notes && material.notes.length > 0) ||
-      material.processedNotes ||
-      material.status === 'PROCESSED' ||
-      material.status === 'NOTES_GENERATED' ||
-      material.files?.some((f) => f.status === 'NOTES_GENERATED' || f.status === 'PROCESSED')
-  );
-}
-
-function isQuizReady(material: StudyMaterial): boolean {
-  return Boolean(
-    material.quizId ||
-      (material.quizzes && material.quizzes.length > 0) ||
-      material.quizStatus === 'GENERATED' ||
-      material.files?.some((f) => f.quizStatus === 'GENERATED')
-  );
-}
-
 export const MaterialCard = React.memo(function MaterialCard({
   material,
-  onReadNotes,
-  onTakeQuiz,
   onDelete,
   isDeleting = false,
 }: MaterialCardProps) {
-  const notesReady = isNotesReady(material);
-  const quizReady = isQuizReady(material);
+  const subjectName = material.subject?.name ?? "General";
+  const router = useRouter();
 
-  const handleDeletePress = React.useCallback(() => {
-    onDelete(material);
-  }, [onDelete, material]);
+  const handleCardPress = React.useCallback(() => {
+    router.push(`/materials/${material.id}` as any);
+  }, [router, material.id]);
 
-  const handleReadNotesPress = React.useCallback(() => {
-    onReadNotes(material);
-  }, [onReadNotes, material]);
-
-  const handleTakeQuizPress = React.useCallback(() => {
-    onTakeQuiz(material);
-  }, [onTakeQuiz, material]);
+  const handleDeletePress = React.useCallback(
+    (e: any) => {
+      e?.stopPropagation?.();
+      onDelete(material);
+    },
+    [onDelete, material],
+  );
 
   return (
-    <View className="bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 rounded-2xl p-4.5 gap-3 shadow-2xs">
-      {/* Title & Delete Header */}
-      <View className="flex-row items-start justify-between gap-2">
-        <View className="flex-1 pr-1">
-          <Text variant="h4" numberOfLines={1}>
+    <Card onPress={handleCardPress} className="p-3.5 gap-2.5">
+      <View className="flex-row items-center justify-between gap-3">
+        <View className="w-10 h-10 rounded-xl items-center justify-center bg-blue-50 dark:bg-blue-950/40">
+          <Icon name="file-text" size={18} color={APP_COLORS.quizBlue} />
+        </View>
+
+        <View className="flex-1 pr-1 justify-center">
+          <View className="flex-row items-center gap-2 mb-0.5">
+            <Badge label={subjectName} variant="default" />
+            <Text variant="muted" className="text-[11px]">
+              {formatShortDate(material.createdAt)}
+            </Text>
+          </View>
+
+          <Text
+            variant="h4"
+            className="text-sm font-bold text-foreground"
+            numberOfLines={1}
+          >
             {material.title}
           </Text>
-          <Text variant="muted" className="mt-0.5" numberOfLines={1}>
-            {material.subject?.name ?? 'General'}
-          </Text>
         </View>
+
+        <Icon name="chevron-right" size={18} color={APP_COLORS.stone400} />
+      </View>
+
+      <View className="flex-row items-center justify-between pt-1 border-t border-border mt-0.5">
+        <MaterialStatusBadges material={material} className="flex-1 pr-2" />
 
         <Pressable
           onPress={handleDeletePress}
           disabled={isDeleting}
-          className="p-1 active:opacity-70"
+          className="w-7 h-7 rounded-lg bg-muted items-center justify-center active:opacity-70"
+          hitSlop={8}
         >
-          <Feather name="trash-2" size={15} color={APP_COLORS.iconLight} />
+          <Icon name="trash-2" size={13} color={APP_COLORS.error} />
         </Pressable>
       </View>
-
-      {/* Badges & Date Row */}
-      <View className="flex-row items-center gap-2 pt-0.5">
-        {/* Notes Ready Badge */}
-        <Badge
-          icon={notesReady ? 'check' : 'clock'}
-          label={notesReady ? 'Notes ready' : 'Processing'}
-          variant={notesReady ? 'emerald' : 'amber'}
-        />
-
-        {/* Quiz Ready Badge */}
-        <Badge
-          icon="zap"
-          label={quizReady ? 'Quiz ready' : 'Quiz pending'}
-          variant={quizReady ? 'blue' : 'default'}
-        />
-
-        {/* Date */}
-        <Text variant="caption" className="font-medium ml-auto">
-          {formatShortDate(material.createdAt)}
-        </Text>
-      </View>
-
-      {/* Action Buttons Row: Read notes & Take quiz */}
-      <View className="flex-row items-center gap-2.5 pt-1">
-        <Button
-          variant="outline"
-          icon="book-open"
-          iconSize={14}
-          onPress={handleReadNotesPress}
-          disabled={!notesReady}
-          className="flex-1 h-10 rounded-xl justify-center items-center"
-        >
-          {notesReady ? 'Read notes' : 'Notes pending'}
-        </Button>
-
-        <Button
-          variant="quiz"
-          icon="zap"
-          iconSize={14}
-          onPress={handleTakeQuizPress}
-          disabled={!quizReady}
-          className="flex-1 h-10 rounded-xl justify-center items-center"
-        >
-          {quizReady ? 'Take quiz' : 'Quiz pending'}
-        </Button>
-      </View>
-    </View>
+    </Card>
   );
 });
-

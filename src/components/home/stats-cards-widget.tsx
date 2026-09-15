@@ -1,93 +1,110 @@
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
-import { dashboardApi } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
-import { Feather } from '@expo/vector-icons';
-import { useQueries } from '@tanstack/react-query';
-import { View } from 'react-native';
+import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
+import { Text } from "@/components/ui/text";
+import { APP_COLORS } from "@/constants/colors";
+import {
+  useDashboardChartData,
+  useDashboardStreak,
+} from "@/hooks/queries/use-dashboard";
+import { formatHours } from "@/lib/utils/formatters";
+import * as React from "react";
+import { View } from "react-native";
 
-export type StatCardItem = {
-  id: string;
-  title: string;
-  value: number;
-  hint: string;
-};
+function getPast7DaysRange() {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(endDate.getDate() - 7);
 
-export function StatsCardsWidget({
-}: Record<string, never>) {
-  const { token } = useAuth();
-  const dashboardQueries = useQueries({
-    queries: [
-      {
-        queryKey: ['dashboard', 'count', 'study-materials', token],
-        queryFn: async () => dashboardApi.getStudyMaterialsCount(token as string),
-        enabled: Boolean(token),
-      },
-      {
-        queryKey: ['dashboard', 'count', 'exam-materials', token],
-        queryFn: async () => dashboardApi.getExamMaterialsCount(token as string),
-        enabled: Boolean(token),
-      },
-      {
-        queryKey: ['dashboard', 'count', 'quizzes', token],
-        queryFn: async () => dashboardApi.getQuizzesCount(token as string),
-        enabled: Boolean(token),
-      },
-      {
-        queryKey: ['dashboard', 'count', 'study-circles', token],
-        queryFn: async () => dashboardApi.getStudyCirclesCount(token as string),
-        enabled: Boolean(token),
-      },
-    ],
-  });
+  return {
+    startDate: startDate.toISOString().slice(0, 10),
+    endDate: endDate.toISOString().slice(0, 10),
+  };
+}
 
-  const [studyMaterialsQuery, examMaterialsQuery, quizzesQuery, studyCirclesQuery] = dashboardQueries;
-  const isLoading = dashboardQueries.some((query) => query.isLoading);
+export const StatsCardsWidget = React.memo(function StatsCardsWidget() {
+  const { startDate, endDate } = React.useMemo(() => getPast7DaysRange(), []);
+  const streakQuery = useDashboardStreak();
+  const chartQuery = useDashboardChartData({ startDate, endDate });
 
-  const cards: StatCardItem[] = [
-    {
-      id: 'study-materials',
-      title: 'Uploaded Study Materials',
-      value: studyMaterialsQuery.data ?? 0,
-      hint: 'Study materials uploaded by you',
-    },
-    {
-      id: 'exam-materials',
-      title: 'Uploaded Exam Materials',
-      value: examMaterialsQuery.data ?? 0,
-      hint: 'Exam materials uploaded by you',
-    },
-    {
-      id: 'quizzes',
-      title: 'Available Quizzes',
-      value: quizzesQuery.data ?? 0,
-      hint: 'Quizzes created by StudyCircleAI for you',
-    },
-    {
-      id: 'study-circles',
-      title: 'Study Circles Joined',
-      value: studyCirclesQuery.data ?? 0,
-      hint: 'Circles you are a member of',
-    },
-  ];
+  const streakDays =
+    (streakQuery.data as any)?.currentStreak ??
+    (streakQuery.data as any)?.streakDays ??
+    0;
+
+  const { formattedHours, totalTasks } = React.useMemo(() => {
+    const points = chartQuery.data ?? [];
+    let sumHours = 0;
+    let sumTasks = 0;
+
+    for (const pt of points) {
+      sumHours += pt.hoursStudied ?? 0;
+      sumTasks += pt.tasksCompleted ?? 0;
+    }
+
+    return {
+      formattedHours: formatHours(sumHours),
+      totalTasks: sumTasks,
+    };
+  }, [chartQuery.data]);
 
   return (
-    <>
-      {cards.map((card) => (
-        <Card key={card.id} className="gap-2 py-3">
-          <CardHeader className="gap-2 px-4">
-            <View className="flex-row items-center justify-between">
-              <CardDescription className="text-sm">{card.title}</CardDescription>
-              <View className="flex-row items-center gap-1">
-                <Text className="text-xs font-semibold">View</Text>
-                <Feather name="external-link" size={14} color="#a3a3a3" />
-              </View>
-            </View>
-            <CardTitle className="text-4xl leading-none">{isLoading ? '-' : card.value}</CardTitle>
-            <Text className="text-muted-foreground text-sm font-medium">{card.hint}</Text>
-          </CardHeader>
-        </Card>
-      ))}
-    </>
+    <Card className="rounded-3xl p-4">
+      <Text variant="h3" className="text-base font-bold mb-3.5">
+        This week
+      </Text>
+
+      <View className="flex-row items-center justify-between">
+        {/* Col 1: Hours Studied */}
+        <View className="flex-row items-center gap-2 flex-1 min-w-0 pr-1">
+          <View className="w-9 h-9 rounded-full bg-primary/10 items-center justify-center border border-primary/20 shrink-0">
+            <Icon name="clock" size={16} color="primary" />
+          </View>
+          <View className="flex-1 min-w-0">
+            <Text variant="h2" className="text-sm font-black leading-tight" numberOfLines={1}>
+              {formattedHours}
+            </Text>
+            <Text variant="muted" className="text-[10px] font-medium leading-tight text-muted-foreground" numberOfLines={1}>
+              studied
+            </Text>
+          </View>
+        </View>
+
+        {/* Divider 1 */}
+        <View className="w-px h-8 bg-border mx-1 shrink-0" />
+
+        {/* Col 2: Tasks Completed */}
+        <View className="flex-row items-center gap-2 flex-1 min-w-0 px-0.5">
+          <View className="w-9 h-9 rounded-full bg-emerald-500 items-center justify-center shadow-2xs shrink-0">
+            <Icon name="check" size={16} color="white" />
+          </View>
+          <View className="flex-1 min-w-0">
+            <Text variant="h2" className="text-sm font-black leading-tight" numberOfLines={1}>
+              {totalTasks}
+            </Text>
+            <Text variant="muted" className="text-[10px] font-medium leading-tight text-muted-foreground" numberOfLines={2}>
+              tasks done
+            </Text>
+          </View>
+        </View>
+
+        {/* Divider 2 */}
+        <View className="w-px h-8 bg-border mx-1 shrink-0" />
+
+        {/* Col 3: Streak */}
+        <View className="flex-row items-center gap-2 flex-1 min-w-0 pl-1">
+          <View className="w-9 h-9 rounded-full bg-warning/10 items-center justify-center border border-warning/20 shrink-0">
+            <Icon name="zap" size={16} color="warning" />
+          </View>
+          <View className="flex-1 min-w-0">
+            <Text variant="h2" className="text-sm font-black leading-tight" numberOfLines={1}>
+              {streakDays} {streakDays === 1 ? "day" : "days"}
+            </Text>
+            <Text variant="muted" className="text-[10px] font-medium leading-tight text-muted-foreground" numberOfLines={1}>
+              streak
+            </Text>
+          </View>
+        </View>
+      </View>
+    </Card>
   );
-}
+});

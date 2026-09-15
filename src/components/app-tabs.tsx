@@ -1,38 +1,45 @@
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { Icon } from "@/components/ui/icon";
+import { APP_COLORS } from "@/constants/colors";
+import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
 import { Tabs } from "expo-router";
 import { Platform, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Colors } from "@/constants/theme";
-
-type TabIconName = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
-
 export default function AppTabs() {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === "unspecified" ? "light" : scheme];
+  const isDark = scheme === "dark";
   const insets = useSafeAreaInsets();
+  const { subjects, isLoading } = useSubjectsQuery();
+
+  const activeColor = APP_COLORS.primary;
+  const inactiveColor = isDark ? APP_COLORS.stone400 : APP_COLORS.stone500;
+  const backgroundColor = isDark ? APP_COLORS.stone900 : APP_COLORS.white;
+  const borderTopColor = isDark ? APP_COLORS.stone800 : APP_COLORS.stone200;
 
   const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? 12 : 6);
   const tabBarHeight = 50 + bottomInset;
+
+  const hasNoSubjects = !isLoading && subjects.length === 0;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.text,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: activeColor,
+        tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.backgroundElement,
+          backgroundColor,
+          borderTopColor,
           borderTopWidth: 1,
           elevation: 0,
           height: tabBarHeight,
           paddingBottom: bottomInset,
           paddingTop: 6,
+          display: hasNoSubjects ? "none" : "flex",
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: "500",
+          fontWeight: "600",
         },
       }}
     >
@@ -41,7 +48,17 @@ export default function AppTabs() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="home" size={size} color={color} />
+            <Icon name="home" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="subjects"
+        options={{
+          title: "Subjects",
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="book-open" size={size} color={color} />
           ),
         }}
       />
@@ -51,35 +68,17 @@ export default function AppTabs() {
         options={{
           title: "Materials",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="file-document"
-              size={size}
-              color={color}
-            />
+            <Icon name="file-text" size={size} color={color} />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="notes"
+        name="progress"
         options={{
-          title: "Notes",
+          title: "Progress",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="notebook" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="quizzes"
-        options={{
-          title: "Quizzes",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="check-decagram"
-              size={size}
-              color={color}
-            />
+            <Icon name="trending-up" size={size} color={color} />
           ),
         }}
       />
@@ -89,11 +88,7 @@ export default function AppTabs() {
         options={{
           title: "Circles",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="account-group"
-              size={size}
-              color={color}
-            />
+            <Icon name="users" size={size} color={color} />
           ),
         }}
       />
@@ -110,11 +105,7 @@ export default function AppTabs() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons
-              name="account-circle"
-              size={size}
-              color={color}
-            />
+            <Icon name="user" size={size} color={color} />
           ),
         }}
       />

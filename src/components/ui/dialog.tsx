@@ -1,10 +1,8 @@
 import { AppBottomSheet } from "@/components/ui/app-bottom-sheet";
 import { cn } from "@/lib/utils";
-import { Feather } from "@expo/vector-icons";
 import * as React from "react";
 import {
   Text,
-  TouchableOpacity,
   View,
   type ViewProps,
 } from "react-native";
@@ -118,7 +116,7 @@ export function DialogTitle({
   return (
     <Text
       className={cn(
-        "text-stone-900 dark:text-stone-100 text-lg font-semibold leading-none",
+        "text-foreground text-lg font-semibold leading-none",
         className,
       )}
       {...props}
@@ -135,7 +133,7 @@ export function DialogDescription({
 }: React.ComponentProps<typeof Text>) {
   return (
     <Text
-      className={cn("text-stone-500 dark:text-stone-400 text-sm", className)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     >
       {children}

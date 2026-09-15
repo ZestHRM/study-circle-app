@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import type { Quiz, QuizDifficultyLevel } from "@/services";
-import { Feather } from "@expo/vector-icons";
 import * as React from "react";
 import { ActivityIndicator, View } from "react-native";
 
@@ -16,7 +16,7 @@ export interface QuizCardProps {
 
 const DIFFICULTY_CONFIG: Record<
   QuizDifficultyLevel,
-  { label: string; variant: "emerald" | "amber" | "destructive"; icon: keyof typeof Feather.glyphMap }
+  { label: string; variant: "emerald" | "amber" | "destructive"; icon: string }
 > = {
   EASY: { label: "Easy", variant: "emerald", icon: "check-circle" },
   MEDIUM: { label: "Medium", variant: "amber", icon: "help-circle" },
@@ -42,17 +42,18 @@ export const QuizCard = React.memo(function QuizCard({
   }, [onViewResults, quiz]);
 
   return (
-    <View className="bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 rounded-2xl p-4.5 gap-3.5 shadow-2xs">
+    <Card className="rounded-2xl p-4.5 gap-3.5 shadow-2xs">
       {/* Header Row: Title & Subject Badge */}
       <View className="flex-row items-start justify-between gap-2">
         <View className="flex-1 pr-1">
           <Text
-            className="text-base font-bold text-stone-900 dark:text-stone-100"
+            variant="h3"
+            className="font-bold"
             numberOfLines={2}
           >
             {quiz.title}
           </Text>
-          <Text className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-0.5" numberOfLines={1}>
+          <Text variant="muted" className="mt-0.5" numberOfLines={1}>
             {quiz.subject?.name ?? "General Subject"}
           </Text>
         </View>
@@ -127,6 +128,6 @@ export const QuizCard = React.memo(function QuizCard({
           Results
         </Button>
       </View>
-    </View>
+    </Card>
   );
 });

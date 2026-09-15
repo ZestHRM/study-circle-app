@@ -1,5 +1,5 @@
-import { Redirect } from 'expo-router';
+import ProfileScreen from '@/app/profile';
 
 export default function MoreScreen() {
-  return <Redirect href="/profile" />;
+  return <ProfileScreen />;
 }

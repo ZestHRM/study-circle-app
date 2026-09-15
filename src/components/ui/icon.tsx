@@ -1,8 +1,8 @@
 import { TextClassContext } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { cn } from "@/lib/utils";
-import { Feather } from "@expo/vector-icons";
 import type { LucideIcon, LucideProps } from "lucide-react-native";
+import * as LucideIcons from "lucide-react-native";
 import * as React from "react";
 import type { TextStyle, ViewStyle } from "react-native";
 import { withUniwind } from "uniwind";
@@ -18,13 +18,15 @@ export type IconColorPreset =
   | "muted"
   | "success"
   | "warning"
-  | "error";
+  | "error"
+  | "purple"
+  | "emerald";
 
 export interface IconProps extends Omit<LucideProps, "size" | "color"> {
   as?: LucideIcon;
-  name?: keyof typeof Feather.glyphMap;
+  name?: string;
   size?: IconSizePreset | number;
-  color?: IconColorPreset | string;
+  color?: IconColorPreset | string | any;
   style?: TextStyle | ViewStyle | any;
   className?: string;
 }
@@ -46,9 +48,65 @@ const COLOR_MAP: Record<IconColorPreset, string> = {
   dark: APP_COLORS.stone900,
   muted: APP_COLORS.stone500,
   success: APP_COLORS.success,
-  warning: APP_COLORS.warning,
+  warning: APP_COLORS.orangeAccent,
   error: APP_COLORS.error,
+  purple: APP_COLORS.brandPurple,
+  emerald: APP_COLORS.emerald600,
 };
+
+function getLucideIcon(name?: string): LucideIcon {
+  if (!name) return LucideIcons.HelpCircle;
+
+  const customMap: Record<string, LucideIcon> = {
+    "flask-outline": LucideIcons.FlaskConical,
+    flask: LucideIcons.FlaskConical,
+    "book-open-variant": LucideIcons.BookOpen,
+    "book-variant": LucideIcons.Book,
+    "cog-outline": LucideIcons.Settings,
+    cog: LucideIcons.Settings,
+    leaf: LucideIcons.Leaf,
+    "upload-cloud": LucideIcons.UploadCloud,
+    "check-square": LucideIcons.CheckSquare,
+    "help-circle": LucideIcons.HelpCircle,
+    "bar-chart-2": LucideIcons.BarChart2,
+    "arrow-right": LucideIcons.ArrowRight,
+    "arrow-left": LucideIcons.ArrowLeft,
+    "chevron-down": LucideIcons.ChevronDown,
+    "chevron-right": LucideIcons.ChevronRight,
+    "chevron-left": LucideIcons.ChevronLeft,
+    plus: LucideIcons.Plus,
+    check: LucideIcons.Check,
+    calendar: LucideIcons.Calendar,
+    file: LucideIcons.FileText,
+    "file-text": LucideIcons.FileText,
+    book: LucideIcons.Book,
+    feather: LucideIcons.Feather,
+    zap: LucideIcons.Zap,
+    lock: LucideIcons.Lock,
+    mail: LucideIcons.Mail,
+    user: LucideIcons.User,
+    eye: LucideIcons.Eye,
+    "eye-off": LucideIcons.EyeOff,
+    search: LucideIcons.Search,
+    filter: LucideIcons.Filter,
+    trash: LucideIcons.Trash2,
+    "trash-2": LucideIcons.Trash2,
+    edit: LucideIcons.Edit3,
+    share: LucideIcons.Share2,
+  };
+
+  if (customMap[name]) return customMap[name];
+
+  const pascalName = name
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
+
+  const foundIcon = (LucideIcons as Record<string, any>)[pascalName];
+  if (foundIcon) return foundIcon;
+
+  return LucideIcons.HelpCircle;
+}
 
 function LucideIconImpl({ as: IconComponent, ...props }: any) {
   return <IconComponent {...props} />;
@@ -69,35 +127,28 @@ export const Icon = React.memo(function Icon({
   as: IconComponent,
   name,
   size = "md",
-  color,
+  color = "primary",
   className,
   style,
   ...props
 }: IconProps) {
   const textClass = React.useContext(TextClassContext);
 
-  if (IconComponent) {
-    return (
-      <StyledLucideIcon
-        as={IconComponent}
-        className={cn("text-foreground size-5", textClass, className)}
-        {...props}
-      />
-    );
-  }
+  const TargetIcon = IconComponent || getLucideIcon(name);
 
   const iconSize = typeof size === "number" ? size : SIZE_MAP[size] ?? 20;
   const iconColor = color
     ? COLOR_MAP[color as IconColorPreset] ?? color
-    : APP_COLORS.stone900;
+    : undefined;
 
   return (
-    <Feather
-      name={name || "help-circle"}
+    <StyledLucideIcon
+      as={TargetIcon}
       size={iconSize}
       color={iconColor}
       style={style}
-      className={className}
+      className={cn("text-foreground", textClass, className)}
+      {...props}
     />
   );
 });

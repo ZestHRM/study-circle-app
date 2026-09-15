@@ -1,27 +1,29 @@
-import { useAuth } from '@/lib/auth';
+import { useAuth } from "@/lib/auth";
 import {
   dashboardApi,
   type CreateDashboardCheckInPayload,
-} from '@/services';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+} from "@/services";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useDashboardStreak() {
-  const { token } = useAuth();
+  const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['dashboard', 'streak', token],
-    queryFn: async () => dashboardApi.getStreak(token as string),
-    enabled: Boolean(token),
+    queryKey: ["dashboard", "streak", user?.id],
+    queryFn: async () => dashboardApi.getStreak(),
+    enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 }
 
 export function useDashboardRecentActivity() {
-  const { token } = useAuth();
+  const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['dashboard', 'recent-activity', token],
-    queryFn: async () => dashboardApi.getRecentActivity(token as string),
-    enabled: Boolean(token),
+    queryKey: ["dashboard", "recent-activity", user?.id],
+    queryFn: async () => dashboardApi.getRecentActivity(),
+    enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
   });
 }
 
@@ -29,25 +31,94 @@ export function useDashboardChartData(params: {
   startDate: string;
   endDate: string;
 }) {
-  const { token } = useAuth();
+  const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['dashboard', 'chart-data', token, params.startDate, params.endDate],
-    queryFn: async () =>
-      dashboardApi.getChartData(token as string, params),
-    enabled: Boolean(token) && Boolean(params.startDate) && Boolean(params.endDate),
+    queryKey: ["dashboard", "chart-data", user?.id, params.startDate, params.endDate],
+    queryFn: async () => dashboardApi.getChartData(params),
+    enabled: Boolean(user) && Boolean(params.startDate) && Boolean(params.endDate),
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useDashboardCounts() {
+  const { user } = useAuth();
+
+  const studyMaterialsQuery = useQuery({
+    queryKey: ["dashboard", "count", "study-materials", user?.id],
+    queryFn: async () => dashboardApi.getStudyMaterialsCount(),
+    enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const examMaterialsQuery = useQuery({
+    queryKey: ["dashboard", "count", "exam-materials", user?.id],
+    queryFn: async () => dashboardApi.getExamMaterialsCount(),
+    enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const quizzesQuery = useQuery({
+    queryKey: ["dashboard", "count", "quizzes", user?.id],
+    queryFn: async () => dashboardApi.getQuizzesCount(),
+    enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const studyCirclesQuery = useQuery({
+    queryKey: ["dashboard", "count", "study-circles", user?.id],
+    queryFn: async () => dashboardApi.getStudyCirclesCount(),
+    enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const isLoading =
+    studyMaterialsQuery.isLoading ||
+    examMaterialsQuery.isLoading ||
+    quizzesQuery.isLoading ||
+    studyCirclesQuery.isLoading;
+
+  return {
+    studyMaterialsCount: studyMaterialsQuery.data ?? 0,
+    examMaterialsCount: examMaterialsQuery.data ?? 0,
+    quizzesCount: quizzesQuery.data ?? 0,
+    studyCirclesCount: studyCirclesQuery.data ?? 0,
+    isLoading,
+  };
+}
+
+export function useTodayCheckIn() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["dashboard", "today-checkin", user?.id],
+    queryFn: async () => dashboardApi.getTodayCheckIn(),
+    enabled: Boolean(user),
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useCheckInById(checkInId: string | null) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["dashboard", "checkin-feedback", user?.id, checkInId],
+    queryFn: async () => dashboardApi.getCheckInById(checkInId!),
+    enabled: Boolean(user && checkInId),
   });
 }
 
 export function useCreateDashboardCheckIn() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: CreateDashboardCheckInPayload) =>
-      dashboardApi.createCheckIn(token as string, payload),
+      dashboardApi.createCheckIn(payload),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
+
+
+

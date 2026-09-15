@@ -13,6 +13,7 @@ export interface UseCreateSubjectFormOptions {
 export function useCreateSubjectForm(options?: UseCreateSubjectFormOptions) {
   const [showInlineCreate, setShowInlineCreate] = React.useState(false);
   const [newSubjectName, setNewSubjectName] = React.useState("");
+  const [newSubjectDescription, setNewSubjectDescription] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
 
   const {
@@ -23,8 +24,9 @@ export function useCreateSubjectForm(options?: UseCreateSubjectFormOptions) {
   const createSubjectMutation = useCreateSubject();
 
   const handleCreateSubject = React.useCallback(
-    async (overrideName?: string) => {
+    async (overrideName?: string, overrideDescription?: string) => {
       const targetName = overrideName ?? newSubjectName;
+      const targetDescription = overrideDescription ?? newSubjectDescription;
       const result = createSubjectSchema.safeParse({ name: targetName });
 
       if (!result.success) {
@@ -44,6 +46,7 @@ export function useCreateSubjectForm(options?: UseCreateSubjectFormOptions) {
       if (existing) {
         const existingId = String(existing.id);
         setNewSubjectName("");
+        setNewSubjectDescription("");
         setError(null);
         setShowInlineCreate(false);
         options?.onSuccess?.(existingId, existing.name);
@@ -54,11 +57,13 @@ export function useCreateSubjectForm(options?: UseCreateSubjectFormOptions) {
         setError(null);
         const created = await createSubjectMutation.mutateAsync({
           name: trimmedName,
+          description: targetDescription.trim() || undefined,
         });
 
         if (created?.id) {
           const createdId = String(created.id);
           setNewSubjectName("");
+          setNewSubjectDescription("");
           setError(null);
           setShowInlineCreate(false);
           await refetchSubjects();
@@ -72,12 +77,20 @@ export function useCreateSubjectForm(options?: UseCreateSubjectFormOptions) {
       }
       return null;
     },
-    [newSubjectName, subjects, createSubjectMutation, refetchSubjects, options],
+    [
+      newSubjectName,
+      newSubjectDescription,
+      subjects,
+      createSubjectMutation,
+      refetchSubjects,
+      options,
+    ],
   );
 
   const reset = React.useCallback(() => {
     setShowInlineCreate(false);
     setNewSubjectName("");
+    setNewSubjectDescription("");
     setError(null);
   }, []);
 
@@ -86,6 +99,8 @@ export function useCreateSubjectForm(options?: UseCreateSubjectFormOptions) {
     setShowInlineCreate,
     newSubjectName,
     setNewSubjectName,
+    newSubjectDescription,
+    setNewSubjectDescription,
     error,
     setError,
     isCreating: createSubjectMutation.isPending,

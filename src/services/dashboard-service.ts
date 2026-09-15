@@ -1,4 +1,9 @@
-import { ApiError, getTotalItems, PaginatedApiResponse, request } from './api-client';
+import {
+  ApiError,
+  getTotalItems,
+  PaginatedApiResponse,
+  RestClient,
+} from "./api-client";
 
 export type DashboardCheckInChartPoint = {
   date: string;
@@ -20,14 +25,14 @@ export type DashboardRecentActivityItem = {
 };
 
 export type DashboardCheckInMood =
-  | 'GREAT'
-  | 'GOOD'
-  | 'OKAY'
-  | 'STRUGGLING'
-  | 'MOTIVATED'
-  | 'FOCUSED'
-  | 'TIRED'
-  | 'EXCITED';
+  | "GREAT"
+  | "GOOD"
+  | "OKAY"
+  | "STRUGGLING"
+  | "MOTIVATED"
+  | "FOCUSED"
+  | "TIRED"
+  | "EXCITED";
 
 export type CreateDashboardCheckInPayload = {
   date: string;
@@ -73,32 +78,65 @@ export type CreateDashboardCheckInResponse = {
 };
 
 export const dashboardApi = {
-  async createCheckIn(token: string, payload: CreateDashboardCheckInPayload) {
-    return request<CreateDashboardCheckInResponse>('/check-ins', {
-      method: 'POST',
-      token,
-      body: payload,
-    });
+  async createCheckIn(
+    tokenOrPayload: string | CreateDashboardCheckInPayload,
+    payload?: CreateDashboardCheckInPayload,
+  ) {
+    const actualPayload =
+      typeof tokenOrPayload === "object" ? tokenOrPayload : payload;
+    const actualToken =
+      typeof tokenOrPayload === "string" ? tokenOrPayload : undefined;
+    return RestClient<CreateDashboardCheckInResponse>(
+      "/check-ins",
+      "POST",
+      actualPayload,
+      { token: actualToken },
+    );
   },
-  async getStudyMaterialsCount(token: string) {
-    const data = await request<PaginatedApiResponse>('/study-materials?page=1&limit=1', { token });
+  async getStudyMaterialsCount(token?: string | null) {
+    const data = await RestClient<PaginatedApiResponse>(
+      "/study-materials",
+      "GET",
+      { page: 1, limit: 1 },
+      { token },
+    );
     return getTotalItems(data);
   },
-  async getExamMaterialsCount(token: string) {
-    const data = await request<PaginatedApiResponse>('/exam-papers?page=1&limit=1', { token });
+  async getExamMaterialsCount(token?: string | null) {
+    const data = await RestClient<PaginatedApiResponse>(
+      "/exam-papers",
+      "GET",
+      { page: 1, limit: 1 },
+      { token },
+    );
     return getTotalItems(data);
   },
-  async getQuizzesCount(token: string) {
-    const data = await request<PaginatedApiResponse>('/quizzes?page=1&limit=1', { token });
+  async getQuizzesCount(token?: string | null) {
+    const data = await RestClient<PaginatedApiResponse>(
+      "/quizzes",
+      "GET",
+      { page: 1, limit: 1 },
+      { token },
+    );
     return getTotalItems(data);
   },
-  async getStudyCirclesCount(token: string) {
-    const data = await request<PaginatedApiResponse>('/study-circles?page=1&limit=1', { token });
+  async getStudyCirclesCount(token?: string | null) {
+    const data = await RestClient<PaginatedApiResponse>(
+      "/study-circles",
+      "GET",
+      { page: 1, limit: 1 },
+      { token },
+    );
     return getTotalItems(data);
   },
-  async getTodayCheckIn(token: string) {
+  async getTodayCheckIn(token?: string | null) {
     try {
-      return await request<{ id: string } | null>('/check-ins/today', { token });
+      return await RestClient<{ id: string } | null>(
+        "/check-ins/today",
+        "GET",
+        {},
+        { token },
+      );
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         return null;
@@ -106,19 +144,36 @@ export const dashboardApi = {
       throw error;
     }
   },
-  async getCheckInById(token: string, checkInId: string) {
-    return request<DashboardCheckInDetail>(`/check-ins/${checkInId}`, { token });
+  async getCheckInById(token: string | null | undefined, checkInId?: string) {
+    const actualId =
+      typeof token === "string" && checkInId ? checkInId : (token as string);
+    const actualToken =
+      typeof token === "string" && checkInId ? token : undefined;
+    return RestClient<DashboardCheckInDetail>(
+      `/check-ins/${actualId}`,
+      "GET",
+      {},
+      { token: actualToken },
+    );
   },
   async getChartData(
-    token: string,
-    params: {
+    tokenOrParams?: string | null | { startDate: string; endDate: string },
+    params?: {
       startDate: string;
       endDate: string;
-    }
+    },
   ) {
-    const query = new URLSearchParams(params).toString();
+    const actualParams =
+      typeof tokenOrParams === "object" ? (tokenOrParams as any) : params;
+    const actualToken =
+      typeof tokenOrParams === "string" ? tokenOrParams : undefined;
     try {
-      return await request<DashboardCheckInChartPoint[]>(`/check-ins/chart-data?${query}`, { token });
+      return await RestClient<DashboardCheckInChartPoint[]>(
+        "/check-ins/chart-data",
+        "GET",
+        actualParams,
+        { token: actualToken },
+      );
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         return [];
@@ -126,10 +181,20 @@ export const dashboardApi = {
       throw error;
     }
   },
-  async getStreak(token: string) {
-    return request<DashboardStreak>('/check-ins/streak', { token });
+  async getStreak(token?: string | null) {
+    return RestClient<DashboardStreak>(
+      "/check-ins/streak",
+      "GET",
+      {},
+      { token },
+    );
   },
-  async getRecentActivity(token: string) {
-    return request<DashboardRecentActivityItem[]>('/check-ins/recent-activity', { token });
+  async getRecentActivity(token?: string | null) {
+    return RestClient<DashboardRecentActivityItem[]>(
+      "/check-ins/recent-activity",
+      "GET",
+      {},
+      { token },
+    );
   },
 };

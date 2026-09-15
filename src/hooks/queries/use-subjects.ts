@@ -1,8 +1,8 @@
 import { useAuth } from "@/lib/auth";
+import { showSuccessToast } from "@/lib/utils/toast";
 import { subjectsApi, type Subject } from "@/services";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
-import { Alert } from "react-native";
 
 export function useSubjectsQuery(params?: {
   page?: number;
@@ -22,6 +22,7 @@ export function useSubjectsQuery(params?: {
         search: params?.search,
       }),
     enabled: Boolean(token),
+    staleTime: 1000 * 60 * 5,
   });
 
   const subjects = query.data?.data ?? [];
@@ -61,7 +62,7 @@ export function useCreateSubject() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["subjects"] });
-      Alert.alert("Success", "Subject created successfully.");
+      showSuccessToast("Success", "Subject created successfully.");
     },
   });
 }

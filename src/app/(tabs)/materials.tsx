@@ -1,49 +1,23 @@
 import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import { MaterialCard, MaterialsHeader } from "@/components/materials";
-import { NotesDetailBottomSheet } from "@/components/notes";
-import { APP_COLORS } from "@/constants/colors";
-import {
-  useDeleteStudyMaterial,
-  useStudyMaterialDetail,
-  useStudyMaterialNotesQuery,
-  useStudyMaterialsInfinite,
-} from "@/hooks/queries";
-import { type StudyMaterial } from "@/services";
-import { useFocusEffect, useRouter } from "expo-router";
-import * as React from "react";
-import { Alert, FlatList, RefreshControl, StatusBar, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
+import { AppHeaderBar } from "@/components/ui/app-header-bar";
+import { AppScreen } from "@/components/ui/app-screen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
+import { APP_COLORS } from "@/constants/colors";
+import { useDeleteStudyMaterial, useStudyMaterialsInfinite } from "@/hooks";
+import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
+import { showErrorToast } from "@/lib/utils/toast";
+import { type StudyMaterial } from "@/services";
+import { useRouter } from "expo-router";
+import * as React from "react";
+import { FlatList, RefreshControl, View } from "react-native";
 
 export default function MaterialsScreen() {
   const router = useRouter();
   const confirm = useConfirmDialog();
-  const [selectedNoteMaterial, setSelectedNoteMaterial] =
-    React.useState<StudyMaterial | null>(null);
-
-  // Auto-close bottom sheets when navigating away from this tab
-  useFocusEffect(
-    React.useCallback(() => {
-      return () => {
-        setSelectedNoteMaterial(null);
-      };
-    }, []),
-  );
-
-  const { data: singleMaterialDetail } = useStudyMaterialDetail(
-    selectedNoteMaterial?.id,
-  );
-
-  const activeMaterial = singleMaterialDetail || selectedNoteMaterial;
-
-  const {
-    data: fetchedNotes,
-    isLoading: isNotesLoading,
-    isError: isNotesError,
-    refetch: refetchNotes,
-  } = useStudyMaterialNotesQuery(activeMaterial);
+  const [selectedSubjectId, setSelectedSubjectId] = React.useState<string>("");
+  const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
 
   const {
     materials,
@@ -55,7 +29,33 @@ export default function MaterialsScreen() {
     refetch,
   } = useStudyMaterialsInfinite();
 
+  const { subjects } = useSubjectsQuery();
+
   const deleteMaterialMutation = useDeleteStudyMaterial();
+
+  const filteredMaterials = React.useMemo(() => {
+    return materials.filter((m) => {
+      if (selectedSubjectId) {
+        const mSubjectId = String(m.subjectId ?? m.subject?.id ?? "");
+        if (mSubjectId !== selectedSubjectId) return false;
+      }
+
+      if (selectedDate) {
+        if (m.createdAt) {
+          const itemDateStr = new Date(m.createdAt).toISOString().split("T")[0];
+          const filterDateStr = selectedDate.toISOString().split("T")[0];
+          if (itemDateStr !== filterDateStr) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [materials, selectedSubjectId, selectedDate]);
+
+  const handleClearFilters = React.useCallback(() => {
+    setSelectedSubjectId("");
+    setSelectedDate(null);
+  }, []);
 
   const handleOpenAddDialog = React.useCallback(() => {
     router.push("/materials/upload");
@@ -79,175 +79,132 @@ export default function MaterialsScreen() {
           error instanceof Error
             ? error.message
             : "Unable to delete the study material right now.";
-        Alert.alert("Delete Failed", message);
+        showErrorToast("Delete Failed", message);
       }
     },
     [confirm, deleteMaterialMutation],
   );
 
-  const handleReadNotes = React.useCallback((material: StudyMaterial) => {
-    setSelectedNoteMaterial(material);
-  }, []);
-
-  const handleTakeQuiz = React.useCallback(
-    (_material: StudyMaterial) => {
-      router.push("/(tabs)/quizzes");
-    },
-    [router],
-  );
-
-  const handleCloseNotesModal = React.useCallback(() => {
-    setSelectedNoteMaterial(null);
-  }, []);
-
-  const handleNotesModalTakeQuiz = React.useCallback(() => {
-    setSelectedNoteMaterial(null);
-    router.push("/(tabs)/quizzes");
-  }, [router]);
-
   const keyExtractor = React.useCallback((item: StudyMaterial) => item.id, []);
 
-  const ItemSeparator = React.useCallback(() => <View className="h-3" />, []);
-
-  const getItemLayout = React.useCallback(
-    (_data: ArrayLike<StudyMaterial> | null | undefined, index: number) => ({
-      length: 168,
-      offset: 168 * index,
-      index,
-    }),
-    [],
-  );
+  const ItemSeparator = React.useCallback(() => <View className="h-3.5" />, []);
 
   const renderItem = React.useCallback(
     ({ item }: { item: StudyMaterial }) => (
       <MaterialCard
         material={item}
-        onReadNotes={handleReadNotes}
-        onTakeQuiz={handleTakeQuiz}
         onDelete={handleDeleteMaterial}
         isDeleting={deleteMaterialMutation.isPending}
       />
     ),
+    [handleDeleteMaterial, deleteMaterialMutation.isPending],
+  );
+
+  const headerElement = React.useMemo(
+    () => (
+      <MaterialsHeader
+        onUploadPress={handleOpenAddDialog}
+        totalMaterialsCount={materials.length}
+        selectedSubjectId={selectedSubjectId}
+        onSubjectChange={setSelectedSubjectId}
+        subjects={subjects}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        onClearFilters={handleClearFilters}
+      />
+    ),
     [
-      handleReadNotes,
-      handleTakeQuiz,
-      handleDeleteMaterial,
-      deleteMaterialMutation.isPending,
+      handleOpenAddDialog,
+      materials.length,
+      selectedSubjectId,
+      setSelectedSubjectId,
+      subjects,
+      selectedDate,
+      setSelectedDate,
+      handleClearFilters,
     ],
   );
 
-  const noteTitle = React.useMemo(
+  const footerElement = React.useMemo(
+    () => (
+      <View className="mt-4 gap-4">
+        <InfiniteListFooter
+          isFetchingNextPage={isFetchingNextPage}
+          hasNextPage={hasNextPage}
+          totalLoaded={filteredMaterials.length}
+          itemLabel="materials"
+        />
+      </View>
+    ),
+    [isFetchingNextPage, hasNextPage, filteredMaterials.length],
+  );
+
+  const hasActiveFilters = Boolean(selectedSubjectId || selectedDate);
+
+  const emptyElement = React.useMemo(
     () =>
-      fetchedNotes?.title || activeMaterial?.title || "Study Material Notes",
-    [fetchedNotes?.title, activeMaterial?.title],
+      !isLoading ? (
+        <EmptyState
+          icon="file-text"
+          title={
+            !hasActiveFilters
+              ? "No Study Materials Yet"
+              : "No Matching Materials"
+          }
+          description={
+            !hasActiveFilters
+              ? "Upload your first PDF or document to generate AI notes and practice quizzes automatically."
+              : "No materials found matching your selected subject or date filters. Try clearing filters."
+          }
+          actionLabel={
+            hasActiveFilters ? "Clear All Filters" : "Upload First Material +"
+          }
+          actionVariant="quiz"
+          onAction={hasActiveFilters ? handleClearFilters : handleOpenAddDialog}
+          className="mt-4"
+        />
+      ) : null,
+    [isLoading, hasActiveFilters, handleClearFilters, handleOpenAddDialog],
   );
 
-  const noteSubjectName = React.useMemo(
-    () =>
-      fetchedNotes?.subjectName ?? activeMaterial?.subject?.name ?? "General",
-    [fetchedNotes?.subjectName, activeMaterial?.subject?.name],
-  );
-
-  const noteCreatedAt = React.useMemo(
-    () => fetchedNotes?.createdAt || activeMaterial?.createdAt,
-    [fetchedNotes?.createdAt, activeMaterial?.createdAt],
-  );
-
-  const noteContent = React.useMemo(
-    () => fetchedNotes?.content || activeMaterial?.processedNotes,
-    [fetchedNotes?.content, activeMaterial?.processedNotes],
-  );
-
-  const notePdfUrl = React.useMemo(
-    () => activeMaterial?.files?.[0]?.url,
-    [activeMaterial?.files],
-  );
-
-  const isSelectedMaterialQuizReady = React.useMemo(
-    () =>
-      Boolean(
-        activeMaterial?.quizId ||
-        (activeMaterial?.quizzes && activeMaterial.quizzes.length > 0) ||
-        activeMaterial?.quizStatus === "GENERATED" ||
-        activeMaterial?.files?.some((f) => f.quizStatus === "GENERATED"),
-      ),
-    [activeMaterial],
+  const refreshControlElement = React.useMemo(
+    () => (
+      <RefreshControl
+        refreshing={isRefreshing}
+        onRefresh={refetch}
+        tintColor={APP_COLORS.quizBlue}
+      />
+    ),
+    [isRefreshing, refetch],
   );
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#ffffff" }}
-      className="bg-white dark:bg-stone-950 flex-1"
+    <AppScreen
       edges={["top"]}
+      header={<AppHeaderBar logoPosition="left" />}
+      scrollable={false}
     >
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#ffffff"
-        translucent={false}
-      />
       <FlatList
-        data={materials}
+        data={filteredMaterials}
         keyExtractor={keyExtractor}
-        getItemLayout={getItemLayout}
         contentContainerStyle={{
           paddingHorizontal: 18,
-          paddingTop: 12,
-          paddingBottom: 32,
+          paddingTop: 8,
+          paddingBottom: 40,
         }}
         removeClippedSubviews={true}
         maxToRenderPerBatch={10}
         windowSize={5}
         initialNumToRender={8}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={refetch}
-            tintColor={APP_COLORS.terracotta}
-          />
-        }
-        ListHeaderComponent={
-          <MaterialsHeader onUploadPress={handleOpenAddDialog} />
-        }
-        ListFooterComponent={
-          <InfiniteListFooter
-            isFetchingNextPage={isFetchingNextPage}
-            hasNextPage={hasNextPage}
-            totalLoaded={materials.length}
-            itemLabel="materials"
-          />
-        }
+        refreshControl={refreshControlElement}
+        ListHeaderComponent={headerElement}
+        ListFooterComponent={footerElement}
         onEndReached={fetchNextPage}
         onEndReachedThreshold={0.4}
         ItemSeparatorComponent={ItemSeparator}
-        ListEmptyComponent={
-          !isLoading ? (
-            <EmptyState
-              icon="file-text"
-              title="No Study Materials Found"
-              description="Upload your first PDF or document to generate AI notes and practice quizzes automatically."
-              actionLabel="Upload First Material"
-              onAction={handleOpenAddDialog}
-            />
-          ) : null
-        }
+        ListEmptyComponent={emptyElement}
         renderItem={renderItem}
       />
-
-      {/* Reusable Notes Detail Bottom Sheet */}
-      <NotesDetailBottomSheet
-        open={Boolean(selectedNoteMaterial)}
-        onClose={handleCloseNotesModal}
-        title={noteTitle}
-        subjectName={noteSubjectName}
-        createdAt={noteCreatedAt}
-        content={noteContent}
-        pdfUrl={notePdfUrl}
-        isLoading={isNotesLoading}
-        isError={isNotesError}
-        isQuizReady={isSelectedMaterialQuizReady}
-        onRetry={refetchNotes}
-        onTakeQuiz={handleNotesModalTakeQuiz}
-      />
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -1,6 +1,7 @@
+import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
 import * as WebBrowser from "expo-web-browser";
 import * as React from "react";
-import { Alert, Linking, Platform, Share } from "react-native";
+import { Linking, Platform, Share } from "react-native";
 
 export type DownloadSource = {
   url?: string | null;
@@ -50,13 +51,13 @@ export function useFileDownload() {
 
         const msg = "No PDF file link or notes content available for download.";
         setDownloadError(msg);
-        Alert.alert("Download Unavailable", msg);
+        showInfoToast("Download Unavailable", msg);
         return false;
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : "Unable to download or share file.";
         setDownloadError(msg);
-        Alert.alert("Download Error", msg);
+        showErrorToast("Download Error", msg);
         return false;
       } finally {
         setIsDownloading(false);

@@ -1,16 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Text } from '@/components/ui/text';
-import { dashboardApi } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { useCheckInById } from '@/hooks/queries/use-dashboard';
 import { Feather } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
 import { View } from 'react-native';
 
 function prettifyMood(value?: string) {
@@ -34,13 +32,7 @@ export function ViewFeedbackDialog({
   onOpenChange: (open: boolean) => void;
   checkInId: string | null;
 }) {
-  const { token } = useAuth();
-
-  const feedbackQuery = useQuery({
-    queryKey: ['dashboard', 'checkin-feedback', token, checkInId],
-    queryFn: async () => dashboardApi.getCheckInById(token as string, checkInId as string),
-    enabled: Boolean(open && token && checkInId),
-  });
+  const feedbackQuery = useCheckInById(open ? checkInId : null);
 
   const feedback = feedbackQuery.data;
   const aiFeedbacks = feedback?.aiFeedbacks ?? [];

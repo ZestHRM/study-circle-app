@@ -2,6 +2,7 @@ import { AppBottomSheet, AppBottomSheetScrollView } from '@/components/ui/app-bo
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { APP_COLORS } from '@/constants/colors';
 import {
@@ -10,7 +11,6 @@ import {
     type QuizAnswerGrading,
 } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { Feather } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import * as React from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -133,19 +133,19 @@ export function QuizResultsSheet({
       >
         {/* Attempts Selection Bar */}
         <View className="gap-2 pb-1">
-          <Text className="text-stone-500 dark:text-stone-400 text-xs font-semibold">
+          <Text variant="muted" className="font-semibold">
             Select Attempt:
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {attemptsQuery.isLoading ? (
               <View className="py-2 flex-row items-center gap-2">
                 <ActivityIndicator size="small" color={APP_COLORS.primary} />
-                <Text className="text-xs text-stone-500">Loading attempts...</Text>
+                <Text variant="muted">Loading attempts...</Text>
               </View>
             ) : null}
 
             {!attemptsQuery.isLoading && (attemptsQuery.data?.data ?? []).length === 0 ? (
-              <Text className="text-stone-400 text-xs italic">No attempts found.</Text>
+              <Text variant="caption" className="italic">No attempts found.</Text>
             ) : null}
 
             {(attemptsQuery.data?.data ?? []).map((attempt, index) => {
@@ -159,7 +159,7 @@ export function QuizResultsSheet({
                   onPress={() => setSelectedAttemptId(attempt.id)}
                   className="h-9 rounded-xl px-3.5"
                 >
-                  <Feather
+                  <Icon
                     name={attempt.completedAt ? 'check-circle' : 'clock'}
                     size={13}
                     color={isSelected ? '#ffffff' : '#78716c'}
@@ -176,7 +176,7 @@ export function QuizResultsSheet({
         {resultsQuery.isLoading ? (
           <View className="py-16 items-center justify-center gap-3">
             <ActivityIndicator size="large" color={APP_COLORS.primary} />
-            <Text className="text-sm font-semibold text-stone-600 dark:text-stone-400">
+            <Text variant="subhead">
               Loading Quiz Results...
             </Text>
           </View>
@@ -184,11 +184,11 @@ export function QuizResultsSheet({
 
         {resultsQuery.isError ? (
           <View className="py-12 items-center justify-center gap-3">
-            <Feather name="alert-circle" size={24} color={APP_COLORS.error} />
-            <Text className="text-sm font-bold text-stone-900 dark:text-stone-100">
+            <Icon name="alert-circle" size={24} color={APP_COLORS.error} />
+            <Text variant="h3">
               Failed to load results for this attempt
             </Text>
-            <Text className="text-xs text-stone-500">Please select a different attempt above.</Text>
+            <Text variant="muted">Please select a different attempt above.</Text>
           </View>
         ) : null}
 

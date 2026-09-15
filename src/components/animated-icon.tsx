@@ -1,16 +1,33 @@
 import { Image } from 'expo-image';
+import * as Speech from 'expo-speech';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
-const DURATION = 600;
+const DURATION = 800;
 
 export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
+  const hasSpokenRef = useRef(false);
+
+  const playWelcomeVoice = () => {
+    if (hasSpokenRef.current) return;
+    hasSpokenRef.current = true;
+    try {
+      Speech.stop();
+      Speech.speak("Welcome to StudyCircle!", {
+        language: "en",
+        pitch: 1.05,
+        rate: 0.92,
+      });
+    } catch {
+      // Ignore speech errors gracefully if unsupported
+    }
+  };
 
   if (!visible) return null;
 
@@ -33,7 +50,7 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  const image = <Image style={styles.image} source={require('@/assets/images/logo.png')} />;
 
   return animate ? (
     <Animated.View
@@ -51,6 +68,7 @@ export function AnimatedSplashOverlay() {
       onLayout={() => {
         SplashScreen.hideAsync().finally(() => {
           setAnimate(true);
+          playWelcomeVoice();
         });
       }}
       style={styles.splashOverlay}>
@@ -104,7 +122,7 @@ export function AnimatedIcon() {
 
       <Animated.View entering={keyframe.duration(DURATION)} style={styles.background} />
       <Animated.View style={styles.imageContainer} entering={logoKeyframe.duration(DURATION)}>
-        <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />
+        <Image style={styles.image} source={require('@/assets/images/logo.png')} />
       </Animated.View>
     </View>
   );
@@ -128,19 +146,19 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   image: {
-    width: 76,
-    height: 71,
+    width: 90,
+    height: 90,
   },
   background: {
     borderRadius: 40,
-    experimental_backgroundImage: `linear-gradient(180deg, #3C9FFE, #0274DF)`,
+    experimental_backgroundImage: `linear-gradient(180deg, #8B5CF6, #6721B6)`,
     width: 128,
     height: 128,
     position: 'absolute',
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,

@@ -1,6 +1,6 @@
+import { Icon } from '@/components/ui/icon';
 import { APP_COLORS } from '@/constants/colors';
 import { cn } from '@/lib/utils';
-import { Feather } from '@expo/vector-icons';
 import * as React from 'react';
 import {
   ActivityIndicator,
@@ -137,7 +137,7 @@ export const SubjectSelectDropdown = React.memo(
           {isLoading ? (
             <ActivityIndicator size="small" color={APP_COLORS.primary} />
           ) : (
-            <Feather name="chevron-down" size={18} color={APP_COLORS.stone500} />
+            <Icon name="chevron-down" size={18} color={APP_COLORS.stone500} />
           )}
         </Pressable>
 
@@ -162,7 +162,7 @@ export const SubjectSelectDropdown = React.memo(
                       onPress={handleClose}
                       className="p-1 rounded-full bg-stone-100 dark:bg-stone-800 active:opacity-70"
                     >
-                      <Feather name="x" size={16} color={APP_COLORS.stone500} />
+                      <Icon name="x" size={16} color={APP_COLORS.stone500} />
                     </Pressable>
                   </View>
 
@@ -187,14 +187,14 @@ export const SubjectSelectDropdown = React.memo(
                             onPress={() => handleSelectOption(opt.value)}
                             className={`flex-row items-center justify-between p-3.5 rounded-2xl border ${
                               isSelected
-                                ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-500/40'
+                                ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500/40'
                                 : 'bg-stone-50/60 dark:bg-stone-800/40 border-stone-100 dark:border-stone-800 active:bg-stone-100 dark:active:bg-stone-800'
                             }`}
                           >
                             <Text
                               className={`text-sm flex-1 pr-2 ${
                                 isSelected
-                                  ? 'font-bold text-purple-700 dark:text-purple-300'
+                                  ? 'font-bold text-blue-700 dark:text-blue-300'
                                   : 'font-medium text-stone-800 dark:text-stone-200'
                               }`}
                               numberOfLines={1}
@@ -202,7 +202,7 @@ export const SubjectSelectDropdown = React.memo(
                               {opt.label}
                             </Text>
                             {isSelected ? (
-                              <Feather
+                              <Icon
                                 name="check-circle"
                                 size={18}
                                 color={APP_COLORS.primary}

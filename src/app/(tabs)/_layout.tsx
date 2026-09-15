@@ -15,7 +15,7 @@ export default function TabLayout() {
   }
 
   if (!token) {
-    return <Redirect href="/sign-in" />;
+    return <Redirect href="/welcome" />;
   }
 
   return <AppTabs />;

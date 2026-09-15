@@ -1,21 +1,31 @@
-import { DailyCheckinDialog } from "@/components/home/daily-checkin-dialog";
-import { DailyCheckinWidget } from "@/components/home/daily-checkin-widget";
-import { HomeGreeting } from "@/components/home/home-greeting";
-import { StatsCardsWidget } from "@/components/home/stats-cards-widget";
-import { StudyStreakWidget } from "@/components/home/study-streak-widget";
-import { TasksChartWidget } from "@/components/home/tasks-chart-widget";
-import { ViewFeedbackDialog } from "@/components/home/view-feedback-dialog";
+import {
+  DailyCheckinWidget,
+  HomeGreeting,
+  NextActionWidget,
+  RecentMaterialsWidget,
+  StatsCardsWidget,
+  ViewFeedbackDialog,
+  YourSubjectsCarouselWidget,
+} from "@/components/home";
+import { CreateFirstSubjectOnboarding } from "@/components/onboarding";
+import { AppScreen } from "@/components/ui/app-screen";
+import { Spinner } from "@/components/ui/spinner";
+import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
 import { useAuth } from "@/lib/auth";
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import * as React from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { RefreshControl, View } from "react-native";
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = React.useState(false);
+  const {
+    subjects,
+    isLoading: isLoadingSubjects,
+    refetch: refetchSubjects,
+  } = useSubjectsQuery();
+
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = React.useState(false);
   const [selectedFeedbackCheckInId, setSelectedFeedbackCheckInId] =
     React.useState<string | null>(null);
@@ -24,76 +34,115 @@ export default function HomeScreen() {
   useFocusEffect(
     React.useCallback(() => {
       return () => {
-        setIsCheckInDialogOpen(false);
         setIsFeedbackDialogOpen(false);
         setSelectedFeedbackCheckInId(null);
       };
-    }, [])
+    }, []),
   );
 
   const activeDashboardRequests = useIsFetching({ queryKey: ["dashboard"] });
   const isRefreshing = activeDashboardRequests > 0;
 
-  function onRefresh() {
-    void queryClient.refetchQueries({
-      queryKey: ["dashboard"],
-      type: "active",
-    });
-  }
+  const onRefresh = React.useCallback(() => {
+    void Promise.all([
+      queryClient.refetchQueries({
+        queryKey: ["dashboard"],
+        type: "active",
+      }),
+      refetchSubjects(),
+    ]);
+  }, [queryClient, refetchSubjects]);
 
-  function openDailyCheckIn() {
-    setIsCheckInDialogOpen(true);
-  }
+  const openDailyCheckIn = React.useCallback(() => {
+    router.push("/daily-checkin");
+  }, []);
 
-  function openFeedback(checkInId: string) {
+  const handleCreateSubject = React.useCallback(() => {
+    router.push("/create-subject");
+  }, []);
+
+  const openFeedback = React.useCallback((checkInId: string) => {
     setSelectedFeedbackCheckInId(checkInId);
     setIsFeedbackDialogOpen(true);
-  }
+  }, []);
 
-  function onFeedbackOpenChange(open: boolean) {
+  const onFeedbackOpenChange = React.useCallback((open: boolean) => {
     setIsFeedbackDialogOpen(open);
     if (!open) {
       setSelectedFeedbackCheckInId(null);
     }
+  }, []);
+
+  const hasNoSubjects = !isLoadingSubjects && subjects.length === 0;
+
+  const refreshControlElement = React.useMemo(
+    () => <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />,
+    [isRefreshing, onRefresh],
+  );
+
+  if (isLoadingSubjects && subjects.length === 0) {
+    return (
+      <AppScreen scrollable={false}>
+        <View className="flex-1 justify-center items-center py-12">
+          <Spinner
+            variant="quiz"
+            size="large"
+            message="Checking your study profile..."
+          />
+        </View>
+      </AppScreen>
+    );
+  }
+
+  if (hasNoSubjects) {
+    return (
+      <AppScreen scrollable={false}>
+        <CreateFirstSubjectOnboarding
+          onCreateSubject={handleCreateSubject}
+          onCheckInSentiment={openDailyCheckIn}
+        />
+      </AppScreen>
+    );
   }
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={["top"]}>
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 8,
-          paddingBottom: 24,
-        }}
-      >
-        <View className="mx-auto w-full max-w-md gap-4 pb-8">
-          <HomeGreeting name={user?.name} />
+    <AppScreen
+      scrollable={true}
+      refreshControl={refreshControlElement}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: 4,
+        paddingBottom: 40,
+      }}
+    >
+      <View className="mx-auto w-full max-w-md gap-4 pb-8">
+        {/* Top Logo, Notification Bell, Tier Badge & Greeting */}
+        <HomeGreeting name={user?.name} />
 
-          <DailyCheckinWidget
-            onCheckIn={openDailyCheckIn}
-            onViewFeedback={openFeedback}
-          />
+        {/* Today's Check-in Card (Yellow banner with Check in -> button) */}
+        <DailyCheckinWidget
+          onCheckIn={openDailyCheckIn}
+          onViewFeedback={openFeedback}
+        />
 
-          <StatsCardsWidget />
+        {/* This week Summary Card (6h 20m studied | 12 tasks completed | 4 day streak) */}
+        <StatsCardsWidget />
 
-          <TasksChartWidget onCheckIn={openDailyCheckIn} />
+        {/* Next best action Card (Review DBMS normalization) */}
+        <NextActionWidget />
 
-          <StudyStreakWidget />
-        </View>
-      </ScrollView>
+        {/* Your subjects Horizontal Carousel (72%, 48%, 31% Readiness Gauges) */}
+        <YourSubjectsCarouselWidget />
 
-      <DailyCheckinDialog
-        open={isCheckInDialogOpen}
-        onOpenChange={setIsCheckInDialogOpen}
-      />
+        {/* Recent in Computer Science List (DBMS Material + PYQs) */}
+        <RecentMaterialsWidget />
+      </View>
+
       <ViewFeedbackDialog
         open={isFeedbackDialogOpen}
         onOpenChange={onFeedbackOpenChange}
         checkInId={selectedFeedbackCheckInId}
       />
-    </SafeAreaView>
+    </AppScreen>
   );
 }

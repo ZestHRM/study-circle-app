@@ -1,20 +1,23 @@
+import { WatermarkBackground } from "@/components/ui/watermark-background";
 import { useAuth } from "@/lib/auth";
 import { Redirect } from "expo-router";
-import { ActivityIndicator, ScrollView, View } from "react-native";
+import * as React from "react";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export function AuthScreen({
-  children,
-  centerContent = false,
-}: {
-  children: React.ReactNode;
-  centerContent?: boolean;
-}) {
+export function AuthScreen({ children }: { children: React.ReactNode }) {
   const { isLoading, token } = useAuth();
+
   if (isLoading) {
     return (
-      <SafeAreaView className="bg-background flex-1 items-center justify-center">
-        <ActivityIndicator />
+      <SafeAreaView className="bg-[#FAFAF9] dark:bg-stone-950 flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#4F46E5" />
       </SafeAreaView>
     );
   }
@@ -23,17 +26,38 @@ export function AuthScreen({
     return <Redirect href="/" />;
   }
 
-  return (
+  const scrollContent = (
     <ScrollView
-      keyboardShouldPersistTaps="handled"
       contentContainerStyle={{
         flexGrow: 1,
-        justifyContent: centerContent ? "center" : "flex-start",
-        paddingHorizontal: 16,
-        paddingVertical: 32,
+        paddingHorizontal: 24,
+        paddingTop: 16,
+        paddingBottom: 32,
       }}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      style={{ flex: 1 }}
     >
-      <View className="mx-auto w-full max-w-md">{children}</View>
+      <View style={{ flex: 1 }} className="gap-6 max-w-lg w-full mx-auto">
+        {children}
+      </View>
     </ScrollView>
+  );
+
+  return (
+    <SafeAreaView
+      style={{ flex: 1 }}
+      className="flex-1 bg-[#FAFAF9] dark:bg-stone-950 relative overflow-hidden"
+    >
+      <WatermarkBackground />
+
+      {Platform.OS === "ios" ? (
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+          {scrollContent}
+        </KeyboardAvoidingView>
+      ) : (
+        scrollContent
+      )}
+    </SafeAreaView>
   );
 }

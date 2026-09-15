@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { Text } from "@/components/ui/text";
 import * as React from "react";
 import { View } from "react-native";
@@ -34,12 +35,7 @@ export const QuizProgressHeader = React.memo(function QuizProgressHeader({
         )}
       </View>
 
-      <View className="bg-stone-200 dark:bg-stone-800 h-1.5 w-full rounded-full overflow-hidden">
-        <View
-          className="bg-purple-600 h-1.5 rounded-full"
-          style={{ width: `${progressPercent}%` }}
-        />
-      </View>
+      <ProgressBar value={progressPercent} variant="quiz" />
     </View>
   );
 });

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "248474031720",
+    "project_id": "studycircleai-mobile-app",
+    "storage_bucket": "studycircleai-mobile-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:248474031720:android:d99cd012ef2c992e73cddd",
+        "android_client_info": {
+          "package_name": "com.studycircleai.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCApyPIJAudU_xEGap6BnouEAGKCiPxWgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:248474031720:android:f2b7cb773463d0cf73cddd",
+        "android_client_info": {
+          "package_name": "com.youse.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCApyPIJAudU_xEGap6BnouEAGKCiPxWgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

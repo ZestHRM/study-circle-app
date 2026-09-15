@@ -1,4 +1,5 @@
 import { useAuth } from "@/lib/auth";
+import { showSuccessToast } from "@/lib/utils/toast";
 import { notesApi, type StudyMaterial } from "@/services";
 import {
   keepPreviousData,
@@ -8,7 +9,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import * as React from "react";
-import { Alert } from "react-native";
 
 export function useNotesQuery(params: {
   page: number;
@@ -140,7 +140,7 @@ export function useCreateNote() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["notes"] });
-      Alert.alert("Success", "Note created successfully.");
+      showSuccessToast("Success", "Note created successfully.");
     },
   });
 }
@@ -162,7 +162,7 @@ export function useUpdateNote() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["notes"] });
-      Alert.alert("Success", "Note updated successfully.");
+      showSuccessToast("Success", "Note updated successfully.");
     },
   });
 }
@@ -208,32 +208,138 @@ export function useStudyMaterialNotesQuery(
         (materialInput as any).noteId ||
         (Array.isArray((materialInput as any).notes)
           ? (materialInput as any).notes[0]?.id
-          : (materialInput as any).notes?.id) ||
-        (Array.isArray((materialInput as any).files)
-          ? (materialInput as any).files[0]?.id
-          : null)
+          : (materialInput as any).notes?.id)
       : null;
 
-  const targetNotesId = explicitNotesId || materialId;
+  const fileContent =
+    typeof materialInput === "object" && materialInput !== null
+      ? (materialInput as any).files?.[0]?.content
+      : null;
 
   return useQuery({
-    queryKey: ["study-notes-detail", token, targetNotesId],
+    queryKey: [
+      "study-notes-detail",
+      token,
+      explicitNotesId,
+      materialId,
+      Boolean(fileContent),
+    ],
     queryFn: async () => {
-      if (!targetNotesId) return null;
-      const notesRes = await notesApi.getById(token as string, targetNotesId);
-      if (notesRes && notesRes.data) {
+      if (!token) return null;
+
+      const objInput = typeof materialInput === "object" && materialInput !== null ? (materialInput as any) : null;
+
+      // Strategy 0: Direct embedded notes content on material object
+      const embeddedContent =
+        objInput?.notes?.[0]?.content ||
+        (Array.isArray(objInput?.notes) ? objInput?.notes[0]?.content : null) ||
+        objInput?.processedNotes ||
+        objInput?.notesContent;
+
+      if (embeddedContent && typeof embeddedContent === "string" && embeddedContent.trim().length > 0) {
         return {
-          content: notesRes.data.content,
-          title: notesRes.data.studyMaterial?.title || "Notes Detail",
-          subjectName:
-            notesRes.data.subject?.name ||
-            notesRes.data.studyMaterial?.subject?.name,
-          createdAt: notesRes.data.createdAt,
+          content: embeddedContent,
+          title: objInput?.title || "Notes Detail",
+          subjectName: objInput?.subject?.name || "General",
+          createdAt: objInput?.createdAt,
         };
       }
+
+      // Strategy 1: Try explicit notes ID if available
+      if (explicitNotesId) {
+        try {
+          const notesRes = await notesApi.getById(token, explicitNotesId);
+          const rawNote = notesRes?.data || notesRes;
+          if (rawNote?.content) {
+            return {
+              content: rawNote.content,
+              title: rawNote.studyMaterial?.title || objInput?.title || "Notes Detail",
+              subjectName:
+                rawNote.subject?.name ||
+                rawNote.studyMaterial?.subject?.name ||
+                objInput?.subject?.name,
+              createdAt: rawNote.createdAt,
+            };
+          }
+        } catch {
+          // Fall through to strategy 2
+        }
+      }
+
+      // Strategy 2: Search notes list by materialId
+      if (materialId) {
+        try {
+          const listRes = await notesApi.list(token, { page: 1, limit: 100 });
+          const rawList = listRes?.data || (Array.isArray(listRes) ? listRes : []);
+          const found = rawList.find(
+            (n: any) => n.studyMaterialId === materialId || n.id === materialId,
+          );
+          if (found?.id) {
+            if (found.content && found.content.trim().length > 0) {
+              return {
+                content: found.content,
+                title: found.studyMaterial?.title || objInput?.title || "Notes Detail",
+                subjectName:
+                  found.subject?.name ||
+                  (found.studyMaterial as any)?.subject?.name ||
+                  objInput?.subject?.name,
+                createdAt: found.createdAt,
+              };
+            }
+
+            const detailRes = await notesApi.getById(token, found.id);
+            const rawDetail = detailRes?.data || detailRes;
+            if (rawDetail?.content) {
+              return {
+                content: rawDetail.content,
+                title: rawDetail.studyMaterial?.title || objInput?.title || "Notes Detail",
+                subjectName:
+                  rawDetail.subject?.name ||
+                  rawDetail.studyMaterial?.subject?.name ||
+                  objInput?.subject?.name,
+                createdAt: rawDetail.createdAt,
+              };
+            }
+          }
+        } catch {
+          // Fall through to strategy 3
+        }
+
+        // Strategy 3: Try materialId directly as notesId
+        try {
+          const directRes = await notesApi.getById(token, materialId);
+          const rawDirect = directRes?.data || directRes;
+          if (rawDirect?.content) {
+            return {
+              content: rawDirect.content,
+              title: rawDirect.studyMaterial?.title || objInput?.title || "Notes Detail",
+              subjectName:
+                rawDirect.subject?.name ||
+                rawDirect.studyMaterial?.subject?.name ||
+                objInput?.subject?.name,
+              createdAt: rawDirect.createdAt,
+            };
+          }
+        } catch {
+          // Fall through to strategy 4
+        }
+      }
+
+      // Strategy 4: Fallback to extracted file content if available
+      if (fileContent && fileContent.trim()) {
+        return {
+          content: fileContent,
+          title: objInput?.title || "Notes Detail",
+          subjectName: objInput?.subject?.name || "General",
+          createdAt: objInput?.createdAt,
+        };
+      }
+
       return null;
     },
-    enabled: Boolean(token && targetNotesId),
-    staleTime: 0,
+    enabled: Boolean(
+      token && (explicitNotesId || materialId || fileContent),
+    ),
+    staleTime: 1000 * 60 * 5,
   });
 }

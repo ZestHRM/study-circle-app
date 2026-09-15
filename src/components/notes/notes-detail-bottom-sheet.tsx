@@ -1,5 +1,4 @@
 import { Button, ErrorState, Icon, Spinner, Text } from "@/components/ui";
-import { APP_COLORS } from "@/constants/colors";
 import { useFileDownload } from "@/hooks";
 import * as React from "react";
 import {
@@ -139,7 +138,6 @@ export const NotesDetailBottomSheet = React.memo(
               style={{
                 height: "100%",
                 width: "100%",
-                backgroundColor: APP_COLORS.white,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
                 overflow: "hidden",
@@ -170,7 +168,7 @@ export const NotesDetailBottomSheet = React.memo(
                   className="w-9 h-9 rounded-full bg-muted items-center justify-center active:opacity-75 ml-2"
                   hitSlop={8}
                 >
-                  <Icon name="x" size={18} color={APP_COLORS.stone600} />
+                  <Icon name="x" size={18} className="text-muted-foreground" />
                 </Pressable>
               </View>
 

@@ -128,7 +128,7 @@ export function WelcomeScreen() {
             <Button
               variant="quiz"
               size="lg"
-              title="Create account"
+              title="Get Started"
               icon="arrow-right"
               iconPosition="right"
               onPress={() => router.push("/(auth)/sign-up")}
@@ -140,7 +140,8 @@ export function WelcomeScreen() {
               size="lg"
               title="Log in"
               onPress={() => router.push("/(auth)/sign-in")}
-              className="w-full"
+              className="w-full dark:bg-white dark:border-white"
+              textClassName="dark:text-stone-950"
             />
 
             <Text

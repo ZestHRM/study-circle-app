@@ -3,12 +3,13 @@ import "../global.css";
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { ConfirmDialogProvider } from "@/components/confirm-dialog-provider";
 import { AuthProvider } from "@/lib/auth";
+import { ThemePreferenceProvider, useThemePreference } from "@/lib/theme-preference";
 import { PortalHost } from "@rn-primitives/portal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
-import { StatusBar, useColorScheme, View } from "react-native";
+import { useState } from "react";
+import { StatusBar, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -74,7 +75,6 @@ const WhiteDefaultTheme = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -87,36 +87,24 @@ export default function RootLayout() {
       }),
   );
 
-  useEffect(() => {
-    // Keep utility-based theming and semantic CSS variables in sync with RN appearance.
-    Uniwind.setTheme(
-      colorScheme === "dark"
-        ? "dark"
-        : colorScheme === "light"
-          ? "light"
-          : "system",
-    );
-  }, [colorScheme]);
-
   // Initialize push notification listeners and channels
   usePushNotifications(true);
 
-  const activeTheme = colorScheme === "dark" ? DarkTheme : WhiteDefaultTheme;
-
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#ffffff" }}>
-      <SafeAreaProvider style={{ flex: 1, backgroundColor: "#ffffff" }}>
-        <ThemeProvider value={activeTheme}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider style={{ flex: 1 }}>
+        <ThemePreferenceProvider>
+          <ThemeAwareRoot>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <ConfirmDialogProvider>
                 <AnimatedSplashOverlay />
-                <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
-                <View style={{ flex: 1, backgroundColor: "#ffffff" }} className="bg-white dark:bg-stone-900 flex-1">
+                <StatusBar translucent={false} />
+                <View style={{ flex: 1 }} className="bg-background flex-1">
                   <Stack
                     screenOptions={{
                       headerShown: false,
-                      contentStyle: { backgroundColor: "#ffffff" },
+                      contentStyle: { backgroundColor: "transparent" },
                     }}
                   >
                     <Stack.Screen name="(tabs)" />
@@ -136,8 +124,19 @@ export default function RootLayout() {
               </ConfirmDialogProvider>
             </AuthProvider>
           </QueryClientProvider>
-        </ThemeProvider>
+          </ThemeAwareRoot>
+        </ThemePreferenceProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function ThemeAwareRoot({ children }: { children: React.ReactNode }) {
+  const { isDark } = useThemePreference();
+  return (
+    <ThemeProvider value={isDark ? DarkTheme : WhiteDefaultTheme}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0c0a09" : "#ffffff"} />
+      {children}
+    </ThemeProvider>
   );
 }

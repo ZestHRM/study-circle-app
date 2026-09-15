@@ -27,7 +27,7 @@ export const AppLogo = React.memo(function AppLogo({
       style={{ width: size, height: size }}
     >
       <Image
-        source={source ?? require("../../../assets/images/icon.png")}
+        source={source ?? require("../../../assets/images/icon-transparent.png")}
         style={[{ width: size, height: size }, style]}
         resizeMode="contain"
       />

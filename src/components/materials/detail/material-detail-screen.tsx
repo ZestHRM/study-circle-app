@@ -13,6 +13,7 @@ import type { Quiz, QuizAttempt } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { StatusBar, View } from "react-native";
+import { useThemePreference } from "@/lib/theme-preference";
 import { isFailed, isNotesReady, isQuizReady, isQuizFailed } from "@/lib/utils/material-status";
 import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
 import { SwipeableTabView } from "@/components/ui/swipeable-tab-view";
@@ -30,6 +31,7 @@ export function MaterialDetailScreen({
   materialId,
 }: MaterialDetailScreenProps) {
   const router = useRouter();
+  const { isDark } = useThemePreference();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState<TabType>("notes");
   const [showNotesSheet, setShowNotesSheet] = React.useState(false);
@@ -155,7 +157,7 @@ export function MaterialDetailScreen({
   if (isMaterialLoading) {
     return (
       <AppScreen edges={["top"]} header={loadingHeaderElement} scrollable={false}>
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
         <View
           className="flex-1 items-center justify-center"
           style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
@@ -173,7 +175,7 @@ export function MaterialDetailScreen({
 
   return (
     <AppScreen edges={["top"]} header={headerElement} scrollable={false}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       {/* Swipeable & Clickable Tab Navigation */}
       <SwipeableTabView<TabType>

@@ -283,7 +283,7 @@ export function StartQuizSheet({
       onRequestClose={() => void onAttemptExit()}
     >
       <SafeAreaView
-        style={{ flex: 1, backgroundColor: "#ffffff" }}
+        style={{ flex: 1 }}
         className="flex-1 bg-white dark:bg-stone-950"
         edges={["top", "bottom"]}
       >
@@ -294,7 +294,7 @@ export function StartQuizSheet({
             className="w-10 h-10 rounded-full items-center justify-center bg-stone-100 dark:bg-stone-800 active:opacity-70"
             hitSlop={8}
           >
-            <Icon name="chevron-left" size={24} color={APP_COLORS.stone800} />
+            <Icon name="chevron-left" size={24} className="text-foreground" />
           </Pressable>
 
           <AppHeaderBrand logoSize={34} />

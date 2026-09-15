@@ -11,15 +11,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth";
+import { type ThemePreference, useThemePreference } from "@/lib/theme-preference";
 import { showSuccessToast } from "@/lib/utils/toast";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as React from "react";
-import { Alert, BackHandler, Platform, View } from "react-native";
+import { Alert, BackHandler, Platform, Pressable, View } from "react-native";
+import { Icon } from "@/components/ui/icon";
 
 export default function ProfileScreen() {
   const { user, token, signOut } = useAuth();
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
+  const { preference, setPreference } = useThemePreference();
 
   React.useEffect(() => {
     if (!token) {
@@ -207,6 +210,8 @@ export default function ProfileScreen() {
         {/* Account & App Options */}
         <ProfileSecurityCard />
 
+        <ThemeSelector preference={preference} onChange={setPreference} />
+
         {/* Sign Out Card */}
         <Button
           variant="destructive"
@@ -227,5 +232,38 @@ export default function ProfileScreen() {
         </View>
       </View>
     </AppScreen>
+  );
+}
+
+function ThemeSelector({ preference, onChange }: { preference: ThemePreference; onChange: (value: ThemePreference) => Promise<void> }) {
+  const options: { value: ThemePreference; label: string; icon: string }[] = [
+    { value: "system", label: "System", icon: "smartphone" },
+    { value: "light", label: "Light", icon: "sun" },
+    { value: "dark", label: "Dark", icon: "moon" },
+  ];
+
+  return (
+    <Card className="rounded-3xl p-4 gap-3">
+      <View className="flex-row items-center gap-2.5 border-b border-border pb-3">
+        <View className="w-8 h-8 rounded-xl bg-blue-500/15 items-center justify-center">
+          <Icon name="palette" size="sm" color="quiz" />
+        </View>
+        <View className="flex-1">
+          <Text variant="h3">Appearance</Text>
+          <Text variant="caption">Choose how StudyCircle looks</Text>
+        </View>
+      </View>
+      <View className="flex-row gap-2">
+        {options.map((option) => {
+          const selected = preference === option.value;
+          return (
+            <Pressable key={option.value} onPress={() => void onChange(option.value)} className={`flex-1 rounded-2xl border py-3 items-center gap-1.5 active:opacity-75 ${selected ? "bg-primary border-primary" : "bg-card border-border"}`}>
+              <Icon name={option.icon} size="sm" color={selected ? "white" : "muted"} />
+              <Text className={selected ? "text-white text-xs font-bold" : "text-foreground text-xs font-bold"}>{option.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </Card>
   );
 }

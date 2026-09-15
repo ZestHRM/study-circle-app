@@ -12,6 +12,7 @@ import {
 } from "@/hooks";
 import { useRefreshControl } from "@/hooks/use-refresh-control";
 import { formatRelativeTime } from "@/lib/utils/formatters";
+import { useThemePreference } from "@/lib/theme-preference";
 import { NotificationItem, NotificationType } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
@@ -27,6 +28,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { isDark } = useThemePreference();
   const [activeTab, setActiveTab] = React.useState<"all" | "unread">("all");
   const [page, setPage] = React.useState<number>(1);
   const limit = 10;
@@ -185,7 +187,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       {/* Reusable Header */}
       <CommonHeader

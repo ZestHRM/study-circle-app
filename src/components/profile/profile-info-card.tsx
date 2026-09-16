@@ -23,7 +23,7 @@ export const ProfileInfoCard = React.memo(function ProfileInfoCard({
   title,
   headerIcon,
   headerIconColor = "primary",
-  headerIconBgClass = "bg-purple-500/15",
+  headerIconBgClass = "bg-primary/10 dark:bg-primary/20",
   rows,
 }: ProfileInfoCardProps) {
   return (
@@ -31,7 +31,9 @@ export const ProfileInfoCard = React.memo(function ProfileInfoCard({
       <CardContent className="p-0 gap-4">
         {/* Header Title Row */}
         <View className="flex-row items-center gap-2.5 border-b border-border pb-3">
-          <View className={`w-8 h-8 rounded-xl items-center justify-center ${headerIconBgClass}`}>
+          <View
+            className={`w-8 h-8 rounded-xl items-center justify-center ${headerIconBgClass}`}
+          >
             <Icon name={headerIcon} size="sm" color={headerIconColor} />
           </View>
           <Text variant="h3">{title}</Text>

@@ -1,4 +1,5 @@
 import {
+  ChangePasswordModal,
   ProfileHero,
   ProfileInfoCard,
   type ProfileInfoRow,
@@ -9,20 +10,25 @@ import { AppLogo } from "@/components/ui/app-logo";
 import { AppScreen } from "@/components/ui/app-screen";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth";
-import { type ThemePreference, useThemePreference } from "@/lib/theme-preference";
+import {
+  type ThemePreference,
+  useThemePreference,
+} from "@/lib/theme-preference";
 import { showSuccessToast } from "@/lib/utils/toast";
+import { getFormattedSubscriptionTier } from "@/services";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as React from "react";
 import { Alert, BackHandler, Platform, Pressable, View } from "react-native";
-import { Icon } from "@/components/ui/icon";
-import { getFormattedSubscriptionTier } from "@/services";
 
 export default function ProfileScreen() {
   const { user, token, signOut } = useAuth();
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] =
+    React.useState(false);
   const { preference, setPreference } = useThemePreference();
 
   React.useEffect(() => {
@@ -67,7 +73,9 @@ export default function ProfileScreen() {
     if (Platform.OS === "web") {
       const confirmed =
         typeof window !== "undefined"
-          ? window.confirm("Are you sure you want to log out of your Study Circle account?")
+          ? window.confirm(
+              "Are you sure you want to log out of your Study Circle account?",
+            )
           : true;
       if (confirmed) {
         void onSignOut();
@@ -151,7 +159,11 @@ export default function ProfileScreen() {
   return (
     <AppScreen
       scrollable={true}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 48 }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 48,
+      }}
     >
       <View className="mx-auto w-full max-w-md gap-4">
         {/* Profile Hero Header */}
@@ -209,7 +221,9 @@ export default function ProfileScreen() {
         </Card>
 
         {/* Account & App Options */}
-        <ProfileSecurityCard />
+        <ProfileSecurityCard
+          onChangePasswordPress={() => router.push("/change-password")}
+        />
 
         <ThemeSelector preference={preference} onChange={setPreference} />
 
@@ -236,7 +250,13 @@ export default function ProfileScreen() {
   );
 }
 
-function ThemeSelector({ preference, onChange }: { preference: ThemePreference; onChange: (value: ThemePreference) => Promise<void> }) {
+function ThemeSelector({
+  preference,
+  onChange,
+}: {
+  preference: ThemePreference;
+  onChange: (value: ThemePreference) => Promise<void>;
+}) {
   const options: { value: ThemePreference; label: string; icon: string }[] = [
     { value: "system", label: "System", icon: "smartphone" },
     { value: "light", label: "Light", icon: "sun" },
@@ -258,9 +278,25 @@ function ThemeSelector({ preference, onChange }: { preference: ThemePreference; 
         {options.map((option) => {
           const selected = preference === option.value;
           return (
-            <Pressable key={option.value} onPress={() => void onChange(option.value)} className={`flex-1 rounded-2xl border py-3 items-center gap-1.5 active:opacity-75 ${selected ? "bg-primary border-primary" : "bg-card border-border"}`}>
-              <Icon name={option.icon} size="sm" color={selected ? "white" : "muted"} />
-              <Text className={selected ? "text-white text-xs font-bold" : "text-foreground text-xs font-bold"}>{option.label}</Text>
+            <Pressable
+              key={option.value}
+              onPress={() => void onChange(option.value)}
+              className={`flex-1 rounded-2xl border py-3 items-center gap-1.5 active:opacity-75 ${selected ? "bg-primary border-primary" : "bg-card border-border"}`}
+            >
+              <Icon
+                name={option.icon}
+                size="sm"
+                color={selected ? "white" : "muted"}
+              />
+              <Text
+                className={
+                  selected
+                    ? "text-white text-xs font-bold"
+                    : "text-foreground text-xs font-bold"
+                }
+              >
+                {option.label}
+              </Text>
             </Pressable>
           );
         })}

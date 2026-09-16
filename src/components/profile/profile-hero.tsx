@@ -6,7 +6,12 @@ import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { useFilePicker } from "@/hooks/use-file-picker";
 import { useAuth } from "@/lib/auth";
-import { getFormattedSubscriptionTier, profileApi, type User } from "@/services";
+import {
+  getFormattedSubscriptionTier,
+  profileApi,
+  type User,
+} from "@/services";
+import { useThemePreference } from "@/lib/theme-preference";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { Image, Pressable, View } from "react-native";
@@ -24,6 +29,7 @@ export const ProfileHero = React.memo(function ProfileHero({
 }: ProfileHeroProps) {
   const router = useRouter();
   const { token } = useAuth();
+  const { isDark } = useThemePreference();
   const [copiedReferral, setCopiedReferral] = React.useState(false);
 
   const handleBackPress = React.useCallback(() => {
@@ -99,7 +105,7 @@ export const ProfileHero = React.memo(function ProfileHero({
           icon="arrow-left"
           onPress={handleBackPress}
           className="w-10 h-10 rounded-full bg-muted items-center justify-center p-0 active:opacity-80"
-          iconColor={APP_COLORS.stone800}
+          iconColor={isDark ? "#f5f5f4" : APP_COLORS.stone800}
         />
         <Text
           variant="h3"

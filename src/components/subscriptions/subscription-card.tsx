@@ -50,7 +50,7 @@ export const SubscriptionCard = React.memo(function SubscriptionCard({
           ? "border-2 border-purple-500/80 bg-purple-50/40 dark:bg-purple-950/20 shadow-md"
           : isPlatinum
           ? "border-2 border-amber-500/80 bg-amber-50/30 dark:bg-amber-950/20 shadow-md"
-          : "border border-stone-200 dark:border-stone-800"
+          : "border border-border"
       } ${className}`}
     >
       {/* Header Row: Title & Badge */}
@@ -63,7 +63,7 @@ export const SubscriptionCard = React.memo(function SubscriptionCard({
                 : isGold
                 ? "bg-purple-100 dark:bg-purple-900/60"
                 : isFree
-                ? "bg-stone-100 dark:bg-stone-800"
+                ? "bg-muted"
                 : "bg-blue-100 dark:bg-blue-950/60"
             }`}
           >
@@ -111,8 +111,8 @@ export const SubscriptionCard = React.memo(function SubscriptionCard({
       </View>
 
       {/* Price Display */}
-      <View className="flex-row items-baseline gap-1 py-1 border-y border-stone-100 dark:border-stone-800/80">
-        <Text variant="h1" className="text-3xl font-black text-stone-900 dark:text-stone-100">
+      <View className="flex-row items-baseline gap-1 py-1 border-y border-border">
+        <Text variant="h1" className="text-3xl font-black text-foreground">
           {priceAmount === 0 ? "Free" : `${currencySymbol}${priceAmount}`}
         </Text>
         {priceAmount > 0 ? (
@@ -148,10 +148,10 @@ export const SubscriptionCard = React.memo(function SubscriptionCard({
               <Text
                 className={`text-xs flex-1 ${
                   isNotIncluded
-                    ? "text-stone-400 line-through"
+                    ? "text-muted-foreground line-through opacity-60"
                     : isHighlight
-                    ? "font-extrabold text-stone-900 dark:text-stone-100"
-                    : "font-medium text-stone-700 dark:text-stone-300"
+                    ? "font-extrabold text-foreground"
+                    : "font-medium text-foreground"
                 }`}
               >
                 {feat}

@@ -21,10 +21,41 @@ export type User = {
   country?: string | null;
   zipcode?: string | null;
   subscriptionTier?: string | null;
+  subscription?: {
+    pricingId?: string | null;
+    tier?: string | null;
+    endDate?: string | null;
+  } | null;
+  picture?: string | null;
   referralCode?: string | null;
   avatarUrl?: string | null;
   avatar?: string | null;
+  role?: string | null;
+  status?: string | null;
+  isEmailVerified?: boolean;
+  isOnboarded?: boolean;
 };
+
+export function getUserSubscriptionTier(user?: User | null): string {
+  if (!user) return "FREE";
+  const rawTier =
+    user.subscriptionTier ||
+    user.subscription?.tier ||
+    (user as any).tier ||
+    (user as any).plan ||
+    "FREE";
+  return String(rawTier).toUpperCase();
+}
+
+export function getFormattedSubscriptionTier(user?: User | null): string {
+  const tier = getUserSubscriptionTier(user);
+  if (tier.includes("PLATINUM")) return "Platinum";
+  if (tier.includes("GOLD")) return "Gold";
+  if (tier.includes("SILVER")) return "Silver";
+  if (tier.includes("PRO")) return "PRO Member";
+  if (tier === "FREE") return "Free Plan";
+  return tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
+}
 
 export type LoginPayload = {
   email: string;
@@ -139,7 +170,7 @@ export const RestClient = async <T = unknown>(
   url: string,
   method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE" = "GET",
   paramsOrData: any = {},
-  options: RestClientOptions = {}
+  options: RestClientOptions = {},
 ): Promise<T> => {
   const token = options.token ?? (await getToken());
   const fullBase = (options.baseURL ?? API_BASE_URL).replace(/\/$/, "");
@@ -149,11 +180,21 @@ export const RestClient = async <T = unknown>(
     typeof FormData !== "undefined" && paramsOrData instanceof FormData;
 
   if (isFormData) {
-    return uploadFormData<T>(cleanUrl, paramsOrData as FormData, token, method as any);
+    return uploadFormData<T>(
+      cleanUrl,
+      paramsOrData as FormData,
+      token,
+      method as any,
+    );
   }
 
   let queryStr = "";
-  if (method === "GET" && paramsOrData && typeof paramsOrData === "object" && Object.keys(paramsOrData).length > 0) {
+  if (
+    method === "GET" &&
+    paramsOrData &&
+    typeof paramsOrData === "object" &&
+    Object.keys(paramsOrData).length > 0
+  ) {
     const searchParams = new URLSearchParams();
     Object.entries(paramsOrData).forEach(([key, val]) => {
       if (val !== undefined && val !== null) {
@@ -167,7 +208,9 @@ export const RestClient = async <T = unknown>(
   const finalUrl = `${fullBase}${cleanUrl}${queryStr}`;
   const hasToken = Boolean(token);
 
-  console.log(`[RestClient ${method}] Final Request URL: ${finalUrl} (Token Attached: ${hasToken})`);
+  console.log(
+    `[RestClient ${method}] Final Request URL: ${finalUrl} (Token Attached: ${hasToken})`,
+  );
 
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -190,7 +233,10 @@ export const RestClient = async <T = unknown>(
     const response = await fetch(finalUrl, {
       method,
       headers,
-      body: method !== "GET" && paramsOrData ? JSON.stringify(paramsOrData) : undefined,
+      body:
+        method !== "GET" && paramsOrData
+          ? JSON.stringify(paramsOrData)
+          : undefined,
     });
 
     const text = await response.text();
@@ -205,11 +251,16 @@ export const RestClient = async <T = unknown>(
 
     if (!response.ok) {
       const msg = getErrorMessage(data, "Something went wrong");
-      console.error(`[RestClient ${method} ERROR] URL: ${finalUrl} (Status: ${response.status}) ->`, data);
+      console.error(
+        `[RestClient ${method} ERROR] URL: ${finalUrl} (Status: ${response.status}) ->`,
+        data,
+      );
       throw new ApiError(msg, response.status, data);
     }
 
-    console.log(`[RestClient ${method} SUCCESS] URL: ${finalUrl} (${response.status})`);
+    console.log(
+      `[RestClient ${method} SUCCESS] URL: ${finalUrl} (${response.status})`,
+    );
     return data as T;
   } catch (error) {
     if (error instanceof ApiError) {
@@ -229,7 +280,7 @@ export const request = async <T = unknown>(
     method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
     body?: unknown;
     token?: string | null;
-  } = {}
+  } = {},
 ): Promise<T> => {
   const method = options.method ?? "GET";
   return RestClient<T>(path, method, options.body, { token: options.token });
@@ -242,13 +293,15 @@ export async function uploadFormData<T>(
   path: string,
   formData: FormData,
   token?: string | null,
-  method: "POST" | "PATCH" | "PUT" = "POST"
+  method: "POST" | "PATCH" | "PUT" = "POST",
 ): Promise<T> {
   const fullUrl = endpoint(path);
   const authToken = token ?? (await getToken());
   const hasToken = Boolean(authToken);
 
-  console.log(`[RestClient Upload ${method}] Final URL: ${fullUrl} (Token Attached: ${hasToken})`);
+  console.log(
+    `[RestClient Upload ${method}] Final URL: ${fullUrl} (Token Attached: ${hasToken})`,
+  );
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -269,16 +322,26 @@ export async function uploadFormData<T>(
         const text = xhr.responseText;
         const data = text ? JSON.parse(text) : null;
         if (xhr.status >= 200 && xhr.status < 300) {
-          console.log(`[RestClient Upload ${method} SUCCESS] ${fullUrl} (${xhr.status})`);
+          console.log(
+            `[RestClient Upload ${method} SUCCESS] ${fullUrl} (${xhr.status})`,
+          );
           resolve(data as T);
         } else {
           const msg = getErrorMessage(data, "Upload failed");
-          console.error(`[API Upload Error] ${method} ${fullUrl} (Status: ${xhr.status}) ->`, data);
+          console.error(
+            `[API Upload Error] ${method} ${fullUrl} (Status: ${xhr.status}) ->`,
+            data,
+          );
           reject(new ApiError(msg, xhr.status, data));
         }
       } catch (err) {
-        console.error(`[RestClient Upload Parse Error] ${method} ${fullUrl}`, err);
-        reject(err instanceof Error ? err : new Error("Unable to parse response"));
+        console.error(
+          `[RestClient Upload Parse Error] ${method} ${fullUrl}`,
+          err,
+        );
+        reject(
+          err instanceof Error ? err : new Error("Unable to parse response"),
+        );
       }
     };
 

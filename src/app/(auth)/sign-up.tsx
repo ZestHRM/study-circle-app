@@ -337,7 +337,7 @@ export default function SignUpScreen() {
         {step === 2 && (
           <View className="gap-4">
             <View className="gap-2">
-              <Text className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+              <Text className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                 Popular suggestions for {selectedLevel}:
               </Text>
               <View className="flex-row flex-wrap gap-2">

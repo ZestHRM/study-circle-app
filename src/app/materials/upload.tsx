@@ -17,6 +17,7 @@ import {
   useSubjectsQuery,
 } from "@/hooks";
 import { useAuth } from "@/lib/auth";
+import { useThemePreference } from "@/lib/theme-preference";
 import {
   isNotesReady as isNotesReadyHelper,
   isQuizReady as isQuizReadyHelper,
@@ -54,6 +55,7 @@ export default function UploadMaterialScreen() {
     fileType?: string;
   }>();
   const { token } = useAuth();
+  const { isDark } = useThemePreference();
   const filePicker = useFilePicker();
   const { downloadFile } = useFileDownload();
 
@@ -419,13 +421,13 @@ export default function UploadMaterialScreen() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#ffffff" }}
-      className="flex-1 bg-white dark:bg-stone-900"
+      style={{ flex: 1 }}
+      className="flex-1 bg-background"
       edges={["top"]}
     >
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#ffffff"
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#0c0a09" : "#ffffff"}
         translucent={false}
       />
       {/* Brand & Stepper Header Bar */}
@@ -441,7 +443,7 @@ export default function UploadMaterialScreen() {
       />
 
       {/* Main Screen Content Body */}
-      <View style={{ flex: 1 }} className="flex-1 bg-white dark:bg-stone-900">
+      <View style={{ flex: 1 }} className="flex-1 bg-background">
         <ScrollView
           style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}

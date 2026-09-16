@@ -1,6 +1,7 @@
 import { APP_COLORS } from "@/constants/colors";
+import { useThemePreference } from "@/lib/theme-preference";
 import * as React from "react";
-import { useColorScheme, useWindowDimensions, View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import RenderHtml from "react-native-render-html";
 
 interface HtmlNotesViewProps {
@@ -13,8 +14,7 @@ export const HtmlNotesView = React.memo(function HtmlNotesView({
   contentWidth,
 }: HtmlNotesViewProps) {
   const { width: windowWidth } = useWindowDimensions();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { isDark } = useThemePreference();
 
   const htmlSource = React.useMemo(() => {
     if (!content || !content.trim()) {
@@ -30,13 +30,13 @@ export const HtmlNotesView = React.memo(function HtmlNotesView({
   const tagsStyles = React.useMemo(
     () => ({
       body: {
-        color: isDark ? "#E7E5E4" : "#1C1917",
+        color: isDark ? "#F5F5F4" : "#1C1917",
         fontSize: 14,
         lineHeight: 22,
         fontFamily: "System",
       },
       div: {
-        color: isDark ? "#E7E5E4" : "#1C1917",
+        color: isDark ? "#F5F5F4" : "#1C1917",
       },
       b: {
         color: APP_COLORS.primary,

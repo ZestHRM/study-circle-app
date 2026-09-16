@@ -95,12 +95,10 @@ export default function RootLayout() {
       <SafeAreaProvider style={{ flex: 1 }}>
         <ThemePreferenceProvider>
           <ThemeAwareRoot>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <ConfirmDialogProvider>
-                <AnimatedSplashOverlay />
-                <StatusBar translucent={false} />
-                <View style={{ flex: 1 }} className="bg-background flex-1">
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <ConfirmDialogProvider>
+                  <AnimatedSplashOverlay />
                   <Stack
                     screenOptions={{
                       headerShown: false,
@@ -116,14 +114,12 @@ export default function RootLayout() {
                       name="notifications"
                       options={{ headerShown: false, title: "Notifications" }}
                     />
-
                   </Stack>
                   <PortalHost />
                   <Toast />
-                </View>
-              </ConfirmDialogProvider>
-            </AuthProvider>
-          </QueryClientProvider>
+                </ConfirmDialogProvider>
+              </AuthProvider>
+            </QueryClientProvider>
           </ThemeAwareRoot>
         </ThemePreferenceProvider>
       </SafeAreaProvider>
@@ -132,11 +128,22 @@ export default function RootLayout() {
 }
 
 function ThemeAwareRoot({ children }: { children: React.ReactNode }) {
-  const { isDark } = useThemePreference();
+  const { isDark, preference } = useThemePreference();
+  const bg = isDark ? "#0c0a09" : "#ffffff";
   return (
     <ThemeProvider value={isDark ? DarkTheme : WhiteDefaultTheme}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? "#0c0a09" : "#ffffff"} />
-      {children}
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={bg}
+        animated={true}
+      />
+      <View
+        key={`root-theme-${preference}-${isDark ? "dark" : "light"}`}
+        style={{ flex: 1, backgroundColor: bg }}
+        className="bg-background flex-1"
+      >
+        {children}
+      </View>
     </ThemeProvider>
   );
 }

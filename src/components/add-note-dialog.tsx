@@ -137,7 +137,7 @@ export function AddNoteDialog({
     <Dialog open={open} onOpenChange={onDialogOpenChange}>
       <DialogContent>
         {/* Dialog Header */}
-        <View className="flex-row items-center justify-between pb-3 border-b border-stone-200/80 dark:border-stone-800">
+        <View className="flex-row items-center justify-between pb-3 border-b border-border">
           <View className="flex-1 pr-2">
             <Text variant="h2">
               {editingNote ? "Edit Note" : "Add New Note"}
@@ -151,7 +151,7 @@ export function AddNoteDialog({
           <Pressable
             onPress={() => onDialogOpenChange(false)}
             disabled={submitting}
-            className="p-1.5 rounded-full bg-stone-100 dark:bg-stone-800 active:opacity-70"
+            className="p-1.5 rounded-full bg-muted active:opacity-70"
           >
             <Feather name="x" size={18} color={APP_COLORS.stone500} />
           </Pressable>
@@ -184,7 +184,7 @@ export function AddNoteDialog({
                 subjects={subjectOptions}
                 isLoading={subjectsQuery.isLoading}
                 placeholder="Choose a subject..."
-                triggerClassName="bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 rounded-2xl h-14 px-5 shadow-2xs"
+                triggerClassName="bg-card border border-border rounded-2xl h-14 px-5 shadow-2xs"
               />
 
               {subjectsQuery.isError ? (
@@ -228,7 +228,7 @@ export function AddNoteDialog({
               placeholderTextColor="#A8A29E"
               multiline
               numberOfLines={6}
-              className="bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl p-4 text-base font-medium text-stone-900 dark:text-stone-100 h-36 mt-1 shadow-2xs"
+              className="bg-card border border-border rounded-2xl p-4 text-base font-medium text-foreground h-36 mt-1 shadow-2xs"
               textAlignVertical="top"
             />
           </FormField>

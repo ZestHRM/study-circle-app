@@ -24,20 +24,20 @@ export const SubscriptionControls = React.memo(
     return (
       <View className={`gap-3 ${className}`}>
         {/* Billing Cycle Toggle */}
-        <View className="flex-row items-center bg-stone-200/80 dark:bg-stone-800/80 p-1 rounded-2xl">
+        <View className="flex-row items-center bg-muted p-1 rounded-2xl">
           <Pressable
             onPress={() => onBillingCycleChange("monthly")}
             className={`flex-1 py-2.5 rounded-xl items-center justify-center ${
               billingCycle === "monthly"
-                ? "bg-white dark:bg-stone-900 shadow-2xs"
+                ? "bg-card shadow-2xs"
                 : "bg-transparent"
             }`}
           >
             <Text
               className={`text-xs font-extrabold ${
                 billingCycle === "monthly"
-                  ? "text-stone-900 dark:text-stone-100"
-                  : "text-stone-500"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
               }`}
             >
               Monthly Billing
@@ -48,15 +48,15 @@ export const SubscriptionControls = React.memo(
             onPress={() => onBillingCycleChange("yearly")}
             className={`flex-1 py-2.5 rounded-xl flex-row items-center justify-center gap-1.5 ${
               billingCycle === "yearly"
-                ? "bg-white dark:bg-stone-900 shadow-2xs"
+                ? "bg-card shadow-2xs"
                 : "bg-transparent"
             }`}
           >
             <Text
               className={`text-xs font-extrabold ${
                 billingCycle === "yearly"
-                  ? "text-stone-900 dark:text-stone-100"
-                  : "text-stone-500"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
               }`}
             >
               Yearly Billing
@@ -69,22 +69,22 @@ export const SubscriptionControls = React.memo(
 
         {/* Currency Switcher */}
         <View className="flex-row items-center justify-between px-1">
-          <Text variant="caption" className="text-xs font-bold text-stone-500">
+          <Text variant="caption" className="text-xs font-bold text-muted-foreground">
             Select Currency:
           </Text>
 
-          <View className="flex-row items-center gap-1 bg-stone-200/70 dark:bg-stone-800 p-0.5 rounded-xl">
+          <View className="flex-row items-center gap-1 bg-muted p-0.5 rounded-xl">
             <Pressable
               onPress={() => onCurrencyChange("inr")}
               className={`px-3 py-1 rounded-lg ${
-                currency === "inr" ? "bg-blue-600 shadow-2xs" : "bg-transparent"
+                currency === "inr" ? "bg-primary shadow-2xs" : "bg-transparent"
               }`}
             >
               <Text
                 className={`text-xs font-bold ${
                   currency === "inr"
-                    ? "text-white"
-                    : "text-stone-600 dark:text-stone-400"
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 ₹ INR
@@ -94,14 +94,14 @@ export const SubscriptionControls = React.memo(
             <Pressable
               onPress={() => onCurrencyChange("usd")}
               className={`px-3 py-1 rounded-lg ${
-                currency === "usd" ? "bg-blue-600 shadow-2xs" : "bg-transparent"
+                currency === "usd" ? "bg-primary shadow-2xs" : "bg-transparent"
               }`}
             >
               <Text
                 className={`text-xs font-bold ${
                   currency === "usd"
-                    ? "text-white"
-                    : "text-stone-600 dark:text-stone-400"
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 $ USD

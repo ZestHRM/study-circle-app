@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
-import { ProgressCircle } from "@/components/ui/progress-circle";
 import { Text } from "@/components/ui/text";
 import { getSubjectTheme } from "@/constants/subject-themes";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
@@ -127,8 +126,8 @@ export const YourSubjectsCarouselWidget = React.memo(
                     </Text>
                   </View>
 
-                  {/* Bottom Gauge & Readiness */}
-                  <View className="flex-row items-center gap-2.5 pt-1 border-t border-border">
+                  {/* Bottom Gauge & Readiness (Commented out) */}
+                  {/* <View className="flex-row items-center gap-2.5 pt-1 border-t border-border">
                     <ProgressCircle
                       percent={sub.readinessPercent}
                       color={ringColor}
@@ -147,7 +146,7 @@ export const YourSubjectsCarouselWidget = React.memo(
                         {sub.statusLabel}
                       </Text>
                     </View>
-                  </View>
+                  </View> */}
                 </Pressable>
               );
             })}

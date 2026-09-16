@@ -1,13 +1,13 @@
 import { Icon } from "@/components/ui/icon";
 import { APP_COLORS } from "@/constants/colors";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
+import { useThemePreference } from "@/lib/theme-preference";
 import { Tabs } from "expo-router";
-import { Platform, useColorScheme } from "react-native";
+import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
+  const { isDark } = useThemePreference();
   const insets = useSafeAreaInsets();
   const { subjects, isLoading } = useSubjectsQuery();
 

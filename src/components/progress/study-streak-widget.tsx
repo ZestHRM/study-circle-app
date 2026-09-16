@@ -126,9 +126,9 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
             </View>
 
             {/* 7-Day Visual Activity Tracker */}
-            <View className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/50 border border-stone-100 dark:border-stone-800 gap-2">
+            <View className="p-3 rounded-2xl bg-muted border border-border gap-2">
               <View className="flex-row items-center justify-between px-0.5">
-                <Text variant="caption" className="text-xs font-bold text-stone-600 dark:text-stone-300">
+                <Text variant="caption" className="text-xs font-bold text-foreground">
                   Last 7 Days Activity
                 </Text>
                 <Text variant="muted" className="text-[11px]">
@@ -145,7 +145,7 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
                           ? "bg-orange-500 dark:bg-orange-600 shadow-2xs"
                           : day.isToday
                           ? "bg-orange-100 dark:bg-orange-950/80 border-2 border-orange-500"
-                          : "bg-stone-200/70 dark:bg-stone-700/60"
+                          : "bg-muted"
                       }`}
                     >
                       <Icon
@@ -164,7 +164,7 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
                       className={`text-[10px] font-bold ${
                         day.isToday
                           ? "text-orange-600 dark:text-orange-400"
-                          : "text-stone-500 dark:text-stone-400"
+                          : "text-muted-foreground"
                       }`}
                     >
                       {day.dayLabel}
@@ -178,7 +178,7 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
             {bestStreak > 0 ? (
               <View className="gap-1.5 px-0.5">
                 <View className="flex-row items-center justify-between">
-                  <Text variant="caption" className="text-xs font-semibold text-stone-600 dark:text-stone-400">
+                  <Text variant="caption" className="text-xs font-semibold text-muted-foreground">
                     Goal to Beat Record
                   </Text>
                   <Text variant="subhead" className="text-xs font-bold">
@@ -195,15 +195,15 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
 
             {/* Recent Activity List */}
             {recentActivity.length > 0 ? (
-              <View className="gap-2 pt-1 border-t border-stone-100 dark:border-stone-800">
-                <Text variant="caption" className="text-xs font-bold text-stone-600 dark:text-stone-300">
+              <View className="gap-2 pt-1 border-t border-border">
+                <Text variant="caption" className="text-xs font-bold text-foreground">
                   Recent Check-ins
                 </Text>
                 <View className="gap-1.5">
                   {recentActivity.slice(0, 3).map((act) => (
                     <View
                       key={act.id}
-                      className="flex-row items-center justify-between px-3 py-2 rounded-xl bg-stone-100/80 dark:bg-stone-800/60"
+                      className="flex-row items-center justify-between px-3 py-2 rounded-xl bg-muted"
                     >
                       <View className="flex-row items-center gap-2">
                         <Icon name="check-circle" size={13} color="success" />

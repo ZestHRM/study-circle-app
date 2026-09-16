@@ -164,13 +164,13 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
           <View className="flex-1">
             <Text
               variant="h3"
-              className="text-base font-bold text-stone-900 dark:text-stone-100"
+              className="text-base font-bold text-foreground"
             >
               Tasks vs Study Hours
             </Text>
             <Text
               variant="caption"
-              className="text-[11px] text-stone-500 font-medium"
+              className="text-[11px] text-muted-foreground font-medium"
             >
               Daily task completion & study time
             </Text>
@@ -178,7 +178,7 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
         </View>
 
         {/* Range Selection Pills */}
-        <View className="flex-row items-center bg-stone-100 dark:bg-stone-800 p-1 rounded-xl gap-0.5">
+        <View className="flex-row items-center bg-muted p-1 rounded-xl gap-0.5">
           {RANGE_OPTIONS.map((opt) => {
             const isActive = selectedRange === opt.value;
             return (
@@ -187,15 +187,15 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
                 onPress={() => setSelectedRange(opt.value)}
                 className={`px-2.5 py-1 rounded-lg ${
                   isActive
-                    ? "bg-blue-600 dark:bg-blue-500 shadow-2xs"
+                    ? "bg-primary shadow-2xs"
                     : "bg-transparent active:opacity-70"
                 }`}
               >
                 <Text
                   className={`text-xs font-bold ${
                     isActive
-                      ? "text-white"
-                      : "text-stone-600 dark:text-stone-400"
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {opt.label}
@@ -259,7 +259,7 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
       {!isLoading && !error && daysWithCheckins > 0 && hasTrackedValues ? (
         <View className="gap-4">
           {/* Key Stats Bar */}
-          <View className="flex-row items-center justify-between bg-stone-50 dark:bg-stone-950/60 p-3 rounded-2xl border border-stone-200/60 dark:border-stone-800">
+          <View className="flex-row items-center justify-between bg-muted p-3 rounded-2xl border border-border">
             <View className="items-center flex-1">
               <Text
                 variant="h2"
@@ -269,12 +269,12 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
               </Text>
               <Text
                 variant="caption"
-                className="text-[10px] font-semibold text-stone-500 uppercase"
+                className="text-[10px] font-semibold text-muted-foreground uppercase"
               >
                 Tasks
               </Text>
             </View>
-            <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
+            <View className="w-px h-7 bg-border" />
             <View className="items-center flex-1">
               <Text
                 variant="h2"
@@ -284,12 +284,12 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
               </Text>
               <Text
                 variant="caption"
-                className="text-[10px] font-semibold text-stone-500 uppercase"
+                className="text-[10px] font-semibold text-muted-foreground uppercase"
               >
                 Hours
               </Text>
             </View>
-            <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
+            <View className="w-px h-7 bg-border" />
             <View className="items-center flex-1">
               <Text
                 variant="h2"
@@ -299,12 +299,12 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
               </Text>
               <Text
                 variant="caption"
-                className="text-[10px] font-semibold text-stone-500 uppercase"
+                className="text-[10px] font-semibold text-muted-foreground uppercase"
               >
                 Avg Tasks
               </Text>
             </View>
-            <View className="w-px h-7 bg-stone-200 dark:bg-stone-800" />
+            <View className="w-px h-7 bg-border" />
             <View className="items-center flex-1">
               <Text
                 variant="h2"
@@ -314,7 +314,7 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
               </Text>
               <Text
                 variant="caption"
-                className="text-[10px] font-semibold text-stone-500 uppercase"
+                className="text-[10px] font-semibold text-muted-foreground uppercase"
               >
                 Rate
               </Text>

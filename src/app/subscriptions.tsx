@@ -16,7 +16,7 @@ import {
 } from "@/hooks/queries/use-subscriptions";
 import { useAuth } from "@/lib/auth";
 import { showInfoToast } from "@/lib/utils/toast";
-import type { SubscriptionPlan } from "@/services";
+import { getFormattedSubscriptionTier, type SubscriptionPlan } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { View } from "react-native";
@@ -33,12 +33,8 @@ export default function SubscriptionsScreen() {
   const [currency, setCurrency] = React.useState<"inr" | "usd">("inr");
 
   const currentTierName = React.useMemo(() => {
-    const raw = (user?.subscriptionTier ?? "Free Plan").toLowerCase();
-    if (raw.includes("plat")) return "Platinum";
-    if (raw.includes("gold")) return "Gold";
-    if (raw.includes("silv")) return "Silver";
-    return "Free Plan";
-  }, [user?.subscriptionTier]);
+    return getFormattedSubscriptionTier(user);
+  }, [user]);
 
   const handleSubscribe = React.useCallback(
     (plan: SubscriptionPlan) => {

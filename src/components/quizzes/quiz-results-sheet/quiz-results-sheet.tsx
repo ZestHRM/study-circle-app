@@ -162,9 +162,9 @@ export function QuizResultsSheet({
                   <Icon
                     name={attempt.completedAt ? 'check-circle' : 'clock'}
                     size={13}
-                    color={isSelected ? '#ffffff' : '#78716c'}
+                    className={isSelected ? 'text-primary-foreground' : 'text-foreground'}
                   />
-                  <Text className={isSelected ? 'text-white font-bold text-xs' : 'text-stone-700 dark:text-stone-300 text-xs'}>
+                  <Text className={isSelected ? 'text-primary-foreground font-bold text-xs' : 'text-foreground text-xs'}>
                     {label}
                   </Text>
                 </Button>
@@ -195,10 +195,10 @@ export function QuizResultsSheet({
         {!resultsQuery.isLoading && !resultsQuery.isError && results.length > 0 ? (
           <>
             {/* Quick Stats Summary Card */}
-            <Card className="gap-3 p-4 bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 rounded-2xl shadow-2xs">
+            <Card className="gap-3 p-4 bg-card border border-border rounded-2xl shadow-2xs">
               <CardHeader className="p-0 gap-1">
                 <View className="flex-row items-center justify-between">
-                  <CardTitle className="text-base font-bold text-stone-900 dark:text-stone-100">
+                  <CardTitle className="text-base font-bold text-foreground">
                     Attempt Summary
                   </CardTitle>
                   <Badge
@@ -207,14 +207,14 @@ export function QuizResultsSheet({
                     icon={scorePercent >= 70 ? 'award' : 'pie-chart'}
                   />
                 </View>
-                <CardDescription className="text-xs text-stone-500">
+                <CardDescription className="text-xs text-muted-foreground">
                   Detailed answer breakdown and AI grading stats.
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="p-0 gap-3 pt-1">
                 {/* Score Bar */}
-                <View className="bg-stone-200 dark:bg-stone-800 h-2 w-full rounded-full overflow-hidden">
+                <View className="bg-muted h-2 w-full rounded-full overflow-hidden">
                   <View
                     className={`h-2 rounded-full ${
                       scorePercent >= 70
@@ -236,8 +236,8 @@ export function QuizResultsSheet({
                 </View>
 
                 {/* Grading Distribution */}
-                <View className="flex-row flex-wrap gap-2 pt-1 border-t border-stone-100 dark:border-stone-800/80">
-                  <Text className="text-xs text-stone-400 font-medium self-center mr-1">Grader:</Text>
+                <View className="flex-row flex-wrap gap-2 pt-1 border-t border-border">
+                  <Text className="text-xs text-muted-foreground font-medium self-center mr-1">Grader:</Text>
                   <Badge label={`GPT: ${graderStats.GPT}`} variant="blue" />
                   <Badge label={`Vector: ${graderStats.EMBEDDING}`} variant="purple" />
                   <Badge label={`Match: ${graderStats.MATCH}`} variant="emerald" />
@@ -250,7 +250,7 @@ export function QuizResultsSheet({
 
             {/* Individual Question Results */}
             <View className="gap-3 pt-1">
-              <Text className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+              <Text className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 Question Details ({results.length}):
               </Text>
 

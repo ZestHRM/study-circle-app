@@ -78,9 +78,9 @@ export const CommonHeader = React.memo(function CommonHeader({
       <Pressable
         onPress={handleBackPress}
         hitSlop={8}
-        className="w-10 h-10 rounded-full items-center justify-center bg-stone-100 dark:bg-stone-800 active:opacity-70"
+        className="w-10 h-10 rounded-full items-center justify-center bg-muted active:opacity-70"
       >
-        <Icon name={backIcon} size={22} color={APP_COLORS.stone800} />
+        <Icon name={backIcon} size={22} color="primary" />
       </Pressable>
     );
   };
@@ -124,7 +124,7 @@ export const CommonHeader = React.memo(function CommonHeader({
           disabled={!onAvatarPress}
           className="flex-row items-center gap-2 active:opacity-80"
         >
-          <View className="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 items-center justify-center border border-stone-300/50 dark:border-stone-700/50">
+          <View className="w-8 h-8 rounded-full bg-muted items-center justify-center border border-border">
             <Text variant="subhead" className="font-extrabold">
               {userInitial}
             </Text>
@@ -171,7 +171,7 @@ export const CommonHeader = React.memo(function CommonHeader({
 
   return (
     <View
-      className={`flex-row items-center justify-between px-5 pt-3 pb-3 bg-white dark:bg-stone-900 border-b border-stone-200/80 dark:border-stone-800 ${className}`}
+      className={`flex-row items-center justify-between px-5 pt-3 pb-3 bg-card border-b border-border ${className}`}
     >
       {/* Left Slot */}
       {leftNode ? leftNode : !rightNode ? null : <View className="w-10" />}

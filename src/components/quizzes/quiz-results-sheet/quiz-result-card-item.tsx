@@ -42,8 +42,8 @@ const CORRECTNESS_CONFIG: Record<
     label: "Not Answered",
     variant: "outline",
     icon: "help-circle",
-    bgColor: "bg-stone-50 dark:bg-stone-900/40",
-    borderColor: "border-stone-200 dark:border-stone-800",
+    bgColor: "bg-muted/40",
+    borderColor: "border-border",
   },
 };
 
@@ -82,7 +82,7 @@ export const QuizResultCardItem = React.memo(function QuizResultCardItem({
 
   return (
     <View
-      className={`border rounded-2xl p-4 gap-3 bg-white dark:bg-stone-900 ${correctness.borderColor} shadow-2xs`}
+      className={`border rounded-2xl p-4 gap-3 bg-card ${correctness.borderColor} shadow-2xs`}
     >
       {/* Header: Question Number & Badges */}
       <View className="flex-row items-center justify-between gap-2">

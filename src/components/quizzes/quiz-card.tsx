@@ -68,7 +68,7 @@ export const QuizCard = React.memo(function QuizCard({
       {/* Description Snippet if present */}
       {quiz.description?.trim() ? (
         <Text
-          className="text-xs text-stone-600 dark:text-stone-300 leading-5"
+          className="text-xs text-muted-foreground leading-5"
           numberOfLines={2}
         >
           {quiz.description.trim()}
@@ -99,7 +99,7 @@ export const QuizCard = React.memo(function QuizCard({
       </View>
 
       {/* Action Buttons Row */}
-      <View className="flex-row items-center gap-2.5 pt-1 border-t border-stone-100 dark:border-stone-800/80">
+      <View className="flex-row items-center gap-2.5 pt-1 border-t border-border">
         <Button
           variant="quiz"
           icon={hasActiveAttempt ? "rotate-cw" : "play"}

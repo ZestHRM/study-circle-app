@@ -167,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const isLoading = isRestoringSession || (Boolean(token) && meQuery.isLoading);
-  const resolvedUser = user ?? meQuery.data ?? null;
+  const resolvedUser = meQuery.data ?? user ?? null;
 
   const value = React.useMemo<AuthContextValue>(
     () => ({

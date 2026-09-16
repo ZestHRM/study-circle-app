@@ -48,8 +48,12 @@ export function ThemePreferenceProvider({ children }: { children: React.ReactNod
     await persistPreference(nextPreference);
   }, []);
 
-  const activeTheme = hasAdaptiveThemes ? systemScheme : theme;
-  const isDark = activeTheme === "dark";
+  const isDark = React.useMemo(() => {
+    if (preference === "dark") return true;
+    if (preference === "light") return false;
+    if (!hasAdaptiveThemes && theme) return theme === "dark";
+    return systemScheme === "dark";
+  }, [preference, theme, hasAdaptiveThemes, systemScheme]);
 
   return (
     <ThemePreferenceContext.Provider value={{ preference, setPreference, isDark }}>

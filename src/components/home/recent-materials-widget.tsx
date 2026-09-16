@@ -3,9 +3,8 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-
 import { useStudyMaterialsInfinite } from "@/hooks/queries/use-study-materials";
-import { useAuth } from "@/lib/auth";
+import { usePlanPermissions } from "@/hooks/use-plan-permissions";
 import { formatShortDate } from "@/lib/utils/formatters";
 import { isNotesReady as isNotesReadyHelper } from "@/lib/utils/material-status";
 import { router } from "expo-router";
@@ -14,13 +13,8 @@ import { Pressable, View } from "react-native";
 
 export const RecentMaterialsWidget = React.memo(
   function RecentMaterialsWidget() {
-    const { user } = useAuth();
     const { materials } = useStudyMaterialsInfinite({ limit: 4 });
-
-    const isPro = React.useMemo(() => {
-      const tier = (user?.subscriptionTier || "").toUpperCase();
-      return Boolean(tier && tier !== "FREE" && tier !== "GUEST" && tier !== "INACTIVE");
-    }, [user?.subscriptionTier]);
+    const { hasQuizAccess: isPro } = usePlanPermissions();
 
     const handleViewAll = React.useCallback(() => {
       router.push("/(tabs)/materials");
@@ -72,10 +66,7 @@ export const RecentMaterialsWidget = React.memo(
               Boolean(mat.quizId || (mat.quizzes && mat.quizzes.length > 0));
 
             return (
-              <Card
-                key={mat.id}
-                className="rounded-3xl p-4 gap-3"
-              >
+              <Card key={mat.id} className="rounded-3xl p-4 gap-3">
                 {/* Main Material Header Row */}
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center gap-3 flex-1 pr-2">
@@ -153,9 +144,7 @@ export const RecentMaterialsWidget = React.memo(
                       <View className="w-5 h-5 rounded-full bg-blue-200/60 dark:bg-blue-900/60 items-center justify-center">
                         <Icon name="lock" size={11} color="primary" />
                       </View>
-                      <Text variant="subhead">
-                        Quiz generated • Locked
-                      </Text>
+                      <Text variant="subhead">Quiz generated • Locked</Text>
                     </View>
 
                     <Button
@@ -185,4 +174,3 @@ export const RecentMaterialsWidget = React.memo(
     );
   },
 );
-

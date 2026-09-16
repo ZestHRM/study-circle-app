@@ -6,7 +6,7 @@ import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { useFilePicker } from "@/hooks/use-file-picker";
 import { useAuth } from "@/lib/auth";
-import { profileApi, type User } from "@/services";
+import { getFormattedSubscriptionTier, profileApi, type User } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { Image, Pressable, View } from "react-native";
@@ -152,7 +152,7 @@ export const ProfileHero = React.memo(function ProfileHero({
         {/* Badges Row */}
         <View className="flex-row items-center gap-2 mt-3 flex-wrap justify-center">
           <Badge
-            label={user?.subscriptionTier || "PRO MEMBER"}
+            label={getFormattedSubscriptionTier(user).toUpperCase()}
             icon="star"
             variant="amber"
           />

@@ -41,7 +41,7 @@ export default function DailyCheckinRoute() {
   }
 
   return (
-    <View style={{ flex: 1 }} className="flex-1 bg-white dark:bg-stone-950">
+    <View className="flex-1 bg-background">
       <DailyCheckinScreen />
     </View>
   );

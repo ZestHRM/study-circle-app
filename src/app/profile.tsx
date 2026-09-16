@@ -17,6 +17,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import * as React from "react";
 import { Alert, BackHandler, Platform, Pressable, View } from "react-native";
 import { Icon } from "@/components/ui/icon";
+import { getFormattedSubscriptionTier } from "@/services";
 
 export default function ProfileScreen() {
   const { user, token, signOut } = useAuth();
@@ -194,7 +195,7 @@ export default function ProfileScreen() {
                 Subscription Plan
               </Text>
               <Text variant="muted">
-                Active Tier: {user?.subscriptionTier || "Free Plan"}
+                Active Tier: {getFormattedSubscriptionTier(user)}
               </Text>
             </View>
             <Button

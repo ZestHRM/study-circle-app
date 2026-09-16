@@ -6,7 +6,7 @@ import { Platform, Text as RNText, type Role } from "react-native";
 
 const textVariants = cva(
   cn(
-    "text-stone-900 dark:text-stone-100 text-base",
+    "text-foreground text-base",
     Platform.select({
       web: "select-text",
     }),
@@ -14,22 +14,22 @@ const textVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-stone-900 dark:text-stone-100",
-        h1: "text-stone-900 dark:text-stone-100 text-3xl font-extrabold",
-        h2: "text-stone-900 dark:text-stone-100 text-xl font-bold",
-        h3: "text-stone-900 dark:text-stone-100 text-base font-semibold",
-        h4: "text-stone-900 dark:text-stone-100 text-sm font-semibold",
-        muted: "text-stone-500 dark:text-stone-400 text-xs font-medium",
-        subhead: "text-stone-700 dark:text-stone-300 text-xs font-semibold",
-        caption: "text-stone-400 dark:text-stone-500 text-xs",
-        primary: "text-[#2563EB] dark:text-[#3B82F6] font-bold",
+        default: "text-foreground",
+        h1: "text-foreground text-3xl font-extrabold",
+        h2: "text-foreground text-xl font-bold",
+        h3: "text-foreground text-base font-semibold",
+        h4: "text-foreground text-sm font-semibold",
+        muted: "text-muted-foreground text-xs font-medium",
+        subhead: "text-foreground/80 text-xs font-semibold",
+        caption: "text-muted-foreground text-xs",
+        primary: "text-primary font-bold",
         terracotta: "text-[#D95B38] font-bold",
-        success: "text-[#047857] font-semibold",
-        error: "text-red-500 font-medium text-xs",
-        p: "text-stone-800 dark:text-stone-200 text-sm leading-6",
-        large: "text-lg font-semibold text-stone-900 dark:text-stone-100",
-        small: "text-xs font-medium text-stone-700 dark:text-stone-300",
-        code: "bg-stone-200 dark:bg-stone-800 rounded px-1.5 py-0.5 font-mono text-xs font-semibold",
+        success: "text-[#047857] dark:text-[#34D399] font-semibold",
+        error: "text-destructive font-medium text-xs",
+        p: "text-foreground/90 text-sm leading-6",
+        large: "text-lg font-semibold text-foreground",
+        small: "text-xs font-medium text-muted-foreground",
+        code: "bg-muted rounded px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground",
       },
     },
     defaultVariants: {

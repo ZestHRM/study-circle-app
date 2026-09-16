@@ -8,8 +8,10 @@ import {
   useStudyMaterialDetail,
   useStudyMaterialNotesQuery,
 } from "@/hooks/queries";
+import { usePlanPermissions } from "@/hooks/use-plan-permissions";
 import { useAuth } from "@/lib/auth";
-import type { Quiz, QuizAttempt } from "@/services";
+import { hasQuizAccess, type Quiz, type QuizAttempt } from "@/services";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { StatusBar, View } from "react-native";
@@ -31,6 +33,7 @@ export function MaterialDetailScreen({
   materialId,
 }: MaterialDetailScreenProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isDark } = useThemePreference();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState<TabType>("notes");
@@ -58,32 +61,12 @@ export function MaterialDetailScreen({
   } = useQuizzesInfiniteQuery({ limit: 20 });
   const startAttemptMutation = useStartQuizAttempt();
 
-  const isPro = React.useMemo(() => {
-    if (!user) return !isForbidden;
-    const tier = (
-      user.subscriptionTier ||
-      (user as any).tier ||
-      (user as any).plan ||
-      (user as any).subscription?.plan ||
-      (user as any).subscription?.status ||
-      ""
-    )
-      .toString()
-      .toUpperCase();
+  const { hasQuizAccess: userHasQuizAccess } = usePlanPermissions();
 
-    if (tier && tier !== "FREE" && tier !== "GUEST" && tier !== "INACTIVE") {
-      return true;
-    }
-    if (
-      (user as any).isPro ||
-      (user as any).isPremium ||
-      (user as any).hasSubscription ||
-      (user as any).subscribed
-    ) {
-      return true;
-    }
-    return !isForbidden;
-  }, [user, isForbidden]);
+  const isPro = React.useMemo(() => {
+    if (isForbidden) return false;
+    return userHasQuizAccess;
+  }, [userHasQuizAccess, isForbidden]);
 
   const materialQuiz = React.useMemo(() => {
     if (!material) return null;
@@ -140,9 +123,16 @@ export function MaterialDetailScreen({
     setShowNotesSheet(false);
     setActiveTab("quiz");
   }, []);
-  const handleQuizSheetChange = React.useCallback((open: boolean) => {
-    if (!open) setSelectedQuizAttempt(null);
-  }, []);
+  const handleQuizSheetChange = React.useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setSelectedQuizAttempt(null);
+        void queryClient.invalidateQueries({ queryKey: ["material-quiz"] });
+        void queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+      }
+    },
+    [queryClient],
+  );
 
   const headerElement = React.useMemo(
     () => <DetailHeader title={title} onBack={handleBack} />,

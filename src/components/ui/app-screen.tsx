@@ -1,3 +1,4 @@
+import { useThemePreference } from "@/lib/theme-preference";
 import { cn } from "@/lib/utils";
 import * as React from "react";
 import {
@@ -36,6 +37,9 @@ export function AppScreen({
   showsVerticalScrollIndicator = false,
   keyboardShouldPersistTaps = "handled",
 }: AppScreenProps) {
+  const { isDark } = useThemePreference();
+  const bg = isDark ? "#0c0a09" : "#ffffff";
+
   const hasEdges = Boolean(
     edges &&
     (Array.isArray(edges) ? edges.length > 0 : Object.keys(edges).length > 0),
@@ -46,8 +50,8 @@ export function AppScreen({
       {header}
       {scrollable ? (
         <ScrollView
-          style={{ flex: 1 }}
-          className="flex-1"
+          style={{ flex: 1, backgroundColor: bg }}
+          className="flex-1 bg-background"
           contentContainerStyle={[
             { flexGrow: 1, paddingBottom: 32 },
             contentContainerStyle,
@@ -61,8 +65,8 @@ export function AppScreen({
         </ScrollView>
       ) : (
         <View
-          style={{ flex: 1 }}
-          className={cn("flex-1", contentContainerClassName)}
+          style={{ flex: 1, backgroundColor: bg }}
+          className={cn("flex-1 bg-background", contentContainerClassName)}
         >
           {children}
         </View>
@@ -74,7 +78,7 @@ export function AppScreen({
     return (
       <SafeAreaView
         edges={edges}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: bg }}
         className={cn("flex-1 bg-background", className)}
       >
         {innerContent}
@@ -83,7 +87,7 @@ export function AppScreen({
   }
 
   return (
-    <View style={{ flex: 1 }} className={cn("flex-1 bg-background", className)}>
+    <View style={{ flex: 1, backgroundColor: bg }} className={cn("flex-1 bg-background", className)}>
       {innerContent}
     </View>
   );

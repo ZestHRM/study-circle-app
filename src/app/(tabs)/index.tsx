@@ -116,25 +116,14 @@ export default function HomeScreen() {
       }}
     >
       <View className="mx-auto w-full max-w-md gap-4 pb-8">
-        {/* Top Logo, Notification Bell, Tier Badge & Greeting */}
         <HomeGreeting name={user?.name} />
-
-        {/* Today's Check-in Card (Yellow banner with Check in -> button) */}
         <DailyCheckinWidget
           onCheckIn={openDailyCheckIn}
           onViewFeedback={openFeedback}
         />
-
-        {/* This week Summary Card (6h 20m studied | 12 tasks completed | 4 day streak) */}
         <StatsCardsWidget />
-
-        {/* Next best action Card (Review DBMS normalization) */}
         <NextActionWidget />
-
-        {/* Your subjects Horizontal Carousel (72%, 48%, 31% Readiness Gauges) */}
         <YourSubjectsCarouselWidget />
-
-        {/* Recent in Computer Science List (DBMS Material + PYQs) */}
         <RecentMaterialsWidget />
       </View>
 

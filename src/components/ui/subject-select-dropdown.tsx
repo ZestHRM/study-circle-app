@@ -120,7 +120,7 @@ export const SubjectSelectDropdown = React.memo(
           onPress={handleOpen}
           disabled={disabled || isLoading}
           className={cn(
-            'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl h-14 px-5 flex-row items-center justify-between shadow-2xs active:opacity-80',
+            'bg-card border border-border rounded-2xl h-14 px-5 flex-row items-center justify-between shadow-2xs active:opacity-80',
             triggerClassName
           )}
         >
@@ -128,8 +128,8 @@ export const SubjectSelectDropdown = React.memo(
             numberOfLines={1}
             className={`text-base flex-1 pr-2 ${
               selectedOption
-                ? 'text-stone-900 dark:text-stone-100 font-medium'
-                : 'text-stone-400 dark:text-stone-500 font-medium'
+                ? 'text-foreground font-medium'
+                : 'text-muted-foreground font-medium'
             }`}
           >
             {displayText}
@@ -137,7 +137,7 @@ export const SubjectSelectDropdown = React.memo(
           {isLoading ? (
             <ActivityIndicator size="small" color={APP_COLORS.primary} />
           ) : (
-            <Icon name="chevron-down" size={18} color={APP_COLORS.stone500} />
+            <Icon name="chevron-down" size={18} color="muted" />
           )}
         </Pressable>
 
@@ -152,17 +152,17 @@ export const SubjectSelectDropdown = React.memo(
           <TouchableWithoutFeedback onPress={handleClose}>
             <View className="flex-1 bg-black/50 justify-center items-center p-5">
               <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                <View className="w-full max-w-sm bg-white dark:bg-stone-900 rounded-3xl p-5 shadow-2xl border border-stone-200 dark:border-stone-800 max-h-[70vh] gap-4">
+                <View className="w-full max-w-sm bg-card rounded-3xl p-5 shadow-2xl border border-border max-h-[70vh] gap-4">
                   {/* Modal Header */}
-                  <View className="flex-row items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
-                    <Text className="text-base font-bold text-stone-900 dark:text-stone-100">
+                  <View className="flex-row items-center justify-between border-b border-border pb-3">
+                    <Text className="text-base font-bold text-foreground">
                       Select Subject
                     </Text>
                     <Pressable
                       onPress={handleClose}
-                      className="p-1 rounded-full bg-stone-100 dark:bg-stone-800 active:opacity-70"
+                      className="p-1 rounded-full bg-muted active:opacity-70"
                     >
-                      <Icon name="x" size={16} color={APP_COLORS.stone500} />
+                      <Icon name="x" size={16} color="muted" />
                     </Pressable>
                   </View>
 

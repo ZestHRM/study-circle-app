@@ -8,4 +8,5 @@ export * from "./use-file-picker";
 export * from "./use-refresh-control";
 export * from "./use-theme";
 export * from "./use-push-notifications";
+export * from "./use-plan-permissions";
 

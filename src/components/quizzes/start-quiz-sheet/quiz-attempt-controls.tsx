@@ -24,7 +24,7 @@ export const QuizAttemptControls = React.memo(function QuizAttemptControls({
   onNext,
 }: QuizAttemptControlsProps) {
   return (
-    <View className="gap-2 pt-3 border-t border-stone-200 dark:border-stone-800">
+    <View className="gap-2 pt-3 border-t border-border">
       <View className="flex-row items-center gap-2">
         <Button
           variant="outline"

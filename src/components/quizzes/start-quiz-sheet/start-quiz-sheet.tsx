@@ -6,6 +6,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { useAuth } from "@/lib/auth";
+import { useThemePreference } from "@/lib/theme-preference";
+import { cn } from "@/lib/utils";
 import { quizzesApi, type QuizAttempt, type QuizQuestion } from "@/services";
 import { Feather } from "@expo/vector-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -32,6 +34,7 @@ export function StartQuizSheet({
   attempt: QuizAttempt | null;
 }) {
   const { token } = useAuth();
+  const { isDark } = useThemePreference();
   const confirm = useConfirmDialog();
   const [secondsLeft, setSecondsLeft] = React.useState(135); // 02:15 countdown
 
@@ -157,11 +160,16 @@ export function StartQuizSheet({
     return materialTitle;
   }, [currentQuestion?.question, materialTitle]);
 
+  const answersRef = React.useRef(answers);
+  React.useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
   const saveAllDraftAnswers = React.useCallback(
     async (answersSnapshot?: AnswerState) => {
       if (!attempt) return true;
 
-      const sourceAnswers = answersSnapshot ?? answers;
+      const sourceAnswers = answersSnapshot ?? answersRef.current;
 
       const draftAnswers = Object.entries(sourceAnswers)
         .filter(([, value]) => value.answer.trim().length > 0)
@@ -193,7 +201,7 @@ export function StartQuizSheet({
         return false;
       }
     },
-    [answers, attempt, questionTypeById, saveMutation],
+    [attempt, questionTypeById, saveMutation],
   );
 
   React.useEffect(() => {
@@ -256,21 +264,21 @@ export function StartQuizSheet({
     setIsShowingSolution((v) => !v);
   }, []);
 
+  const currentQuestionId = currentQuestion?.id;
+
   const onAnswerChange = React.useCallback(
     (nextValue: string) => {
-      if (!currentQuestion) return;
+      if (!currentQuestionId) return;
 
-      const nextAnswers: AnswerState = {
-        ...answers,
-        [currentQuestion.id]: {
+      setAnswers((prev) => ({
+        ...prev,
+        [currentQuestionId]: {
           answer: nextValue,
           saved: false,
         },
-      };
-
-      setAnswers(nextAnswers);
+      }));
     },
-    [answers, currentQuestion],
+    [currentQuestionId],
   );
 
   if (!open || !attempt) return null;
@@ -283,15 +291,15 @@ export function StartQuizSheet({
       onRequestClose={() => void onAttemptExit()}
     >
       <SafeAreaView
-        style={{ flex: 1 }}
-        className="flex-1 bg-white dark:bg-stone-950"
+        style={{ flex: 1, backgroundColor: isDark ? "#0c0a09" : "#ffffff" }}
+        className="flex-1 bg-background"
         edges={["top", "bottom"]}
       >
         {/* 1. Header Bar: Back Arrow & StudyCircleAI Logo */}
-        <View className="flex-row items-center justify-between px-5 py-3 border-b border-stone-100 dark:border-stone-800">
+        <View className="flex-row items-center justify-between px-5 py-3 border-b border-border bg-card">
           <Pressable
             onPress={() => void onAttemptExit()}
-            className="w-10 h-10 rounded-full items-center justify-center bg-stone-100 dark:bg-stone-800 active:opacity-70"
+            className="w-10 h-10 rounded-full items-center justify-center bg-muted active:opacity-70"
             hitSlop={8}
           >
             <Icon name="chevron-left" size={24} className="text-foreground" />
@@ -304,7 +312,8 @@ export function StartQuizSheet({
 
         {/* 2. Main Screen Scrollable Content */}
         <ScrollView
-          style={{ flex: 1 }}
+          style={{ flex: 1, backgroundColor: isDark ? "#0c0a09" : "#ffffff" }}
+          className="flex-1 bg-background"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
@@ -344,16 +353,16 @@ export function StartQuizSheet({
             <>
               {/* Breadcrumb Row: [Icon Subject] > [Material Title] */}
               <View className="flex-row items-center gap-2">
-                <View className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 items-center justify-center">
+                <View className="w-7 h-7 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 items-center justify-center">
                   <Icon name="flask-outline" size={14} color="#059669" />
                 </View>
-                <Text variant="subhead" className="font-bold text-stone-900 dark:text-stone-100">
+                <Text variant="subhead" className="font-bold">
                   {subjectName}
                 </Text>
-                <Icon name="chevron-right" size={12} color={APP_COLORS.stone400} />
+                <Icon name="chevron-right" size={12} className="text-muted-foreground" />
                 <Text
                   variant="subhead"
-                  className="text-blue-600 dark:text-blue-400 font-semibold flex-1"
+                  className="text-primary font-semibold flex-1"
                   numberOfLines={1}
                 >
                   {materialTitle}
@@ -362,17 +371,17 @@ export function StartQuizSheet({
 
               {/* Title & Timer Row */}
               <View className="gap-1">
-                <Text variant="h1" className="text-3xl font-black tracking-tight text-stone-900 dark:text-stone-100">
+                <Text variant="h1" className="text-3xl font-black tracking-tight">
                   Practice Quiz
                 </Text>
 
                 <View className="flex-row items-center justify-between mt-1">
-                  <Text variant="subhead" className="text-blue-600 dark:text-blue-400 font-bold text-base">
+                  <Text variant="subhead" className="text-primary font-bold text-base">
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </Text>
-                  <View className="flex-row items-center gap-1.5 bg-slate-100 dark:bg-stone-800 px-3 py-1.5 rounded-full">
-                    <Icon name="clock" size={14} color={APP_COLORS.stone700} />
-                    <Text variant="subhead" className="font-extrabold text-stone-900 dark:text-stone-100">
+                  <View className="flex-row items-center gap-1.5 bg-muted px-3 py-1.5 rounded-full border border-border">
+                    <Icon name="clock" size={14} className="text-foreground" />
+                    <Text variant="subhead" className="font-extrabold">
                       {formattedTimer}
                     </Text>
                   </View>
@@ -381,28 +390,28 @@ export function StartQuizSheet({
 
               {/* Progress Bar & Percentage Pill */}
               <View className="flex-row items-center gap-3">
-                <View className="flex-1 h-3 rounded-full bg-blue-100 dark:bg-blue-950/50 overflow-hidden">
+                <View className="flex-1 h-3 rounded-full bg-muted overflow-hidden border border-border/50">
                   <View
                     style={{ width: `${progressPercent}%` }}
-                    className="h-full bg-[#0066FF] rounded-full"
+                    className="h-full bg-primary rounded-full"
                   />
                 </View>
-                <Text variant="subhead" className="font-black text-[#0066FF]">
+                <Text variant="subhead" className="font-black text-primary">
                   {progressPercent}%
                 </Text>
               </View>
 
               {/* Tag Pills Row: Difficulty + Topic */}
               <View className="flex-row items-center gap-2">
-                <View className="bg-amber-100 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800 px-4 py-1.5 rounded-full">
-                  <Text variant="caption" className="font-bold text-amber-900 dark:text-amber-200">
+                <View className="bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 px-4 py-1.5 rounded-full">
+                  <Text variant="caption" className="font-bold text-amber-600 dark:text-amber-400">
                     {difficultyLevel}
                   </Text>
                 </View>
-                <View className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800 px-4 py-1.5 rounded-full">
+                <View className="bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full">
                   <Text
                     variant="caption"
-                    className="font-bold text-blue-800 dark:text-blue-200"
+                    className="font-bold text-primary"
                     numberOfLines={1}
                   >
                     {topicKeyword}
@@ -410,9 +419,9 @@ export function StartQuizSheet({
                 </View>
               </View>
 
-              {/* Question & Options Card Container (Soft Blue Background) */}
-              <View className="bg-[#F0F7FF] dark:bg-stone-900 border border-blue-100 dark:border-stone-800 rounded-3xl p-5 gap-5">
-                <Text variant="h3" className="text-stone-900 dark:text-stone-100 font-black leading-7 text-lg">
+              {/* Question & Options Card Container */}
+              <View className="bg-card border border-border rounded-3xl p-5 gap-5 shadow-xs">
+                <Text variant="h3" className="font-black leading-7 text-lg">
                   {currentQuestion.question}
                 </Text>
 
@@ -430,10 +439,10 @@ export function StartQuizSheet({
                 <Pressable
                   onPress={onPrevious}
                   disabled={isFirstQuestion || saveMutation.isPending}
-                  className="px-5 py-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 bg-white dark:bg-stone-900 flex-row items-center justify-center gap-1.5 active:opacity-80 disabled:opacity-40 shadow-2xs"
+                  className="px-5 py-4 rounded-2xl border border-border bg-card flex-row items-center justify-center gap-1.5 active:opacity-80 disabled:opacity-40 shadow-2xs"
                 >
-                  <Icon name="chevron-left" size={18} color={APP_COLORS.stone700} />
-                  <Text variant="subhead" className="font-bold text-stone-800 dark:text-stone-200">
+                  <Icon name="chevron-left" size={18} className="text-foreground" />
+                  <Text variant="subhead" className="font-bold">
                     Prev
                   </Text>
                 </Pressable>
@@ -441,9 +450,22 @@ export function StartQuizSheet({
                 <Pressable
                   onPress={onNext}
                   disabled={!currentAnswer.trim() || saveMutation.isPending}
-                  className="flex-1 bg-[#0066FF] rounded-2xl py-4 flex-row items-center justify-center gap-2 shadow-md active:opacity-90 disabled:opacity-50"
+                  className={cn(
+                    "flex-1 rounded-2xl py-4 flex-row items-center justify-center gap-2 shadow-md active:opacity-90",
+                    !currentAnswer.trim() || saveMutation.isPending
+                      ? "bg-muted border border-border"
+                      : "bg-primary"
+                  )}
                 >
-                  <Text variant="subhead" className="text-white font-bold text-base">
+                  <Text
+                    variant="subhead"
+                    className={cn(
+                      "font-bold text-base",
+                      !currentAnswer.trim() || saveMutation.isPending
+                        ? "text-muted-foreground"
+                        : "text-primary-foreground"
+                    )}
+                  >
                     {isLastQuestion ? "Submit Quiz →" : "Submit answer →"}
                   </Text>
                 </Pressable>
@@ -452,12 +474,12 @@ export function StartQuizSheet({
               {/* View Explanation Accordion Card */}
               <Pressable
                 onPress={onToggleSolution}
-                className="bg-[#F0F7FF] dark:bg-stone-900 border border-blue-100 dark:border-stone-800 rounded-3xl p-4 gap-2 active:opacity-90"
+                className="bg-card border border-border rounded-3xl p-4 gap-2 active:opacity-90 shadow-xs"
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center gap-3">
-                    <View className="w-9 h-9 rounded-2xl bg-blue-100 dark:bg-blue-950/60 items-center justify-center">
-                      <Icon name="bar-chart-2" size={18} color="#0066FF" />
+                    <View className="w-9 h-9 rounded-2xl bg-primary/10 items-center justify-center">
+                      <Icon name="bar-chart-2" size={18} color={APP_COLORS.primary} />
                     </View>
                     <Text variant="h4" className="font-bold text-base">
                       View explanation
@@ -466,7 +488,7 @@ export function StartQuizSheet({
                   <Icon
                     name={isShowingSolution ? "chevron-up" : "chevron-down"}
                     size={20}
-                    color={APP_COLORS.stone600}
+                    className="text-muted-foreground"
                   />
                 </View>
 
@@ -476,7 +498,7 @@ export function StartQuizSheet({
                     explanation={currentQuestion.explanation}
                   />
                 ) : (
-                  <Text variant="muted" className="text-xs">
+                  <Text variant="muted" className="text-xs text-muted-foreground">
                     See the correct answer and a detailed explanation after you submit.
                   </Text>
                 )}

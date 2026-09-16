@@ -40,8 +40,8 @@ export const OptionItem = React.memo(function OptionItem({
       className={cn(
         "flex-row items-center gap-3.5 px-4 py-3.5 rounded-2xl border active:opacity-90",
         isSelected
-          ? "bg-white dark:bg-stone-900 border-[#0066FF] shadow-xs"
-          : "bg-white dark:bg-stone-900 border-blue-200/80 dark:border-stone-800"
+          ? "bg-primary/15 border-primary shadow-xs"
+          : "bg-muted/50 border-border"
       )}
     >
       {/* Radio Circle */}
@@ -49,18 +49,18 @@ export const OptionItem = React.memo(function OptionItem({
         className={cn(
           "w-6 h-6 rounded-full items-center justify-center border-2",
           isSelected
-            ? "border-[#0066FF] bg-[#0066FF]"
-            : "border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+            ? "border-primary bg-primary"
+            : "border-muted-foreground/40 bg-card"
         )}
       >
         {isSelected ? (
-          <View className="w-2.5 h-2.5 rounded-full bg-white" />
+          <View className="w-2.5 h-2.5 rounded-full bg-primary-foreground" />
         ) : null}
       </View>
 
       {/* Option Letter (A, B, C, D) in bold blue */}
       {!isTrueFalse && (
-        <Text variant="subhead" className="font-extrabold text-[#0066FF] w-4">
+        <Text variant="subhead" className="font-extrabold text-primary w-4">
           {optionLetter}
         </Text>
       )}
@@ -69,10 +69,10 @@ export const OptionItem = React.memo(function OptionItem({
       <Text
         variant="subhead"
         className={cn(
-          "flex-1 font-semibold text-base",
+          "flex-1 text-base",
           isSelected
-            ? "text-stone-900 dark:text-stone-100 font-bold"
-            : "text-stone-800 dark:text-stone-200"
+            ? "text-foreground font-bold"
+            : "text-foreground font-medium"
         )}
       >
         {label}
@@ -103,21 +103,22 @@ export const QuestionOptions = React.memo(function QuestionOptions({
           onChangeText={onChange}
           multiline
           numberOfLines={6}
-          className="min-h-[130px] p-3.5 text-sm rounded-2xl bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800"
+          className="min-h-[130px] p-3.5 text-sm rounded-2xl bg-card border-border text-foreground"
           textAlignVertical="top"
           placeholder="Type your answer here in detail..."
         />
-        <Text className="text-xs text-stone-400 dark:text-stone-500 self-end font-medium">
+        <Text className="text-xs text-muted-foreground self-end font-medium">
           {wordCount} {wordCount === 1 ? "word" : "words"}
         </Text>
       </View>
     );
   }
 
-  const renderedOptions =
-    type === "TRUE_FALSE"
+  const renderedOptions = React.useMemo(() => {
+    return type === "TRUE_FALSE"
       ? trueFalseOptions()
       : options.map((option) => ({ label: option, value: option }));
+  }, [type, options]);
 
   return (
     <View className="gap-3">

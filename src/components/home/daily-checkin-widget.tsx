@@ -12,6 +12,7 @@ import { useTodayCheckIn } from "@/hooks/queries/use-dashboard";
 import { useAuth } from "@/lib/auth";
 import { formatDayDate } from "@/lib/utils/formatters";
 import { showInfoToast } from "@/lib/utils/toast";
+import { getUserSubscriptionTier } from "@/services";
 import { router } from "expo-router";
 import * as React from "react";
 import { View } from "react-native";
@@ -30,9 +31,10 @@ export const DailyCheckinWidget = React.memo(function DailyCheckinWidget({
 
   const todayCheckIn = todayCheckInQuery.data;
   const hasCheckedIn = Boolean(todayCheckIn);
-  const isPaidUser = Boolean(
-    user?.subscriptionTier && user.subscriptionTier !== "FREE",
-  );
+  const isPaidUser = React.useMemo(() => {
+    const tier = getUserSubscriptionTier(user);
+    return Boolean(tier && tier !== "FREE" && tier !== "GUEST" && tier !== "INACTIVE");
+  }, [user]);
   const todayLabel = React.useMemo(() => formatDayDate(), []);
 
   const handleCheckIn = React.useCallback(() => {

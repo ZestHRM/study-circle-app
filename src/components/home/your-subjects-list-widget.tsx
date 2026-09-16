@@ -54,8 +54,8 @@ export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget
                 <Icon name={theme.iconName} size={20} color={theme.colorHex} />
               </View>
 
-              {/* Subject Title & Progress Bar */}
-              <View className="flex-1 gap-1.5">
+              {/* Subject Title */}
+              <View className="flex-1 justify-center">
                 <Text
                   variant="h3"
                   className="text-base font-extrabold"
@@ -64,18 +64,18 @@ export const YourSubjectsListWidget = React.memo(function YourSubjectsListWidget
                   {item.name}
                 </Text>
 
-                <ProgressBar
+                {/* <ProgressBar
                   value={progressPercent}
                   size="lg"
                   barClassName="bg-blue-600 dark:bg-blue-500"
-                />
+                /> */}
               </View>
 
-              {/* Percentage & Chevron Right */}
+              {/* Chevron Right */}
               <View className="flex-row items-center gap-2 pl-2">
-                <Text variant="subhead" className="font-bold">
+                {/* <Text variant="subhead" className="font-bold">
                   {progressPercent}%
-                </Text>
+                </Text> */}
                 <Icon name="chevron-right" size={18} color="muted" />
               </View>
             </Pressable>

@@ -14,16 +14,16 @@ export const QuizSolutionBox = React.memo(function QuizSolutionBox({
   explanation,
 }: QuizSolutionBoxProps) {
   return (
-    <View className="bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/60 rounded-2xl p-4 gap-1.5 mt-1">
+    <View className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-4 gap-1.5 mt-1">
       <View className="flex-row items-center gap-2">
         <Feather name="check-circle" size={15} color={APP_COLORS.primary} />
-        <Text className="text-sm font-bold text-purple-950 dark:text-purple-200">
+        <Text className="text-sm font-bold text-purple-700 dark:text-purple-300">
           Correct Answer: {answer ?? "N/A"}
         </Text>
       </View>
 
-      <Text className="text-xs text-stone-600 dark:text-stone-300 leading-5 pt-0.5">
-        <Text className="font-semibold">Explanation: </Text>
+      <Text className="text-xs text-muted-foreground leading-5 pt-0.5">
+        <Text className="font-semibold text-foreground">Explanation: </Text>
         {explanation || "No explanation provided."}
       </Text>
     </View>

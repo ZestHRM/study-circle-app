@@ -1,5 +1,6 @@
 import { Button, ErrorState, Icon, Spinner, Text } from "@/components/ui";
 import { useFileDownload } from "@/hooks";
+import { useThemePreference } from "@/lib/theme-preference";
 import * as React from "react";
 import {
   Animated,
@@ -42,6 +43,7 @@ export const NotesDetailBottomSheet = React.memo(
     onRetry,
     onTakeQuiz,
   }: NotesDetailBottomSheetProps) {
+    const { isDark } = useThemePreference();
     const { isDownloading, downloadFile } = useFileDownload();
 
     const translateY = React.useRef(new Animated.Value(0)).current;
@@ -107,6 +109,8 @@ export const NotesDetailBottomSheet = React.memo(
 
     if (!open) return null;
 
+    const sheetBgColor = isDark ? "#0c0a09" : "#ffffff";
+
     return (
       <Modal
         visible={open}
@@ -143,12 +147,14 @@ export const NotesDetailBottomSheet = React.memo(
                 overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
+                backgroundColor: sheetBgColor,
               }}
               className="bg-card"
             >
               {/* Header Bar with Interactive Drag Handle */}
               <View
                 {...panResponder.panHandlers}
+                style={{ backgroundColor: sheetBgColor }}
                 className="px-5 pt-2.5 pb-3 border-b border-border flex-row items-center justify-between bg-card"
               >
                 <View className="flex-1">
@@ -173,7 +179,7 @@ export const NotesDetailBottomSheet = React.memo(
               </View>
 
               {/* Scrollable Content Body - Native ScrollView that ALWAYS SCROLLS smoothly */}
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, backgroundColor: sheetBgColor }}>
                 {isLoading ? (
                   <View className="flex-1 items-center justify-center p-8">
                     <Spinner
@@ -195,7 +201,8 @@ export const NotesDetailBottomSheet = React.memo(
                   />
                 ) : (
                   <ScrollView
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, backgroundColor: sheetBgColor }}
+                    className="bg-card"
                     showsVerticalScrollIndicator={true}
                     keyboardShouldPersistTaps="handled"
                     bounces={true}
@@ -208,7 +215,10 @@ export const NotesDetailBottomSheet = React.memo(
               </View>
 
               {/* Fixed Action Buttons Footer Bar - Pinned at bottom of screen */}
-              <View className="px-5 py-3.5 bg-card border-t border-border flex-row items-center gap-3">
+              <View
+                style={{ backgroundColor: sheetBgColor }}
+                className="px-5 py-3.5 bg-card border-t border-border flex-row items-center gap-3"
+              >
                 <Button
                   variant="terracotta"
                   icon="download"

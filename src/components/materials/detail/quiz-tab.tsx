@@ -256,6 +256,8 @@ export const QuizTab = React.memo(function QuizTab({
     );
   }
 
+  const hasActiveAttempt = Boolean(quiz?.activeAttempt);
+
   return (
     <ScrollView
       className="flex-1 bg-background"
@@ -268,12 +270,23 @@ export const QuizTab = React.memo(function QuizTab({
         <View className="w-20 h-20 rounded-3xl bg-blue-100 dark:bg-blue-950/40 items-center justify-center">
           <Icon name="clipboard" size={38} color={APP_COLORS.quizBlue} />
         </View>
+
+        {hasActiveAttempt ? (
+          <View className="bg-orange-500/15 border border-orange-500/30 px-3.5 py-1 rounded-full flex-row items-center gap-1.5">
+            <Icon name="clock" size={13} color="#F97316" />
+            <Text className="text-xs font-bold text-orange-600 dark:text-orange-400">
+              Attempt In Progress
+            </Text>
+          </View>
+        ) : null}
+
         <Text variant="h2" className="text-center">
-          Your quiz is ready!
+          {hasActiveAttempt ? "Resume your practice quiz!" : "Your quiz is ready!"}
         </Text>
         <Text variant="muted" className="text-center leading-6">
-          We created a practice set from your material.{"\n"}Test your knowledge
-          and boost your score.
+          {hasActiveAttempt
+            ? "You have an active quiz attempt in progress.\nPick up right where you left off."
+            : "We created a practice set from your material.\nTest your knowledge and boost your score."}
         </Text>
 
         {/* Dynamic Quiz Stats */}
@@ -308,17 +321,29 @@ export const QuizTab = React.memo(function QuizTab({
         </View>
       </View>
 
-      {/* Start Button */}
+      {/* Start / Resume Button */}
       <Pressable
         onPress={() => onStartQuiz(quiz)}
         disabled={isStarting && startingQuizId === quiz.id}
-        className="bg-blue-600 rounded-2xl flex-row items-center justify-center gap-2 active:opacity-80 py-3.5"
+        className="bg-primary rounded-2xl flex-row items-center justify-center gap-2 active:opacity-80 py-3.5 shadow-md"
         style={{ height: 52 }}
       >
-        <Icon name="zap" size={16} color={APP_COLORS.white} />
+        <Icon
+          name={
+            isStarting && startingQuizId === quiz.id
+              ? "loader"
+              : hasActiveAttempt
+              ? "rotate-cw"
+              : "zap"
+          }
+          size={16}
+          color={APP_COLORS.white}
+        />
         <Text variant="subhead" className="text-white font-bold">
           {isStarting && startingQuizId === quiz.id
             ? "Starting…"
+            : hasActiveAttempt
+            ? "Resume Quiz →"
             : "Start Quiz →"}
         </Text>
       </Pressable>

@@ -543,7 +543,7 @@ export default function UploadMaterialScreen() {
           content={
             fetchedGeneratedNotes?.content || processedMaterial?.processedNotes
           }
-          pdfUrl={processedMaterial?.files?.[0]?.url}
+          pdfUrl={(fetchedGeneratedNotes as any)?.pdfUrl ?? undefined}
           isLoading={isFetchingGeneratedNotes}
           isError={isGeneratedNotesError}
           isQuizReady={isQuizReady}

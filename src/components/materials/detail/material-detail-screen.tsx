@@ -226,7 +226,7 @@ export function MaterialDetailScreen({
           (material as any)?.extractedText ??
           null
         }
-        pdfUrl={pdfUrl}
+        pdfUrl={(notesData as any)?.pdfUrl ?? undefined}
         isLoading={isNotesLoading}
         isError={isNotesError}
         isQuizReady={quizReady}

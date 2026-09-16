@@ -11,6 +11,9 @@
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.studycircleai.app",
       "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Study Circle AI uses your photo library so you can choose an image for your profile picture."
+      },
       "entitlements": {
         "aps-environment": "production"
       }

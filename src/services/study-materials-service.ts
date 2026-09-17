@@ -63,53 +63,40 @@ export type StudyMaterialsResponse = {
   };
 };
 
+export type CreateStudyMaterialPayload = {
+  title: string;
+  description?: string;
+  subjectId: string | number;
+  file: {
+    uri: string;
+    name: string;
+    type: string;
+  };
+};
+
 export const studyMaterialsApi = {
-  async list(
-    token: string,
-    params: {
-      page: number;
-      limit: number;
-      search?: string;
-    },
-  ) {
+  async list(params?: { page?: number; limit?: number; search?: string }) {
+    const queryParams = params ?? { page: 1, limit: 10 };
     const query = new URLSearchParams({
-      page: String(params.page),
-      limit: String(params.limit),
-      ...(params.search ? { search: params.search } : {}),
+      page: String(queryParams.page ?? 1),
+      limit: String(queryParams.limit ?? 10),
+      ...(queryParams.search ? { search: queryParams.search } : {}),
     }).toString();
-    console.log("Fetching study materials with query:", token);
-    return request<StudyMaterialsResponse>(`/study-materials?${query}`, {
-      token,
-    });
+    return request<StudyMaterialsResponse>(`/study-materials?${query}`);
   },
 
-  async getById(token: string, id: string) {
-    return request<StudyMaterial>(`/study-materials/${id}`, {
-      token,
-    });
+  async getById(id: string) {
+    return request<StudyMaterial>(`/study-materials/${id}`);
   },
 
-  async delete(token: string, id: string) {
+  async delete(id: string) {
     return request<MessageResponse | null>(`/study-materials/${id}`, {
       method: "DELETE",
-      token,
     });
   },
 
-  async create(
-    token: string,
-    payload: {
-      title: string;
-      description?: string;
-      subjectId: string | number;
-      file: {
-        uri: string;
-        name: string;
-        type: string;
-      };
-    },
-  ) {
-    if (!payload.file || !payload.file.uri) {
+  async create(payload: CreateStudyMaterialPayload) {
+    if (!payload || !payload.file || !payload.file.uri) {
       throw new Error("Kripya valid PDF file upload karein.");
     }
 
@@ -143,6 +130,6 @@ export const studyMaterialsApi = {
       } as unknown as Blob);
     }
 
-    return uploadFormData<StudyMaterial>("/study-materials", formData, token);
+    return uploadFormData<StudyMaterial>("/study-materials", formData);
   },
 };

@@ -43,6 +43,19 @@ export async function setupNotificationChannels(): Promise<void> {
  */
 export async function registerForPushNotificationsAsync(): Promise<PushNotificationRegistrationResult> {
   try {
+    const userToken = await getToken();
+    if (!userToken) {
+      console.log(
+        "[NotificationService] User is not authenticated. Deferring push notification permission request until after login.",
+      );
+      return {
+        granted: false,
+        expoPushToken: null,
+        fcmToken: null,
+        error: "User is not logged in",
+      };
+    }
+
     await setupNotificationChannels();
 
     if (!Device.isDevice) {
@@ -163,7 +176,6 @@ export type NotificationItem = {
   updatedAt?: string;
 };
 
-
 export type GetNotificationsParams = {
   page?: number;
   limit?: number;
@@ -267,14 +279,10 @@ export async function getNotifications(
     "/notifications",
     "GET",
     { page, limit },
-    { token },
+    token ? { token } : undefined,
   );
 }
 
-/**
- * API 2: Delete notifications (by array of IDs or "all")
- * DELETE /notifications
- */
 export async function deleteNotifications(
   payload: DeleteNotificationsPayload,
   token?: string | null,
@@ -283,14 +291,10 @@ export async function deleteNotifications(
     "/notifications",
     "DELETE",
     payload,
-    { token },
+    token ? { token } : undefined,
   );
 }
 
-/**
- * API 3: Mark notification(s) as read
- * POST /notifications/read
- */
 export async function markNotificationsAsRead(
   payload: MarkReadPayload,
   token?: string | null,
@@ -299,14 +303,10 @@ export async function markNotificationsAsRead(
     "/notifications/read",
     "POST",
     payload,
-    { token },
+    token ? { token } : undefined,
   );
 }
 
-/**
- * API 4: Get unread notifications count
- * GET /notifications/unread-count
- */
 export async function getUnreadNotificationsCount(
   token?: string | null,
 ): Promise<UnreadCountResponse> {
@@ -314,14 +314,10 @@ export async function getUnreadNotificationsCount(
     "/notifications/unread-count",
     "GET",
     {},
-    { token },
+    token ? { token } : undefined,
   );
 }
 
-/**
- * API 5: Register FCM Device Token
- * POST /notifications/register-device-token
- */
 export async function registerDeviceToken(
   payload: RegisterDeviceTokenPayload,
   token?: string | null,
@@ -330,7 +326,7 @@ export async function registerDeviceToken(
     "/notifications/register-device-token",
     "POST",
     payload,
-    { token },
+    token ? { token } : undefined,
   );
 }
 
@@ -342,4 +338,3 @@ export const notificationApi = {
   registerDeviceToken,
   syncPushTokenWithBackend,
 };
-

@@ -14,16 +14,15 @@ export function useQuizzesInfiniteQuery(params?: {
   subjectId?: string;
   status?: string;
 }) {
-  const { token } = useAuth();
   const limit = params?.limit ?? 8;
   const search = params?.search;
   const subjectId = params?.subjectId;
   const status = params?.status;
 
   const query = useInfiniteQuery({
-    queryKey: ['quizzes-infinite', token, limit, search, subjectId, status],
+    queryKey: ['quizzes-infinite', limit, search, subjectId, status],
     queryFn: async ({ pageParam = 1 }) =>
-      quizzesApi.list(token as string, {
+      quizzesApi.list({
         page: pageParam as number,
         limit,
         search: search || undefined,
@@ -44,7 +43,6 @@ export function useQuizzesInfiniteQuery(params?: {
         Math.ceil((lastPage.pagination.totalItems ?? 0) / limit);
       return currentPage < totalPages ? currentPage + 1 : undefined;
     },
-    enabled: Boolean(token),
   });
 
   const quizzes = React.useMemo(
@@ -98,13 +96,11 @@ export function useQuizzesQuery(params: {
   subjectId?: string;
   status?: string;
 }) {
-  const { token } = useAuth();
   const limit = params.limit ?? 8;
 
   const query = useQuery({
     queryKey: [
       'quizzes',
-      token,
       params.page,
       limit,
       params.search,
@@ -112,14 +108,13 @@ export function useQuizzesQuery(params: {
       params.status,
     ],
     queryFn: async () =>
-      quizzesApi.list(token as string, {
+      quizzesApi.list({
         page: params.page,
         limit,
         search: params.search || undefined,
         subjectId: params.subjectId || undefined,
         status: params.status || undefined,
       }),
-    enabled: Boolean(token),
     placeholderData: keepPreviousData,
   });
 
@@ -146,10 +141,7 @@ export function useQuizzesQuery(params: {
 }
 
 export function useStartQuizAttempt() {
-  const { token } = useAuth();
-
   return useMutation({
-    mutationFn: async (quizId: string) =>
-      quizzesApi.startAttempt(token as string, quizId),
+    mutationFn: async (quizId: string) => quizzesApi.startAttempt(quizId),
   });
 }

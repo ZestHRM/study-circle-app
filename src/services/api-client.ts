@@ -172,7 +172,10 @@ export const RestClient = async <T = unknown>(
   paramsOrData: any = {},
   options: RestClientOptions = {},
 ): Promise<T> => {
-  const token = options.token ?? (await getToken());
+  const token =
+    typeof options.token === "string" && options.token.trim().length > 0
+      ? options.token
+      : await getToken();
   const fullBase = (options.baseURL ?? API_BASE_URL).replace(/\/$/, "");
   const cleanUrl = url.startsWith("/") ? url : `/${url}`;
 
@@ -296,7 +299,10 @@ export async function uploadFormData<T>(
   method: "POST" | "PATCH" | "PUT" = "POST",
 ): Promise<T> {
   const fullUrl = endpoint(path);
-  const authToken = token ?? (await getToken());
+  const authToken =
+    typeof token === "string" && token.trim().length > 0
+      ? token
+      : await getToken();
   const hasToken = Boolean(authToken);
 
   console.log(

@@ -54,36 +54,30 @@ export interface VerifyPaymentResponse {
 }
 
 export const subscriptionsApi = {
-  getPlans(token?: string | null): Promise<SubscriptionPlan[]> {
+  getPlans(): Promise<SubscriptionPlan[]> {
     return RestClient<SubscriptionPlan[]>(
       "/subscriptions/plans",
       "GET",
-      {},
-      { token },
     );
   },
 
   subscribe(
     payload: SubscribePlanRequest,
-    token?: string | null,
   ): Promise<SubscribePlanResponse> {
     return RestClient<SubscribePlanResponse>(
       "/subscriptions/subscribe",
       "POST",
       { planId: payload.planId },
-      { token },
     );
   },
 
   verifyPayment(
     payload: VerifyPaymentRequest,
-    token?: string | null,
   ): Promise<VerifyPaymentResponse> {
     return RestClient<VerifyPaymentResponse>(
       "/subscriptions/verify-payment",
       "POST",
       payload,
-      { token },
     );
   },
 };

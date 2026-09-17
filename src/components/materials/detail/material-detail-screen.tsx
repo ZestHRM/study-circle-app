@@ -2,7 +2,9 @@ import { NotesDetailBottomSheet } from "@/components/notes/notes-detail-bottom-s
 import { StartQuizSheet } from "@/components/quizzes";
 import { AppScreen } from "@/components/ui/app-screen";
 import { Spinner } from "@/components/ui/spinner";
+import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import {
+  useDeleteStudyMaterial,
   useQuizzesInfiniteQuery,
   useStartQuizAttempt,
   useStudyMaterialDetail,
@@ -134,9 +136,35 @@ export function MaterialDetailScreen({
     [queryClient],
   );
 
+  const deleteMaterialMutation = useDeleteStudyMaterial();
+  const confirm = useConfirmDialog();
+
+  const handleDeleteMaterial = React.useCallback(async () => {
+    if (!material) return;
+    const confirmed = await confirm({
+      title: "Delete Study Material",
+      description: `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await deleteMaterialMutation.mutateAsync(material.id);
+      router.back();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to delete the study material right now.";
+      showErrorToast("Delete Failed", message);
+    }
+  }, [confirm, deleteMaterialMutation, material, title, router]);
+
   const headerElement = React.useMemo(
-    () => <DetailHeader title={title} onBack={handleBack} />,
-    [title, handleBack],
+    () => <DetailHeader title={title} onBack={handleBack} onDelete={handleDeleteMaterial} />,
+    [title, handleBack, handleDeleteMaterial],
   );
 
   const loadingHeaderElement = React.useMemo(

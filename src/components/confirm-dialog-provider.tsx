@@ -41,18 +41,28 @@ export function ConfirmDialogProvider({
     null,
   );
   const resolverRef = React.useRef<((confirmed: boolean) => void) | null>(null);
+  const isConfirmedRef = React.useRef<boolean>(false);
 
-  const closeDialog = React.useCallback((confirmed: boolean) => {
-    const resolver = resolverRef.current;
-    resolverRef.current = null;
-    setOpen(false);
-    setOptions(null);
-    resolver?.(confirmed);
+  const handleActionClick = React.useCallback((confirmed: boolean) => {
+    isConfirmedRef.current = confirmed;
+  }, []);
+
+  const handleOpenChange = React.useCallback((isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      const resolver = resolverRef.current;
+      const result = isConfirmedRef.current;
+      resolverRef.current = null;
+      isConfirmedRef.current = false;
+      setOptions(null);
+      resolver?.(result);
+    }
   }, []);
 
   const confirm = React.useCallback((dialogOptions: ConfirmDialogOptions) => {
     return new Promise<boolean>((resolve) => {
       resolverRef.current = resolve;
+      isConfirmedRef.current = false;
       setOptions(dialogOptions);
       setOpen(true);
     });
@@ -62,15 +72,7 @@ export function ConfirmDialogProvider({
     <ConfirmDialogContext.Provider value={{ confirm }}>
       {children}
 
-      <AlertDialog
-        open={open}
-        onOpenChange={(isOpen) => {
-          setOpen(isOpen);
-          if (!isOpen && resolverRef.current) {
-            closeDialog(false);
-          }
-        }}
-      >
+      <AlertDialog open={open} onOpenChange={handleOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -83,14 +85,18 @@ export function ConfirmDialogProvider({
             ) : null}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onPress={() => closeDialog(false)}>
+            <AlertDialogCancel
+              onPressIn={() => handleActionClick(false)}
+              onPress={() => handleActionClick(false)}
+            >
               <Text>{options?.cancelText ?? DEFAULT_OPTIONS.cancelText}</Text>
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive active:bg-destructive/90"
-              onPress={() => closeDialog(true)}
+              onPressIn={() => handleActionClick(true)}
+              onPress={() => handleActionClick(true)}
             >
-              <Text className="text-white">
+              <Text className="text-white" style={{ color: "#ffffff" }}>
                 {options?.confirmText ?? DEFAULT_OPTIONS.confirmText}
               </Text>
             </AlertDialogAction>

@@ -11,8 +11,8 @@ import {
   useUnreadCountQuery,
 } from "@/hooks";
 import { useRefreshControl } from "@/hooks/use-refresh-control";
-import { formatRelativeTime } from "@/lib/utils/formatters";
 import { useThemePreference } from "@/lib/theme-preference";
+import { formatRelativeTime } from "@/lib/utils/formatters";
 import { NotificationItem, NotificationType } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
@@ -155,7 +155,6 @@ export default function NotificationsScreen() {
           className="p-2 rounded-lg bg-red-100 dark:bg-red-950/60 items-center justify-center active:opacity-70"
           hitSlop={8}
         >
-
           <Icon name="trash-2" size={18} color="error" />
         </Pressable>
       </View>

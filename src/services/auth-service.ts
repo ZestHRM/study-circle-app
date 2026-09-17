@@ -19,7 +19,7 @@ export const authApi = {
     );
   },
   me(token?: string) {
-    return RestClient<User>("/auth/me", "GET", {}, { token });
+    return RestClient<User>("/auth/me", "GET", {}, token ? { token } : undefined);
   },
   verifyEmail(payload: { email: string; code: string }) {
     return RestClient<AuthResponse>("/auth/verify-email", "POST", payload);

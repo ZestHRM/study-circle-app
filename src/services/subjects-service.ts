@@ -33,38 +33,15 @@ export type SubjectsResponse = {
 };
 
 export const subjectsApi = {
-  async list(
-    token?: string,
-    params: {
-      page: number;
-      limit: number;
-      search?: string;
-    } = { page: 1, limit: 50 }
-  ) {
-    return RestClient<SubjectsResponse>("/subjects", "GET", params, { token });
+  async list(params?: { page?: number; limit?: number; search?: string }) {
+    return RestClient<SubjectsResponse>("/subjects", "GET", params ?? { page: 1, limit: 50 });
   },
 
-  async create(
-    token?: string,
-    payload?: {
-      name: string;
-      description?: string;
-      userId?: string;
-    }
-  ) {
-    // Overload support if token is omitted
-    const actualPayload = typeof token === "object" ? token : payload;
-    const actualToken = typeof token === "string" ? token : undefined;
-
-    return RestClient<Subject>(
-      "/subjects",
-      "POST",
-      {
-        name: actualPayload?.name,
-        description: actualPayload?.description ?? "",
-        userId: actualPayload?.userId ?? "",
-      },
-      { token: actualToken }
-    );
+  async create(payload: { name: string; description?: string; userId?: string }) {
+    return RestClient<Subject>("/subjects", "POST", {
+      name: payload.name,
+      description: payload.description ?? "",
+      userId: payload.userId ?? "",
+    });
   },
 };

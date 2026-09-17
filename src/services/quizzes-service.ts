@@ -1,8 +1,8 @@
-import { request } from './api-client';
+import { request } from "./api-client";
 
-export type QuizDifficultyLevel = 'EASY' | 'MEDIUM' | 'HARD';
+export type QuizDifficultyLevel = "EASY" | "MEDIUM" | "HARD";
 
-export type QuizStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type QuizStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
 export type QuizAttempt = {
   id: string;
@@ -17,7 +17,10 @@ export type QuizAttempt = {
   }[];
 };
 
-export type QuizQuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
+export type QuizQuestionType =
+  | "MULTIPLE_CHOICE"
+  | "TRUE_FALSE"
+  | "SHORT_ANSWER";
 
 export type QuizQuestion = {
   id: string;
@@ -33,12 +36,12 @@ export type QuizQuestion = {
 };
 
 export type QuizAnswerCorrectness =
-  | 'CORRECT'
-  | 'INCORRECT'
-  | 'PARTIALLY_CORRECT'
-  | 'NONE';
+  | "CORRECT"
+  | "INCORRECT"
+  | "PARTIALLY_CORRECT"
+  | "NONE";
 
-export type QuizAnswerGrading = 'EMBEDDING' | 'GPT' | 'NONE' | 'MATCH';
+export type QuizAnswerGrading = "EMBEDDING" | "GPT" | "NONE" | "MATCH";
 
 export type QuizAttemptAnswer = {
   id: string;
@@ -50,7 +53,13 @@ export type QuizAttemptAnswer = {
   timeSpent: number | null;
   question: Pick<
     QuizQuestion,
-    'id' | 'question' | 'type' | 'answer' | 'explanation' | 'aiConfidence' | 'topic'
+    | "id"
+    | "question"
+    | "type"
+    | "answer"
+    | "explanation"
+    | "aiConfidence"
+    | "topic"
   >;
 };
 
@@ -115,59 +124,54 @@ export type QuizAttemptResultsResponse = {
   };
 };
 
+export type GetQuizzesParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  subjectId?: string;
+  status?: string;
+};
+
 export const quizzesApi = {
-  async list(
-    token: string,
-    params: {
-      page: number;
-      limit: number;
-      search?: string;
-      subjectId?: string;
-      status?: string;
-    }
-  ) {
+  async list(params?: GetQuizzesParams) {
+    const queryParams = params ?? { page: 1, limit: 10 };
     const query = new URLSearchParams({
-      page: String(params.page),
-      limit: String(params.limit),
-      ...(params.search ? { search: params.search } : {}),
-      ...(params.subjectId ? { subjectId: params.subjectId } : {}),
-      ...(params.status ? { status: params.status } : {}),
+      page: String(queryParams.page ?? 1),
+      limit: String(queryParams.limit ?? 10),
+      ...(queryParams.search ? { search: queryParams.search } : {}),
+      ...(queryParams.subjectId ? { subjectId: queryParams.subjectId } : {}),
+      ...(queryParams.status ? { status: queryParams.status } : {}),
     }).toString();
 
-    return request<QuizzesResponse>(`/quizzes?${query}`, {
-      token,
-    });
+    return request<QuizzesResponse>(`/quizzes?${query}`);
   },
-  async startAttempt(token: string, quizId: string) {
+
+  async startAttempt(quizId: string) {
     return request<QuizAttempt>(`/quizzes/${quizId}/attempts`, {
-      method: 'POST',
-      token,
+      method: "POST",
     });
   },
-  async getById(token: string, quizId: string) {
-    return request<QuizDetailsResponse>(`/quizzes/${quizId}`, {
-      token,
-    });
+
+  async getById(quizId: string) {
+    return request<QuizDetailsResponse>(`/quizzes/${quizId}`);
   },
+
   async getAttempts(
-    token: string,
     quizId: string,
-    params: {
-      page: number;
-      limit: number;
-    }
+    params?: { page?: number; limit?: number },
   ) {
+    const queryParams = params ?? { page: 1, limit: 10 };
     const query = new URLSearchParams({
-      page: String(params.page),
-      limit: String(params.limit),
+      page: String(queryParams.page ?? 1),
+      limit: String(queryParams.limit ?? 10),
     }).toString();
 
-    return request<QuizAttemptsResponse>(`/quizzes/${quizId}/attempts?${query}`, {
-      token,
-    });
+    return request<QuizAttemptsResponse>(
+      `/quizzes/${quizId}/attempts?${query}`,
+    );
   },
+
   async saveAnswers(
-    token: string,
     quizId: string,
     attemptId: string,
     payload: {
@@ -175,33 +179,30 @@ export const quizzesApi = {
         questionId: string;
         answer: string;
       }[];
-    }
+    },
   ) {
-    return request<QuizAttempt>(`/quizzes/${quizId}/attempts/${attemptId}/save`, {
-      method: 'POST',
-      token,
-      body: payload,
-    });
+    return request<QuizAttempt>(
+      `/quizzes/${quizId}/attempts/${attemptId}/save`,
+      {
+        method: "POST",
+        body: payload,
+      },
+    );
   },
+
   async getAttemptResults(
-    token: string,
     quizId: string,
     attemptId: string,
-    params: {
-      page: number;
-      limit: number;
-    }
+    params?: { page?: number; limit?: number },
   ) {
+    const queryParams = params ?? { page: 1, limit: 10 };
     const query = new URLSearchParams({
-      page: String(params.page),
-      limit: String(params.limit),
+      page: String(queryParams.page ?? 1),
+      limit: String(queryParams.limit ?? 10),
     }).toString();
 
     return request<QuizAttemptResultsResponse>(
       `/quizzes/${quizId}/attempts/${attemptId}/results?${query}`,
-      {
-        token,
-      }
     );
   },
 };

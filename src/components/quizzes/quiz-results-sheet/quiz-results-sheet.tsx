@@ -34,13 +34,13 @@ export function QuizResultsSheet({
   const [selectedAttemptId, setSelectedAttemptId] = React.useState('');
 
   const attemptsQuery = useQuery({
-    queryKey: ['quiz-attempts', token, quizId],
+    queryKey: ['quiz-attempts', quizId],
     queryFn: async () =>
-      quizzesApi.getAttempts(token as string, quizId as string, {
+      quizzesApi.getAttempts(quizId as string, {
         page: 1,
         limit: MAX_QUIZ_ATTEMPTS,
       }),
-    enabled: open && Boolean(token) && Boolean(quizId),
+    enabled: open && Boolean(quizId),
   });
 
   React.useEffect(() => {
@@ -58,13 +58,13 @@ export function QuizResultsSheet({
   const resultsLimit = Math.max(totalQuestions, 1);
 
   const resultsQuery = useQuery({
-    queryKey: ['quiz-attempt-results', token, quizId, selectedAttemptId, resultsLimit],
+    queryKey: ['quiz-attempt-results', quizId, selectedAttemptId, resultsLimit],
     queryFn: async () =>
-      quizzesApi.getAttemptResults(token as string, quizId as string, selectedAttemptId, {
+      quizzesApi.getAttemptResults(quizId as string, selectedAttemptId, {
         page: 1,
         limit: resultsLimit,
       }),
-    enabled: open && Boolean(token) && Boolean(quizId) && Boolean(selectedAttemptId),
+    enabled: open && Boolean(quizId) && Boolean(selectedAttemptId),
   });
 
   const results = resultsQuery.data?.data ?? [];

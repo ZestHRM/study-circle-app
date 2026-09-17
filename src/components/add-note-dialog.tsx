@@ -81,13 +81,13 @@ export function AddNoteDialog({
   }, []);
 
   const subjectsQuery = useQuery({
-    queryKey: ["subjects", token],
+    queryKey: ["subjects"],
     queryFn: async () =>
-      subjectsApi.list(token as string, {
+      subjectsApi.list({
         page: 1,
         limit: 200,
       }),
-    enabled: open && Boolean(token),
+    enabled: open,
   });
 
   const subjectOptions = React.useMemo(

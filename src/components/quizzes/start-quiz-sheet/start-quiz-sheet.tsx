@@ -54,10 +54,9 @@ export function StartQuizSheet({
   }, [secondsLeft]);
 
   const quizQuery = useQuery({
-    queryKey: ["quiz-details", token, attempt?.quizId],
-    queryFn: async () =>
-      quizzesApi.getById(token as string, attempt?.quizId as string),
-    enabled: open && Boolean(token) && Boolean(attempt?.quizId),
+    queryKey: ["quiz-details", attempt?.quizId],
+    queryFn: async () => quizzesApi.getById(attempt?.quizId as string),
+    enabled: open && Boolean(attempt?.quizId),
   });
 
   const saveMutation = useMutation({
@@ -66,21 +65,17 @@ export function StartQuizSheet({
       attemptId: string;
       answers: { questionId: string; answer: string }[];
     }) => {
-      return quizzesApi.saveAnswers(
-        token as string,
-        payload.quizId,
-        payload.attemptId,
-        {
-          answers: payload.answers,
-        },
-      );
+      return quizzesApi.saveAnswers(payload.quizId, payload.attemptId, {
+        answers: payload.answers,
+      });
     },
   });
 
   const rawData = quizQuery.data as any;
   const quizDetails = rawData?.data ?? rawData;
   const questions: QuizQuestion[] = quizDetails?.quizQuestions ?? [];
-  const subjectName = quizDetails?.subject?.name ?? quizDetails?.subjectName ?? "Physics";
+  const subjectName =
+    quizDetails?.subject?.name ?? quizDetails?.subjectName ?? "Physics";
   const materialTitle = quizDetails?.title ?? "Laws of Motion";
   const difficultyLevel = quizDetails?.difficultyLevel ?? "Medium";
 
@@ -359,7 +354,11 @@ export function StartQuizSheet({
                 <Text variant="subhead" className="font-bold">
                   {subjectName}
                 </Text>
-                <Icon name="chevron-right" size={12} className="text-muted-foreground" />
+                <Icon
+                  name="chevron-right"
+                  size={12}
+                  className="text-muted-foreground"
+                />
                 <Text
                   variant="subhead"
                   className="text-primary font-semibold flex-1"
@@ -371,12 +370,18 @@ export function StartQuizSheet({
 
               {/* Title & Timer Row */}
               <View className="gap-1">
-                <Text variant="h1" className="text-3xl font-black tracking-tight">
+                <Text
+                  variant="h1"
+                  className="text-3xl font-black tracking-tight"
+                >
                   Practice Quiz
                 </Text>
 
                 <View className="flex-row items-center justify-between mt-1">
-                  <Text variant="subhead" className="text-primary font-bold text-base">
+                  <Text
+                    variant="subhead"
+                    className="text-primary font-bold text-base"
+                  >
                     Question {currentQuestionIndex + 1} of {totalQuestions}
                   </Text>
                   <View className="flex-row items-center gap-1.5 bg-muted px-3 py-1.5 rounded-full border border-border">
@@ -404,7 +409,10 @@ export function StartQuizSheet({
               {/* Tag Pills Row: Difficulty + Topic */}
               <View className="flex-row items-center gap-2">
                 <View className="bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/30 px-4 py-1.5 rounded-full">
-                  <Text variant="caption" className="font-bold text-amber-600 dark:text-amber-400">
+                  <Text
+                    variant="caption"
+                    className="font-bold text-amber-600 dark:text-amber-400"
+                  >
                     {difficultyLevel}
                   </Text>
                 </View>
@@ -441,7 +449,11 @@ export function StartQuizSheet({
                   disabled={isFirstQuestion || saveMutation.isPending}
                   className="px-5 py-4 rounded-2xl border border-border bg-card flex-row items-center justify-center gap-1.5 active:opacity-80 disabled:opacity-40 shadow-2xs"
                 >
-                  <Icon name="chevron-left" size={18} className="text-foreground" />
+                  <Icon
+                    name="chevron-left"
+                    size={18}
+                    className="text-foreground"
+                  />
                   <Text variant="subhead" className="font-bold">
                     Prev
                   </Text>
@@ -454,7 +466,7 @@ export function StartQuizSheet({
                     "flex-1 rounded-2xl py-4 flex-row items-center justify-center gap-2 shadow-md active:opacity-90",
                     !currentAnswer.trim() || saveMutation.isPending
                       ? "bg-muted border border-border"
-                      : "bg-primary"
+                      : "bg-primary",
                   )}
                 >
                   <Text
@@ -463,7 +475,7 @@ export function StartQuizSheet({
                       "font-bold text-base",
                       !currentAnswer.trim() || saveMutation.isPending
                         ? "text-muted-foreground"
-                        : "text-primary-foreground"
+                        : "text-primary-foreground",
                     )}
                   >
                     {isLastQuestion ? "Submit Quiz →" : "Submit answer →"}
@@ -479,7 +491,11 @@ export function StartQuizSheet({
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center gap-3">
                     <View className="w-9 h-9 rounded-2xl bg-primary/10 items-center justify-center">
-                      <Icon name="bar-chart-2" size={18} color={APP_COLORS.primary} />
+                      <Icon
+                        name="bar-chart-2"
+                        size={18}
+                        color={APP_COLORS.primary}
+                      />
                     </View>
                     <Text variant="h4" className="font-bold text-base">
                       View explanation
@@ -498,8 +514,12 @@ export function StartQuizSheet({
                     explanation={currentQuestion.explanation}
                   />
                 ) : (
-                  <Text variant="muted" className="text-xs text-muted-foreground">
-                    See the correct answer and a detailed explanation after you submit.
+                  <Text
+                    variant="muted"
+                    className="text-xs text-muted-foreground"
+                  >
+                    See the correct answer and a detailed explanation after you
+                    submit.
                   </Text>
                 )}
               </Pressable>

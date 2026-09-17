@@ -6,11 +6,13 @@ import { Pressable, View } from "react-native";
 interface DetailHeaderProps {
   title: string;
   onBack: () => void;
+  onDelete?: () => void;
 }
 
 export const DetailHeader = React.memo(function DetailHeader({
   title,
   onBack,
+  onDelete,
 }: DetailHeaderProps) {
   return (
     <View className="flex-row items-center justify-between px-4 py-3 bg-background">
@@ -28,12 +30,17 @@ export const DetailHeader = React.memo(function DetailHeader({
       >
         {title}
       </Text>
-      <Pressable
-        hitSlop={12}
-        className="w-10 h-10 rounded-full items-center justify-center active:opacity-60"
-      >
-        <Icon name="more-vertical" size={20} className="text-muted-foreground" />
-      </Pressable>
+      {onDelete ? (
+        <Pressable
+          onPress={onDelete}
+          hitSlop={12}
+          className="w-10 h-10 rounded-full items-center justify-center active:opacity-60"
+        >
+          <Icon name="trash-2" size={20} className="text-red-500" />
+        </Pressable>
+      ) : (
+        <View className="w-10" />
+      )}
     </View>
   );
 });

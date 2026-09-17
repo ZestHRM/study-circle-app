@@ -116,6 +116,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (mounted && storedToken) {
           setToken(storedToken);
+          try {
+            const pushResult = await registerForPushNotificationsAsync();
+            const pushToken = pushResult.fcmToken || pushResult.expoPushToken;
+            if (pushToken) {
+              void syncPushTokenWithBackend(pushToken, storedToken);
+            }
+          } catch (err) {
+            console.warn('[AuthProvider] Failed to sync push token during session restore:', err);
+          }
         }
       } catch {
         await deleteStoredToken();

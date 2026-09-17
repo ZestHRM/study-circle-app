@@ -94,13 +94,6 @@ export default function AppTabs() {
       />
 
       <Tabs.Screen
-        name="explore"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
         name="more"
         options={{
           title: "Profile",

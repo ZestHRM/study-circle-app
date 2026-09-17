@@ -43,6 +43,19 @@ export async function setupNotificationChannels(): Promise<void> {
  */
 export async function registerForPushNotificationsAsync(): Promise<PushNotificationRegistrationResult> {
   try {
+    const userToken = await getToken();
+    if (!userToken) {
+      console.log(
+        "[NotificationService] User is not authenticated. Deferring push notification permission request until after login.",
+      );
+      return {
+        granted: false,
+        expoPushToken: null,
+        fcmToken: null,
+        error: "User is not logged in",
+      };
+    }
+
     await setupNotificationChannels();
 
     if (!Device.isDevice) {

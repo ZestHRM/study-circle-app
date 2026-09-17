@@ -90,8 +90,8 @@ export default function RootLayout() {
       }),
   );
 
-  // Initialize push notification listeners and channels
-  usePushNotifications(true);
+  // Initialize push notification listeners without requesting permissions on boot
+  usePushNotifications(false);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

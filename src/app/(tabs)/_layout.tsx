@@ -1,7 +1,7 @@
-import AppTabs from '@/components/app-tabs';
-import { useAuth } from '@/lib/auth';
-import { Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import AppTabs from "@/components/app-tabs";
+import { useAuth } from "@/lib/auth";
+import { Redirect } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 
 export default function TabLayout() {
   const { isLoading, token } = useAuth();

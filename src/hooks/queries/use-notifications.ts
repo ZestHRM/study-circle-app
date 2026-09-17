@@ -30,10 +30,7 @@ export function useNotificationsQuery(params?: GetNotificationsParams) {
   const notifications: NotificationItem[] = React.useMemo(() => {
     if (!query.data) return [];
     return (
-      query.data.data ??
-      query.data.notifications ??
-      query.data.items ??
-      []
+      query.data.data ?? query.data.notifications ?? query.data.items ?? []
     );
   }, [query.data]);
 

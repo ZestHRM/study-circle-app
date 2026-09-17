@@ -159,7 +159,6 @@ export default function UploadMaterialScreen() {
     async function checkStatus() {
       try {
         const material = await studyMaterialsApi.getById(
-          token as string,
           createdMaterialId as string,
         );
         if (!isMounted) return;
@@ -345,7 +344,7 @@ export default function UploadMaterialScreen() {
       setSubmitting(true);
       setSubmitError(null);
 
-      const result = await studyMaterialsApi.create(token, {
+      const result = await studyMaterialsApi.create({
         title: values.title.trim(),
         subjectId: values.subjectId,
         file: {

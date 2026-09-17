@@ -23,21 +23,15 @@ export type ChangePasswordPayload = {
 export const profileApi = {
   async changePassword(
     payload: ChangePasswordPayload,
-    token?: string | null,
   ): Promise<MessageResponse> {
-    return RestClient<MessageResponse>("/profile/password", "PUT", payload, {
-      token,
-    });
+    return RestClient<MessageResponse>("/profile/password", "PUT", payload);
   },
 
-  async uploadPicture(
-    file: {
-      uri: string;
-      name?: string;
-      type?: string;
-    },
-    token?: string | null,
-  ): Promise<UploadProfilePictureResponse> {
+  async uploadPicture(file: {
+    uri: string;
+    name?: string;
+    type?: string;
+  }): Promise<UploadProfilePictureResponse> {
     const fileName = file.name || "profile.jpg";
     const fileType = file.type || "image/jpeg";
 
@@ -66,7 +60,7 @@ export const profileApi = {
     return uploadFormData<UploadProfilePictureResponse>(
       "/profile/picture",
       formData,
-      token,
+      undefined,
       "POST",
     );
   },

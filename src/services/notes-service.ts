@@ -60,63 +60,57 @@ export type StudyNotesDetailResponse = {
   data: StudyNotesDetail;
 };
 
+export type GetNotesParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  subjectId?: string;
+};
+
+export type CreateNotePayload = {
+  content: string;
+  subjectId: number;
+};
+
+export type UpdateNotePayload = {
+  content?: string;
+  subjectId?: number;
+};
+
 export const notesApi = {
-  async list(
-    token: string,
-    params: {
-      page: number;
-      limit: number;
-      search?: string;
-      subjectId?: string;
-    },
-  ) {
+  async list(params?: GetNotesParams) {
+    const queryParams = params ?? { page: 1, limit: 10 };
     const query = new URLSearchParams({
-      page: String(params.page),
-      limit: String(params.limit),
-      ...(params.search ? { search: params.search } : {}),
-      ...(params.subjectId ? { subjectId: params.subjectId } : {}),
+      page: String(queryParams.page ?? 1),
+      limit: String(queryParams.limit ?? 10),
+      ...(queryParams.search ? { search: queryParams.search } : {}),
+      ...(queryParams.subjectId ? { subjectId: queryParams.subjectId } : {}),
     }).toString();
 
-    return request<NotesResponse>(`/notes?${query}`, {
-      token,
-    });
+    return request<NotesResponse>(`/notes?${query}`);
   },
-  async getById(token: string, notesId: string) {
-    return request<StudyNotesDetailResponse>(`/notes/${notesId}`, {
-      token,
-    });
+
+  async getById(notesId: string) {
+    return request<StudyNotesDetailResponse>(`/notes/${notesId}`);
   },
-  async create(
-    token: string,
-    payload: {
-      content: string;
-      subjectId: number;
-    },
-  ) {
+
+  async create(payload: CreateNotePayload) {
     return request<Note>("/notes", {
       method: "POST",
-      token,
       body: payload,
     });
   },
-  async update(
-    token: string,
-    id: string,
-    payload: {
-      content?: string;
-      subjectId?: number;
-    },
-  ) {
+
+  async update(id: string, payload: UpdateNotePayload) {
     return request<Note>(`/notes/${id}`, {
       method: "PUT",
-      token,
       body: payload,
     });
   },
-  async delete(token: string, id: string) {
+
+  async delete(id: string) {
     return request<MessageResponse | null>(`/notes/${id}`, {
       method: "DELETE",
-      token,
     });
   },
 };

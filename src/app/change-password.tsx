@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { WatermarkBackground } from "@/components/ui/watermark-background";
 import { getErrorMessage } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
 import { useThemePreference } from "@/lib/theme-preference";
 import { showErrorToast, showSuccessToast } from "@/lib/utils/toast";
 import { changePasswordSchema, type ChangePasswordValues } from "@/schemas";
@@ -25,7 +24,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
-  const { token } = useAuth();
   const { isDark } = useThemePreference();
   const [generalError, setGeneralError] = React.useState<string | null>(null);
 
@@ -48,14 +46,11 @@ export default function ChangePasswordScreen() {
   const onSubmit = async (data: ChangePasswordValues) => {
     setGeneralError(null);
     try {
-      await profileApi.changePassword(
-        {
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-          confirmPassword: data.confirmPassword,
-        },
-        token,
-      );
+      await profileApi.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword,
+      });
 
       showSuccessToast(
         "Password Updated",

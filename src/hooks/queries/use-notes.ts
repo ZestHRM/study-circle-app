@@ -1,4 +1,3 @@
-import { useAuth } from "@/lib/auth";
 import { showSuccessToast } from "@/lib/utils/toast";
 import { notesApi, type StudyMaterial } from "@/services";
 import {
@@ -16,26 +15,17 @@ export function useNotesQuery(params: {
   search?: string;
   subjectId?: string;
 }) {
-  const { token } = useAuth();
   const limit = params.limit ?? 8;
 
   const query = useQuery({
-    queryKey: [
-      "notes",
-      token,
-      params.page,
-      limit,
-      params.search,
-      params.subjectId,
-    ],
+    queryKey: ["notes", params.page, limit, params.search, params.subjectId],
     queryFn: async () =>
-      notesApi.list(token as string, {
+      notesApi.list({
         page: params.page,
         limit,
         search: params.search || undefined,
         subjectId: params.subjectId || undefined,
       }),
-    enabled: Boolean(token),
     placeholderData: keepPreviousData,
   });
 
@@ -68,19 +58,18 @@ export function useNotesInfiniteQuery(params?: {
   search?: string;
   subjectId?: string;
 }) {
-  const { token } = useAuth();
   const limit = params?.limit ?? 8;
   const search = params?.search;
   const subjectId = params?.subjectId;
 
   const query = useInfiniteQuery({
-    queryKey: ["notes-infinite", token, limit, search, subjectId],
+    queryKey: ["notes-infinite", limit, search, subjectId],
     queryFn: async ({ pageParam = 1 }) =>
-      notesApi.list(token as string, {
+      notesApi.list({
         page: pageParam as number,
         limit,
         search: search || undefined,
-        subjectId: subjectId || undefined,
+        subjectId: search || undefined,
       }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
@@ -96,15 +85,15 @@ export function useNotesInfiniteQuery(params?: {
         Math.ceil((lastPage.pagination.totalItems ?? 0) / limit);
       return currentPage < totalPages ? currentPage + 1 : undefined;
     },
-    enabled: Boolean(token),
   });
 
   const notes = React.useMemo(
     () => query.data?.pages.flatMap((page) => page.data) ?? [],
-    [query.data]
+    [query.data],
   );
 
-  const totalItems = query.data?.pages[0]?.pagination.totalItems ?? notes.length;
+  const totalItems =
+    query.data?.pages[0]?.pagination.totalItems ?? notes.length;
   const isRefreshing = query.isRefetching && !query.isFetchingNextPage;
 
   const fetchNextPage = React.useCallback(() => {
@@ -131,12 +120,11 @@ export function useNotesInfiniteQuery(params?: {
 }
 
 export function useCreateNote() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: { content: string; subjectId: number }) => {
-      return notesApi.create(token as string, payload);
+      return notesApi.create(payload);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["notes"] });
@@ -146,7 +134,6 @@ export function useCreateNote() {
 }
 
 export function useUpdateNote() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -155,7 +142,7 @@ export function useUpdateNote() {
       content: string;
       subjectId: number;
     }) => {
-      return notesApi.update(token as string, payload.id, {
+      return notesApi.update(payload.id, {
         content: payload.content,
         subjectId: payload.subjectId,
       });
@@ -168,12 +155,11 @@ export function useUpdateNote() {
 }
 
 export function useDeleteNote() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      return notesApi.delete(token as string, id);
+      return notesApi.delete(id);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["notes"] });
@@ -182,24 +168,20 @@ export function useDeleteNote() {
 }
 
 export function useStudyNotesQuery(notesId?: string | null) {
-  const { token } = useAuth();
-
   return useQuery({
-    queryKey: ["study-notes-detail", token, notesId],
+    queryKey: ["study-notes-detail", notesId],
     queryFn: async () => {
       if (!notesId) return null;
-      const res = await notesApi.getById(token as string, notesId);
+      const res = await notesApi.getById(notesId);
       return res.data;
     },
-    enabled: Boolean(token && notesId),
+    enabled: Boolean(notesId),
   });
 }
 
 export function useStudyMaterialNotesQuery(
   materialInput?: StudyMaterial | string | null,
 ) {
-  const { token } = useAuth();
-
   const materialId =
     typeof materialInput === "string" ? materialInput : materialInput?.id;
   const explicitNotesId =
@@ -219,15 +201,15 @@ export function useStudyMaterialNotesQuery(
   return useQuery({
     queryKey: [
       "study-notes-detail",
-      token,
       explicitNotesId,
       materialId,
       Boolean(fileContent),
     ],
     queryFn: async () => {
-      if (!token) return null;
-
-      const objInput = typeof materialInput === "object" && materialInput !== null ? (materialInput as any) : null;
+      const objInput =
+        typeof materialInput === "object" && materialInput !== null
+          ? (materialInput as any)
+          : null;
 
       // Strategy 0: Direct embedded notes content on material object
       const embeddedContent =
@@ -236,7 +218,11 @@ export function useStudyMaterialNotesQuery(
         objInput?.processedNotes ||
         objInput?.notesContent;
 
-      if (embeddedContent && typeof embeddedContent === "string" && embeddedContent.trim().length > 0) {
+      if (
+        embeddedContent &&
+        typeof embeddedContent === "string" &&
+        embeddedContent.trim().length > 0
+      ) {
         return {
           content: embeddedContent,
           title: objInput?.title || "Notes Detail",
@@ -248,12 +234,15 @@ export function useStudyMaterialNotesQuery(
       // Strategy 1: Try explicit notes ID if available
       if (explicitNotesId) {
         try {
-          const notesRes = await notesApi.getById(token, explicitNotesId);
+          const notesRes = await notesApi.getById(explicitNotesId);
           const rawNote = notesRes?.data || notesRes;
           if (rawNote?.content) {
             return {
               content: rawNote.content,
-              title: rawNote.studyMaterial?.title || objInput?.title || "Notes Detail",
+              title:
+                rawNote.studyMaterial?.title ||
+                objInput?.title ||
+                "Notes Detail",
               subjectName:
                 rawNote.subject?.name ||
                 rawNote.studyMaterial?.subject?.name ||
@@ -269,8 +258,9 @@ export function useStudyMaterialNotesQuery(
       // Strategy 2: Search notes list by materialId
       if (materialId) {
         try {
-          const listRes = await notesApi.list(token, { page: 1, limit: 100 });
-          const rawList = listRes?.data || (Array.isArray(listRes) ? listRes : []);
+          const listRes = await notesApi.list({ page: 1, limit: 100 });
+          const rawList =
+            listRes?.data || (Array.isArray(listRes) ? listRes : []);
           const found = rawList.find(
             (n: any) => n.studyMaterialId === materialId || n.id === materialId,
           );
@@ -278,7 +268,10 @@ export function useStudyMaterialNotesQuery(
             if (found.content && found.content.trim().length > 0) {
               return {
                 content: found.content,
-                title: found.studyMaterial?.title || objInput?.title || "Notes Detail",
+                title:
+                  found.studyMaterial?.title ||
+                  objInput?.title ||
+                  "Notes Detail",
                 subjectName:
                   found.subject?.name ||
                   (found.studyMaterial as any)?.subject?.name ||
@@ -287,12 +280,15 @@ export function useStudyMaterialNotesQuery(
               };
             }
 
-            const detailRes = await notesApi.getById(token, found.id);
+            const detailRes = await notesApi.getById(found.id);
             const rawDetail = detailRes?.data || detailRes;
             if (rawDetail?.content) {
               return {
                 content: rawDetail.content,
-                title: rawDetail.studyMaterial?.title || objInput?.title || "Notes Detail",
+                title:
+                  rawDetail.studyMaterial?.title ||
+                  objInput?.title ||
+                  "Notes Detail",
                 subjectName:
                   rawDetail.subject?.name ||
                   rawDetail.studyMaterial?.subject?.name ||
@@ -307,12 +303,15 @@ export function useStudyMaterialNotesQuery(
 
         // Strategy 3: Try materialId directly as notesId
         try {
-          const directRes = await notesApi.getById(token, materialId);
+          const directRes = await notesApi.getById(materialId);
           const rawDirect = directRes?.data || directRes;
           if (rawDirect?.content) {
             return {
               content: rawDirect.content,
-              title: rawDirect.studyMaterial?.title || objInput?.title || "Notes Detail",
+              title:
+                rawDirect.studyMaterial?.title ||
+                objInput?.title ||
+                "Notes Detail",
               subjectName:
                 rawDirect.subject?.name ||
                 rawDirect.studyMaterial?.subject?.name ||
@@ -337,9 +336,7 @@ export function useStudyMaterialNotesQuery(
 
       return null;
     },
-    enabled: Boolean(
-      token && (explicitNotesId || materialId || fileContent),
-    ),
+    enabled: Boolean(explicitNotesId || materialId || fileContent),
     staleTime: 1000 * 60 * 5,
   });
 }

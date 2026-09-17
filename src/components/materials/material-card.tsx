@@ -28,17 +28,16 @@ export const MaterialCard = React.memo(function MaterialCard({
     router.push(`/materials/${material.id}` as any);
   }, [router, material.id]);
 
-  const handleDeletePress = React.useCallback(
-    (e: any) => {
-      e?.stopPropagation?.();
-      onDelete(material);
-    },
-    [onDelete, material],
-  );
+  const handleDeletePress = React.useCallback(() => {
+    onDelete(material);
+  }, [onDelete, material]);
 
   return (
-    <Card onPress={handleCardPress} className="p-3.5 gap-2.5">
-      <View className="flex-row items-center justify-between gap-3">
+    <Card className="p-3.5 gap-2.5">
+      <Pressable
+        onPress={handleCardPress}
+        className="flex-row items-center justify-between gap-3 active:opacity-80"
+      >
         <View className="w-10 h-10 rounded-xl items-center justify-center bg-blue-50 dark:bg-blue-950/40">
           <Icon name="file-text" size={18} color={APP_COLORS.quizBlue} />
         </View>
@@ -61,18 +60,20 @@ export const MaterialCard = React.memo(function MaterialCard({
         </View>
 
         <Icon name="chevron-right" size={18} color={APP_COLORS.stone400} />
-      </View>
+      </Pressable>
 
       <View className="flex-row items-center justify-between pt-1 border-t border-border mt-0.5">
-        <MaterialStatusBadges material={material} className="flex-1 pr-2" />
+        <Pressable onPress={handleCardPress} className="flex-1 pr-2 active:opacity-80">
+          <MaterialStatusBadges material={material} />
+        </Pressable>
 
         <Pressable
           onPress={handleDeletePress}
           disabled={isDeleting}
-          className="w-7 h-7 rounded-lg bg-muted items-center justify-center active:opacity-70"
+          className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/30 items-center justify-center active:opacity-70"
           hitSlop={8}
         >
-          <Icon name="trash-2" size={13} color={APP_COLORS.error} />
+          <Icon name="trash-2" size={15} color={APP_COLORS.error} />
         </Pressable>
       </View>
     </Card>

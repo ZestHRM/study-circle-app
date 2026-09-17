@@ -1,25 +1,24 @@
-import { useAuth } from '@/lib/auth';
-import { studyMaterialsApi, type StudyMaterial } from '@/services';
+import { showSuccessToast } from "@/lib/utils/toast";
+import { studyMaterialsApi } from "@/services";
 import {
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
-} from '@tanstack/react-query';
-import * as React from 'react';
+} from "@tanstack/react-query";
+import * as React from "react";
 
 export function useStudyMaterialsInfinite(options?: {
   limit?: number;
   search?: string;
 }) {
-  const { token } = useAuth();
   const limit = options?.limit ?? 8;
   const search = options?.search;
 
   const query = useInfiniteQuery({
-    queryKey: ['study-materials', token, limit, search],
+    queryKey: ["study-materials", limit, search],
     queryFn: async ({ pageParam = 1 }) =>
-      studyMaterialsApi.list(token as string, {
+      studyMaterialsApi.list({
         page: pageParam as number,
         limit,
         search,
@@ -38,19 +37,20 @@ export function useStudyMaterialsInfinite(options?: {
         Math.ceil((lastPage.pagination.totalItems ?? 0) / limit);
       return currentPage < totalPages ? currentPage + 1 : undefined;
     },
-    enabled: Boolean(token),
     refetchInterval: (query) => {
       const pages = query.state.data?.pages;
       if (!pages) return false;
       const allMaterials = pages.flatMap((p) => p.data ?? []);
       const isAnyProcessing = allMaterials.some((m) => {
         const isNotesProcessing =
-          m.status === 'PENDING' ||
-          m.status === 'PROCESSING' ||
-          m.status === 'GENERATING_NOTES' ||
-          m.files?.some((f) => f.status === 'PENDING' || f.status === 'PROCESSING');
+          m.status === "PENDING" ||
+          m.status === "PROCESSING" ||
+          m.status === "GENERATING_NOTES" ||
+          m.files?.some(
+            (f) => f.status === "PENDING" || f.status === "PROCESSING",
+          );
         const isQuizProcessing =
-          m.quizStatus === 'PENDING' || m.quizStatus === 'GENERATING';
+          m.quizStatus === "PENDING" || m.quizStatus === "GENERATING";
         return isNotesProcessing || isQuizProcessing;
       });
       return isAnyProcessing ? 4000 : false;
@@ -59,7 +59,7 @@ export function useStudyMaterialsInfinite(options?: {
 
   const materials = React.useMemo(
     () => query.data?.pages.flatMap((page) => page.data) ?? [],
-    [query.data]
+    [query.data],
   );
 
   const isRefreshing = query.isRefetching && !query.isFetchingNextPage;
@@ -87,32 +87,32 @@ export function useStudyMaterialsInfinite(options?: {
 }
 
 export function useStudyMaterialDetail(id?: string | null) {
-  const { token } = useAuth();
-
   return useQuery({
-    queryKey: ['study-material-detail', token, id],
+    queryKey: ["study-material-detail", id],
     queryFn: async () => {
       if (!id) return null;
-      return studyMaterialsApi.getById(token as string, id);
+      return studyMaterialsApi.getById(id);
     },
-    enabled: Boolean(token && id),
+    enabled: Boolean(id),
     refetchInterval: (query) => {
       const material = query.state.data;
       if (!material) return false;
       const isNotesProcessing =
-        material.status === 'PENDING' ||
-        material.status === 'PROCESSING' ||
-        material.status === 'GENERATING_NOTES' ||
-        material.files?.some((f) => f.status === 'PENDING' || f.status === 'PROCESSING');
+        material.status === "PENDING" ||
+        material.status === "PROCESSING" ||
+        material.status === "GENERATING_NOTES" ||
+        material.files?.some(
+          (f) => f.status === "PENDING" || f.status === "PROCESSING",
+        );
       const isQuizProcessing =
-        material.quizStatus === 'PENDING' || material.quizStatus === 'GENERATING';
+        material.quizStatus === "PENDING" ||
+        material.quizStatus === "GENERATING";
       return isNotesProcessing || isQuizProcessing ? 3000 : false;
     },
   });
 }
 
 export function useCreateStudyMaterial() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -126,35 +126,37 @@ export function useCreateStudyMaterial() {
         type: string;
       };
     }) => {
-      return studyMaterialsApi.create(token as string, payload);
+      return studyMaterialsApi.create(payload);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ['study-materials'],
+        queryKey: ["study-materials"],
       });
     },
   });
 }
 
 export function useDeleteStudyMaterial() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      return studyMaterialsApi.delete(token as string, id);
+      return studyMaterialsApi.delete(id);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ['study-materials'],
+        queryKey: ["study-materials"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["notes"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["quizzes"],
+      });
+      showSuccessToast(
+        "Material Deleted",
+        "The study material has been deleted successfully.",
+      );
     },
   });
 }
-
-
-
-
-
-
-

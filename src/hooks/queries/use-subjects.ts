@@ -9,19 +9,17 @@ export function useSubjectsQuery(params?: {
   limit?: number;
   search?: string;
 }) {
-  const { token } = useAuth();
   const page = params?.page ?? 1;
   const limit = params?.limit ?? 200;
 
   const query = useQuery({
-    queryKey: ["subjects", token, page, limit, params?.search],
+    queryKey: ["subjects", page, limit, params?.search],
     queryFn: async () =>
-      subjectsApi.list(token as string, {
+      subjectsApi.list({
         page,
         limit,
         search: params?.search,
       }),
-    enabled: Boolean(token),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -49,7 +47,6 @@ export function useSubjectsQuery(params?: {
 }
 
 export function useCreateSubject() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -58,7 +55,7 @@ export function useCreateSubject() {
       description?: string;
       userId?: string;
     }) => {
-      return subjectsApi.create(token as string, payload);
+      return subjectsApi.create(payload);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["subjects"] });

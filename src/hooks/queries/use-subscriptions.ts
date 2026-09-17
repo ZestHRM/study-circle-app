@@ -14,7 +14,7 @@ export function useSubscriptionPlansQuery() {
 
   const query = useQuery<SubscriptionPlan[]>({
     queryKey: ["subscription-plans", token],
-    queryFn: () => subscriptionsApi.getPlans(token),
+    queryFn: () => subscriptionsApi.getPlans(),
     staleTime: 1000 * 60 * 15, // 15 mins cache
   });
 
@@ -66,7 +66,6 @@ export function useSubscribeMutation() {
 
       const subRes = await subscriptionsApi.subscribe(
         { planId: selectedPlanId },
-        token,
       );
 
       const orderId =
@@ -112,7 +111,6 @@ export function useSubscribeMutation() {
           razorpay_subscription_id: sdkResult.orderId || orderId || "",
           razorpay_signature: sdkResult.signature || "",
         },
-        token,
       );
 
       return { plan, sdkResult, verifyRes };

@@ -2,8 +2,12 @@ import "../global.css";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { ConfirmDialogProvider } from "@/components/confirm-dialog-provider";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { AuthProvider } from "@/lib/auth";
-import { ThemePreferenceProvider, useThemePreference } from "@/lib/theme-preference";
+import {
+  ThemePreferenceProvider,
+  useThemePreference,
+} from "@/lib/theme-preference";
 import { PortalHost } from "@rn-primitives/portal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
@@ -12,7 +16,6 @@ import { useState } from "react";
 import { StatusBar, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { usePushNotifications } from "@/hooks/use-push-notifications";
 import Toast from "react-native-toast-message";
 import { Uniwind } from "uniwind";
 

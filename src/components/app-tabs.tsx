@@ -66,9 +66,19 @@ export default function AppTabs() {
       <Tabs.Screen
         name="materials"
         options={{
-          title: "Materials",
+          title: "Study Material",
           tabBarIcon: ({ color, size }) => (
             <Icon name="file-text" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="exam-materials"
+        options={{
+          title: "Exam Material",
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="award" size={size} color={color} />
           ),
         }}
       />

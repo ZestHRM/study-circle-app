@@ -57,6 +57,20 @@ export function getFormattedSubscriptionTier(user?: User | null): string {
   return tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
 }
 
+/**
+ * Centralized user avatar image URL resolver
+ */
+export function getUserAvatarUrl(user?: User | null): string | null {
+  if (!user) return null;
+  return (
+    user.picture ||
+    user.avatarUrl ||
+    user.avatar ||
+    (user as any).pictureUrl ||
+    null
+  );
+}
+
 export type LoginPayload = {
   email: string;
   password: string;

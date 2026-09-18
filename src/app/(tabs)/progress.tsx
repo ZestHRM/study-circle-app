@@ -76,10 +76,10 @@ export default function ProgressScreen() {
           subtitle="Track your daily study habits, quiz scores & course completion in real-time."
         />
 
-        <View className="flex-row items-center gap-2.5">
-          <Card className="flex-1 p-3.5 gap-2 border border-primary/20 bg-primary/10">
+        <View className="flex-row items-center gap-2.5 flex-wrap">
+          <Card className="flex-1 min-w-[140px] p-3.5 gap-2 border border-primary/20 bg-primary/10">
             <View className="flex-row items-center justify-between">
-              <View className="w-8 h-8 rounded-xl bg-primary/10 items-center justify-center">
+              <View className="w-8 h-8 rounded-xl bg-primary/10 items-center justify-center shrink-0">
                 <Icon name="trending-up" size={16} color="primary" />
               </View>
               <Text
@@ -97,9 +97,9 @@ export default function ProgressScreen() {
             </Text>
           </Card>
 
-          <Card className="flex-1 p-3.5 gap-2 border border-warning/20 bg-warning/10">
+          <Card className="flex-1 min-w-[140px] p-3.5 gap-2 border border-warning/20 bg-warning/10">
             <View className="flex-row items-center justify-between">
-              <View className="w-8 h-8 rounded-xl bg-warning/10 items-center justify-center">
+              <View className="w-8 h-8 rounded-xl bg-warning/10 items-center justify-center shrink-0">
                 <Icon name="zap" size={16} color="warning" />
               </View>
               <Text

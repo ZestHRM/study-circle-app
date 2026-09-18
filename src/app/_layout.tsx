@@ -13,11 +13,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useState } from "react";
-import { StatusBar, View } from "react-native";
+import { Text as RNText, TextInput as RNTextInput, StatusBar, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Uniwind } from "uniwind";
+
+// Enforce max font scaling cap globally to keep text readable without breaking layouts
+if ((RNText as any).defaultProps == null) {
+  (RNText as any).defaultProps = {};
+}
+(RNText as any).defaultProps.maxFontSizeMultiplier = 1.35;
+
+if ((RNTextInput as any).defaultProps == null) {
+  (RNTextInput as any).defaultProps = {};
+}
+(RNTextInput as any).defaultProps.maxFontSizeMultiplier = 1.35;
 
 SplashScreen.preventAutoHideAsync();
 

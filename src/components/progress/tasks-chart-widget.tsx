@@ -156,9 +156,9 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
   return (
     <View className={UI_STYLES.cardPadded}>
       {/* Widget Header Row */}
-      <View className={UI_STYLES.rowBetween}>
-        <View className="flex-row items-center gap-3 flex-1 pr-2">
-          <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center border border-primary/20">
+      <View className="flex-row items-center justify-between gap-3 flex-wrap">
+        <View className="flex-row items-center gap-3 flex-1 min-w-[170px]">
+          <View className="w-9 h-9 rounded-xl bg-primary/10 items-center justify-center border border-primary/20 shrink-0">
             <Icon name="bar-chart-2" size={18} color="primary" />
           </View>
           <View className="flex-1">
@@ -178,7 +178,7 @@ export const TasksChartWidget = React.memo(function TasksChartWidget({
         </View>
 
         {/* Range Selection Pills */}
-        <View className="flex-row items-center bg-muted p-1 rounded-xl gap-0.5">
+        <View className="flex-row items-center bg-muted p-1 rounded-xl gap-0.5 shrink-0">
           {RANGE_OPTIONS.map((opt) => {
             const isActive = selectedRange === opt.value;
             return (

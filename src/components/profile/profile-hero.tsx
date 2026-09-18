@@ -1,3 +1,4 @@
+import { Avatar } from "@/components/Avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -5,17 +6,16 @@ import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { useFilePicker } from "@/hooks/use-file-picker";
-import { useAuth } from "@/lib/auth";
+import { useThemePreference } from "@/lib/theme-preference";
 import {
   getFormattedSubscriptionTier,
+  getUserAvatarUrl,
   profileApi,
   type User,
 } from "@/services";
-import { useThemePreference } from "@/lib/theme-preference";
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { Image, Pressable, View } from "react-native";
-
+import { Pressable, View } from "react-native";
 export interface ProfileHeroProps {
   user: User | null;
   onBack?: () => void;
@@ -28,9 +28,18 @@ export const ProfileHero = React.memo(function ProfileHero({
   onAvatarChange,
 }: ProfileHeroProps) {
   const router = useRouter();
-  const { token } = useAuth();
   const { isDark } = useThemePreference();
   const [copiedReferral, setCopiedReferral] = React.useState(false);
+  const [localAvatarUri, setLocalAvatarUri] = React.useState<string | null>(
+    null,
+  );
+  const [isUploading, setIsUploading] = React.useState(false);
+
+  const filePicker = useFilePicker({
+    allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/*"],
+  });
+
+  const avatarUri = localAvatarUri || getUserAvatarUrl(user);
 
   const handleBackPress = React.useCallback(() => {
     if (onBack) {
@@ -42,22 +51,6 @@ export const ProfileHero = React.memo(function ProfileHero({
     }
   }, [onBack, router]);
 
-  const [avatarUri, setAvatarUri] = React.useState<string | null>(
-    (user as any)?.avatarUrl || (user as any)?.avatar || null,
-  );
-  const [isUploading, setIsUploading] = React.useState(false);
-
-  const filePicker = useFilePicker({
-    allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/*"],
-  });
-
-  const initials = React.useMemo(() => {
-    if (!user?.name) return "SC";
-    const parts = user.name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }, [user?.name]);
-
   const handleCopyReferral = React.useCallback(() => {
     if (!user?.referralCode) return;
     setCopiedReferral(true);
@@ -68,10 +61,7 @@ export const ProfileHero = React.memo(function ProfileHero({
     const picked = await filePicker.pickFile();
     if (!picked?.uri) return;
 
-    // Immediately show preview
-    setAvatarUri(picked.uri);
-
-    if (!token) return;
+    setLocalAvatarUri(picked.uri);
 
     try {
       setIsUploading(true);
@@ -84,21 +74,20 @@ export const ProfileHero = React.memo(function ProfileHero({
       const serverAvatar =
         response?.url || response?.avatarUrl || response?.avatar;
       if (serverAvatar) {
-        setAvatarUri(serverAvatar);
+        setLocalAvatarUri(serverAvatar);
         onAvatarChange?.(serverAvatar);
       } else {
         onAvatarChange?.(picked.uri);
       }
-    } catch (err: any) {
-      console.error("Failed to upload profile picture:", err);
+    } catch {
+      // Ignore image upload network error silently
     } finally {
       setIsUploading(false);
     }
-  }, [filePicker, token, onAvatarChange]);
+  }, [filePicker, onAvatarChange]);
 
   return (
     <View className="bg-card border-b border-border pt-3 pb-6 px-5 mb-5 rounded-b-[28px] shadow-2xs">
-      {/* Top Header Action Bar */}
       <View className="flex-row items-center justify-between mb-4">
         <Button
           variant="ghost"
@@ -116,31 +105,15 @@ export const ProfileHero = React.memo(function ProfileHero({
         <View className="w-10" />
       </View>
 
-      {/* Profile Hero Content */}
       <View className="items-center">
-        {/* AVATAR RING WITH PICTURE UPLOADER OVERLAY */}
         <View className="relative mb-3">
-          <View className="w-24 h-24 rounded-full border-2 border-primary/30 bg-primary/10 items-center justify-center shadow-xs overflow-hidden">
-            {avatarUri ? (
-              <Image
-                source={{ uri: avatarUri }}
-                className="w-full h-full rounded-full"
-                resizeMode="cover"
-              />
-            ) : (
-              <Text
-                variant="h1"
-                className="text-primary text-3xl font-extrabold tracking-wider"
-              >
-                {initials}
-              </Text>
-            )}
-          </View>
-
-          {/* Online Indicator Badge */}
-          <View className="absolute top-1 right-1 w-4 h-4 rounded-full border-2 border-background bg-emerald-500" />
-
-          {/* Camera / Edit Profile Picture Button */}
+          <Avatar
+            uri={avatarUri}
+            name={user?.name}
+            className="w-24 h-24 border-2 border-primary/30 shadow-xs"
+            fallbackClassName="bg-primary/10"
+            textClassName="text-primary text-3xl font-extrabold tracking-wider"
+          />
           <Pressable
             onPress={handlePickAvatar}
             disabled={isUploading}
@@ -167,7 +140,6 @@ export const ProfileHero = React.memo(function ProfileHero({
           ) : null}
         </View>
 
-        {/* Referral Code Chip */}
         {user?.referralCode ? (
           <Pressable
             onPress={handleCopyReferral}

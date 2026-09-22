@@ -22,14 +22,14 @@ export type IconColorPreset =
   | "purple"
   | "emerald";
 
-export interface IconProps extends Omit<LucideProps, "size" | "color"> {
+export type IconProps = Omit<LucideProps, "size" | "color"> & {
   as?: LucideIcon;
   name?: string;
   size?: IconSizePreset | number;
   color?: IconColorPreset | string | any;
   style?: TextStyle | ViewStyle | any;
   className?: string;
-}
+};
 
 const SIZE_MAP: Record<IconSizePreset, number> = {
   xs: 12,
@@ -136,9 +136,9 @@ export const Icon = React.memo(function Icon({
 
   const TargetIcon = IconComponent || getLucideIcon(name);
 
-  const iconSize = typeof size === "number" ? size : SIZE_MAP[size] ?? 20;
+  const iconSize = typeof size === "number" ? size : (SIZE_MAP[size] ?? 20);
   const iconColor = color
-    ? COLOR_MAP[color as IconColorPreset] ?? color
+    ? (COLOR_MAP[color as IconColorPreset] ?? color)
     : undefined;
 
   return (

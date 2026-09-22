@@ -111,6 +111,10 @@ export default function ProfileScreen() {
     router.push("/change-password");
   }, [router]);
 
+  const handleNavigateEditProfile = React.useCallback(() => {
+    router.push("/edit-profile");
+  }, [router]);
+
   const activeTierLabel = React.useMemo(
     () => getFormattedSubscriptionTier(user),
     [user],
@@ -129,7 +133,7 @@ export default function ProfileScreen() {
     >
       <View className="mx-auto w-full max-w-md gap-4">
         {/* Profile Hero Header */}
-        <ProfileHero user={user} />
+        <ProfileHero user={user} onEditPress={handleNavigateEditProfile} />
 
         {/* Real-time Stats Cards */}
         <ProfileStats user={user} />

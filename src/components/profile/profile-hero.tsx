@@ -16,15 +16,19 @@ import {
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { Pressable, View } from "react-native";
-export interface ProfileHeroProps {
+
+export type ProfileHeroProps = {
   user: User | null;
   onBack?: () => void;
+  onEditPress?: () => void;
   onAvatarChange?: (imageUri: string) => void;
-}
+};
+
 
 export const ProfileHero = React.memo(function ProfileHero({
   user,
   onBack,
+  onEditPress,
   onAvatarChange,
 }: ProfileHeroProps) {
   const router = useRouter();
@@ -102,7 +106,17 @@ export const ProfileHero = React.memo(function ProfileHero({
         >
           My Profile
         </Text>
-        <View className="w-10" />
+        {onEditPress ? (
+          <Button
+            variant="ghost"
+            icon="edit"
+            onPress={onEditPress}
+            className="w-10 h-10 rounded-full bg-muted items-center justify-center p-0 active:opacity-80"
+            iconColor={isDark ? "#f5f5f4" : APP_COLORS.stone800}
+          />
+        ) : (
+          <View className="w-10" />
+        )}
       </View>
 
       <View className="items-center">

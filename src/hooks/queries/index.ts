@@ -5,4 +5,4 @@ export * from './use-study-materials';
 export * from './use-subjects';
 export * from './use-subscriptions';
 export * from './use-notifications';
-
+export * from './use-profile';

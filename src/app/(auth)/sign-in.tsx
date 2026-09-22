@@ -1,27 +1,31 @@
 import { AuthScreen } from "@/components/auth-screen";
-import { AuthFooter, AuthHeader } from "@/components/ui";
+import {
+  AuthFooter,
+  AuthHeader,
+  FormInput,
+  FormStatusMessage,
+} from "@/components/ui";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { getErrorMessage } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useAuthErrorHandler } from "@/lib/hooks/use-auth-error-handler";
 import { signInSchema, type SignInValues } from "@/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Pressable, type TextInput, View } from "react-native";
 
 export default function SignInScreen() {
   const router = useRouter();
   const auth = useAuth();
   const passwordInputRef = React.useRef<TextInput>(null);
-  const [generalError, setGeneralError] = React.useState<string | null>(null);
+  const { error, message, runAction } = useAuthErrorHandler();
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -31,27 +35,29 @@ export default function SignInScreen() {
   });
 
   async function onSubmit(data: SignInValues) {
-    setGeneralError(null);
+    const formattedEmail = data.email.trim().toLowerCase();
 
-    try {
-      await auth.signIn({
-        email: data.email.trim().toLowerCase(),
-        password: data.password,
-      });
+    const result = await runAction(
+      () =>
+        auth.signIn({
+          email: formattedEmail,
+          password: data.password,
+        }),
+      "Unable to sign in right now.",
+      {
+        onError: (errMsg) => {
+          if (errMsg.toLowerCase().includes("verify your email")) {
+            router.push({
+              pathname: "/verify-email",
+              params: { email: formattedEmail },
+            });
+          }
+        },
+      },
+    );
+
+    if (result.ok) {
       router.replace("/");
-    } catch (caughtError) {
-      const message = getErrorMessage(
-        caughtError,
-        "Unable to sign in right now.",
-      );
-      setGeneralError(message);
-
-      if (message.toLowerCase().includes("verify your email")) {
-        router.push({
-          pathname: "/verify-email",
-          params: { email: data.email.trim().toLowerCase() },
-        });
-      }
     }
   }
 
@@ -64,45 +70,29 @@ export default function SignInScreen() {
       />
 
       <View className="gap-4 w-full">
-        <Controller
+        <FormInput
           control={control}
           name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Email address"
-              placeholder="name@example.com"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              keyboardType="email-address"
-              autoComplete="email"
-              autoCapitalize="none"
-              onSubmitEditing={() => passwordInputRef.current?.focus()}
-              returnKeyType="next"
-              submitBehavior="submit"
-              error={errors.email?.message}
-            />
-          )}
+          label="Email address"
+          placeholder="name@example.com"
+          keyboardType="email-address"
+          autoComplete="email"
+          autoCapitalize="none"
+          onSubmitEditing={() => passwordInputRef.current?.focus()}
+          returnKeyType="next"
+          submitBehavior="submit"
         />
 
         <View className="gap-1">
-          <Controller
+          <FormInput
+            ref={passwordInputRef}
             control={control}
             name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                ref={passwordInputRef}
-                label="Password"
-                placeholder="••••••••"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-                returnKeyType="send"
-                onSubmitEditing={handleSubmit(onSubmit)}
-                error={errors.password?.message}
-              />
-            )}
+            label="Password"
+            placeholder="••••••••"
+            secureTextEntry
+            returnKeyType="send"
+            onSubmitEditing={handleSubmit(onSubmit)}
           />
           <View className="items-end pt-0.5">
             <Pressable onPress={() => router.push("/forgot-password")}>
@@ -116,11 +106,7 @@ export default function SignInScreen() {
           </View>
         </View>
 
-        {generalError ? (
-          <Text variant="error" className="text-sm">
-            {generalError}
-          </Text>
-        ) : null}
+        <FormStatusMessage error={error} message={message} />
       </View>
 
       <View className="gap-3.5">

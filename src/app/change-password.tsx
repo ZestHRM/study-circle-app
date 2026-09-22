@@ -1,10 +1,11 @@
 import { AppLogo } from "@/components/ui/app-logo";
 import { AuthHeader } from "@/components/ui/auth-header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FormInput } from "@/components/ui/form-input";
+import { FormStatusMessage } from "@/components/ui/form-status-message";
 import { Text } from "@/components/ui/text";
 import { WatermarkBackground } from "@/components/ui/watermark-background";
-import { getErrorMessage } from "@/lib/api";
+import { useAuthErrorHandler } from "@/lib/hooks/use-auth-error-handler";
 import { useThemePreference } from "@/lib/theme-preference";
 import { showErrorToast, showSuccessToast } from "@/lib/utils/toast";
 import { changePasswordSchema, type ChangePasswordValues } from "@/schemas";
@@ -12,7 +13,7 @@ import { profileApi } from "@/services";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -25,7 +26,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function ChangePasswordScreen() {
   const router = useRouter();
   const { isDark } = useThemePreference();
-  const [generalError, setGeneralError] = React.useState<string | null>(null);
+  const { error, message, runAction } = useAuthErrorHandler();
 
   const newPasswordRef = React.useRef<TextInput>(null);
   const confirmPasswordRef = React.useRef<TextInput>(null);
@@ -33,7 +34,7 @@ export default function ChangePasswordScreen() {
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
@@ -44,23 +45,27 @@ export default function ChangePasswordScreen() {
   });
 
   const onSubmit = async (data: ChangePasswordValues) => {
-    setGeneralError(null);
-    try {
-      await profileApi.changePassword({
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
-        confirmPassword: data.confirmPassword,
-      });
+    const result = await runAction(
+      () =>
+        profileApi.changePassword({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+          confirmPassword: data.confirmPassword,
+        }),
+      "Failed to update password.",
+      {
+        onError: (msg) => {
+          showErrorToast("Change Password Failed", msg);
+        },
+      },
+    );
 
+    if (result.ok) {
       showSuccessToast(
         "Password Updated",
         "Your account password has been changed successfully.",
       );
       router.back();
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to update password.");
-      setGeneralError(msg);
-      showErrorToast("Change Password Failed", msg);
     }
   };
 
@@ -102,70 +107,39 @@ export default function ChangePasswordScreen() {
 
         {/* Form Inputs Container */}
         <View className="gap-4 w-full mt-2">
-          {/* Current Password */}
-          <Controller
+          <FormInput
             control={control}
             name="currentPassword"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Current Password"
-                placeholder="Enter current password"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-                onSubmitEditing={() => newPasswordRef.current?.focus()}
-                returnKeyType="next"
-                error={errors.currentPassword?.message}
-              />
-            )}
+            label="Current Password"
+            placeholder="Enter current password"
+            secureTextEntry
+            onSubmitEditing={() => newPasswordRef.current?.focus()}
+            returnKeyType="next"
           />
 
-          {/* New Password */}
-          <Controller
+          <FormInput
+            ref={newPasswordRef}
             control={control}
             name="newPassword"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                ref={newPasswordRef}
-                label="New Password"
-                placeholder="At least 6 characters"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-                onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-                returnKeyType="next"
-                error={errors.newPassword?.message}
-              />
-            )}
+            label="New Password"
+            placeholder="At least 6 characters"
+            secureTextEntry
+            onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+            returnKeyType="next"
           />
 
-          {/* Confirm Password */}
-          <Controller
+          <FormInput
+            ref={confirmPasswordRef}
             control={control}
             name="confirmPassword"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                ref={confirmPasswordRef}
-                label="Confirm New Password"
-                placeholder="Re-enter new password"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit(onSubmit)}
-                error={errors.confirmPassword?.message}
-              />
-            )}
+            label="Confirm New Password"
+            placeholder="Re-enter new password"
+            secureTextEntry
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit(onSubmit)}
           />
 
-          {generalError ? (
-            <Text variant="error" className="text-sm">
-              {generalError}
-            </Text>
-          ) : null}
+          <FormStatusMessage error={error} message={message} />
         </View>
 
         {/* Form Submit & Actions */}

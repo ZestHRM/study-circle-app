@@ -46,11 +46,10 @@ export function useProfileInfoSections(
 
   const locationRows = React.useMemo<ProfileInfoRow[]>(() => {
     const locParts = [user?.city, user?.state, user?.country].filter(Boolean);
-    const regionText =
-      locParts.length > 0 ? locParts.join(", ") : "Not provided";
+    const cityText = locParts.length > 0 ? locParts.join(", ") : "Not provided";
 
     const rows: ProfileInfoRow[] = [
-      { label: "Region", value: regionText, iconName: "map-pin" },
+      { label: "City", value: cityText, iconName: "map-pin" },
     ];
     if (user?.zipcode) {
       rows.push({ label: "Zipcode", value: user.zipcode, iconName: "hash" });

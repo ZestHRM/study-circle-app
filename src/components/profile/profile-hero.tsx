@@ -24,7 +24,6 @@ export type ProfileHeroProps = {
   onAvatarChange?: (imageUri: string) => void;
 };
 
-
 export const ProfileHero = React.memo(function ProfileHero({
   user,
   onBack,
@@ -91,13 +90,13 @@ export const ProfileHero = React.memo(function ProfileHero({
   }, [filePicker, onAvatarChange]);
 
   return (
-    <View className="bg-card border-b border-border pt-3 pb-6 px-5 mb-5 rounded-b-[28px] shadow-2xs">
+    <View className="bg-card border-b border-border pt-3 pb-6 mb-5 rounded-b-[28px] shadow-2xs">
       <View className="flex-row items-center justify-between mb-4">
         <Button
           variant="ghost"
           icon="arrow-left"
           onPress={handleBackPress}
-          className="w-10 h-10 rounded-full bg-muted items-center justify-center p-0 active:opacity-80"
+          className="w-10 h-10 rounded-full bg-muted items-center justify-center active:opacity-80"
           iconColor={isDark ? "#f5f5f4" : APP_COLORS.stone800}
         />
         <Text
@@ -154,7 +153,7 @@ export const ProfileHero = React.memo(function ProfileHero({
           ) : null}
         </View>
 
-        {user?.referralCode ? (
+        {/* {user?.referralCode ? (
           <Pressable
             onPress={handleCopyReferral}
             className="mt-3 flex-row items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-muted active:opacity-80"
@@ -175,7 +174,7 @@ export const ProfileHero = React.memo(function ProfileHero({
               color={APP_COLORS.stone500}
             />
           </Pressable>
-        ) : null}
+        ) : null} */}
       </View>
     </View>
   );

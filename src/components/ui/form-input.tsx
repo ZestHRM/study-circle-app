@@ -6,20 +6,24 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
+import { TextInput } from "react-native";
 
-export interface FormInputProps<
+export type FormInputProps<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> extends Omit<InputProps, "name"> {
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+> = Omit<InputProps, "name"> & {
   control: Control<TFieldValues>;
   name: TName;
   label: string;
-}
+};
 
-export function FormInput<
+function FormInputInner<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({ control, name, label, ...props }: FormInputProps<TFieldValues, TName>) {
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>(
+  { control, name, label, ...props }: FormInputProps<TFieldValues, TName>,
+  ref: React.Ref<TextInput>,
+) {
   return (
     <Controller
       control={control}
@@ -29,6 +33,7 @@ export function FormInput<
         fieldState: { error },
       }) => (
         <Input
+          ref={ref}
           label={label}
           value={value}
           onChangeText={onChange}
@@ -40,3 +45,12 @@ export function FormInput<
     />
   );
 }
+
+export const FormInput = React.forwardRef(FormInputInner) as <
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>(
+  props: FormInputProps<TFieldValues, TName> & {
+    ref?: React.Ref<TextInput>;
+  },
+) => React.ReactElement;

@@ -1,4 +1,4 @@
-import { RestClient } from "./api-client";
+import { MessageResponse, RestClient } from "./api-client";
 
 export type CurrencyPrice = {
   inr: number;
@@ -78,6 +78,13 @@ export const subscriptionsApi = {
       "/subscriptions/verify-payment",
       "POST",
       payload,
+    );
+  },
+
+  cancelSubscription(): Promise<MessageResponse> {
+    return RestClient<MessageResponse>(
+      "/subscriptions/cancel",
+      "POST",
     );
   },
 };

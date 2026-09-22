@@ -49,6 +49,8 @@ export function getUserSubscriptionTier(user?: User | null): string {
 
 export function getFormattedSubscriptionTier(user?: User | null): string {
   const tier = getUserSubscriptionTier(user);
+  console.log("getFormattedSubscriptionTier -> user:", tier);
+
   if (tier.includes("PLATINUM")) return "Platinum";
   if (tier.includes("GOLD")) return "Gold";
   if (tier.includes("SILVER")) return "Silver";

@@ -59,7 +59,8 @@
       "expo-image",
       "expo-web-browser",
       "expo-build-properties",
-      "./plugins/withDisableUserScriptSandboxing"
+      "./plugins/withDisableUserScriptSandboxing",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

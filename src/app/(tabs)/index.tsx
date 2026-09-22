@@ -4,6 +4,7 @@ import {
   NextActionWidget,
   RecentMaterialsWidget,
   StatsCardsWidget,
+  StudyStreakWidget,
   ViewFeedbackDialog,
   YourSubjectsCarouselWidget,
 } from "@/components/home";
@@ -122,6 +123,7 @@ export default function HomeScreen() {
           onViewFeedback={openFeedback}
         />
         <StatsCardsWidget />
+        <StudyStreakWidget />
         <NextActionWidget />
         <YourSubjectsCarouselWidget />
         <RecentMaterialsWidget />

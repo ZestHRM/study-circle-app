@@ -12,7 +12,11 @@
       "bundleIdentifier": "com.studycircleai.app",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Study Circle AI uses your photo library so you can choose an image for your profile picture or upload materials."
+        "NSPhotoLibraryUsageDescription": "Study Circle AI uses your photo library so you can choose an image for your profile picture or upload materials.",
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
       },
       "entitlements": {
         "aps-environment": "production"
@@ -36,6 +40,8 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
       [
         "expo-status-bar",
         {

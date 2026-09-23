@@ -4,27 +4,15 @@ import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { formatShortDate } from "@/lib/utils/formatters";
-import type { ExamMaterial, ExamMaterialCategory } from "@/services/exam-materials-service";
+import type { ExamMaterial } from "@/services/exam-materials-service";
 import * as React from "react";
 import { Pressable, View } from "react-native";
 
-export interface ExamMaterialCardProps {
+export type ExamMaterialCardProps = {
   material: ExamMaterial;
   onDelete: (material: ExamMaterial) => void;
   onPress?: (material: ExamMaterial) => void;
   isDeleting?: boolean;
-}
-
-const CATEGORY_CONFIG: Record<
-  ExamMaterialCategory,
-  { label: string; color: string; bgClass: string; icon: string }
-> = {
-  ALL: { label: "Exam Material", color: APP_COLORS.primary, bgClass: "bg-indigo-50 dark:bg-indigo-950/40", icon: "award" },
-  PYQ: { label: "PYQ Paper", color: "#8B5CF6", bgClass: "bg-purple-50 dark:bg-purple-950/40", icon: "file-check" },
-  MOCK_TEST: { label: "Mock Test", color: "#3B82F6", bgClass: "bg-blue-50 dark:bg-blue-950/40", icon: "file-text" },
-  MODEL_PAPER: { label: "Model Paper", color: "#10B981", bgClass: "bg-emerald-50 dark:bg-emerald-950/40", icon: "book-open" },
-  REVISION_SHEET: { label: "Revision Sheet", color: "#F59E0B", bgClass: "bg-amber-50 dark:bg-amber-950/40", icon: "layers" },
-  SYLLABUS: { label: "Syllabus Guide", color: "#EC4899", bgClass: "bg-pink-50 dark:bg-pink-950/40", icon: "list" },
 };
 
 export const ExamMaterialCard = React.memo(function ExamMaterialCard({
@@ -34,7 +22,6 @@ export const ExamMaterialCard = React.memo(function ExamMaterialCard({
   isDeleting = false,
 }: ExamMaterialCardProps) {
   const subjectName = material.subject?.name ?? "General";
-  const categoryConfig = CATEGORY_CONFIG[material.examCategory] || CATEGORY_CONFIG.PYQ;
 
   const handlePress = React.useCallback(() => {
     if (onPress) {
@@ -55,19 +42,22 @@ export const ExamMaterialCard = React.memo(function ExamMaterialCard({
   }, [material.files]);
 
   return (
-    <Card className="p-3.5 gap-2.5 border-l-4 border-l-primary">
+    <Card className="p-3.5 gap-2.5 border-l-4 border-l-primary bg-card border-border">
       <Pressable
         onPress={handlePress}
         className="flex-row items-center justify-between gap-3 active:opacity-80"
       >
-        <View className={`w-11 h-11 rounded-xl items-center justify-center ${categoryConfig.bgClass}`}>
-          <Icon name={categoryConfig.icon as any} size={20} color={categoryConfig.color} />
+        <View className="w-11 h-11 rounded-xl items-center justify-center bg-primary/10">
+          <Icon name="file-check" size={20} color={APP_COLORS.primary} />
         </View>
 
         <View className="flex-1 pr-1 justify-center">
           <View className="flex-row items-center flex-wrap gap-1.5 mb-1">
-            <Badge label={categoryConfig.label} variant="outline" className="py-0.5 px-2" />
-            <Badge label={subjectName} variant="default" className="py-0.5 px-2" />
+            <Badge
+              label={subjectName}
+              variant="outline"
+              className="py-0.5 px-2"
+            />
             {material.year ? (
               <Text variant="muted" className="text-[11px] font-medium">
                 • {material.year}

@@ -50,8 +50,7 @@ export default function ExamMaterialsScreen() {
 
   const handleCardPress = React.useCallback(
     (material: ExamMaterial) => {
-      // Navigate to material detail if available or open viewer
-      router.push(`/materials/${material.id}` as any);
+      router.push(`/exam-materials/${material.id}` as any);
     },
     [router],
   );
@@ -101,8 +100,6 @@ export default function ExamMaterialsScreen() {
       <ExamMaterialsHeader
         onUploadPress={handleOpenAddDialog}
         totalMaterialsCount={materials.length}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
         selectedSubjectId={selectedSubjectId}
         onSubjectChange={setSelectedSubjectId}
         subjects={subjects}
@@ -114,8 +111,6 @@ export default function ExamMaterialsScreen() {
     [
       handleOpenAddDialog,
       materials.length,
-      selectedCategory,
-      setSelectedCategory,
       selectedSubjectId,
       setSelectedSubjectId,
       subjects,

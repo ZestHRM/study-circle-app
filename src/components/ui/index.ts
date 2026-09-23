@@ -34,6 +34,7 @@ export * from "./notice-box";
 export * from "./progress-bar";
 export * from "./progress-circle";
 export * from "./screen-header";
+export * from "./search-input";
 export * from "./section-header";
 export * from "./select";
 export * from "./selection-card";

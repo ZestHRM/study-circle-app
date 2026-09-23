@@ -7,6 +7,9 @@ import { useRouter } from "expo-router";
 import * as React from "react";
 import { Pressable, View } from "react-native";
 
+import { Avatar } from "@/components/Avatar";
+import { getUserAvatarUrl } from "@/services";
+
 export interface CommonHeaderProps {
   /** Callback fired when left back arrow button is pressed */
   onBack?: () => void;
@@ -124,11 +127,13 @@ export const CommonHeader = React.memo(function CommonHeader({
           disabled={!onAvatarPress}
           className="flex-row items-center gap-2 active:opacity-80"
         >
-          <View className="w-8 h-8 rounded-full bg-muted items-center justify-center border border-border">
-            <Text variant="subhead" className="font-extrabold">
-              {userInitial}
-            </Text>
-          </View>
+          <Avatar
+            uri={getUserAvatarUrl(user)}
+            name={user?.name}
+            className="w-8 h-8 border border-border"
+            fallbackClassName="bg-muted"
+            textClassName="text-xs font-bold text-foreground"
+          />
           {rightSubtitle ? (
             <Text variant="muted">
               {rightSubtitle}

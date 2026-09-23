@@ -5,24 +5,29 @@ import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import type { SubscriptionPlan } from "@/services";
+import { type AppCurrency, getCurrencySymbol } from "@/utils/get-user-currency";
 import * as React from "react";
 import { View } from "react-native";
 
 export interface SubscriptionCardProps {
   plan: SubscriptionPlan;
   billingCycle: "monthly" | "yearly";
-  currency: "inr" | "usd";
+  currency?: AppCurrency;
   isCurrent?: boolean;
   onSubscribe: (plan: SubscriptionPlan) => void;
+  onCancel?: () => void;
+  isCancelling?: boolean;
   className?: string;
 }
 
 export const SubscriptionCard = React.memo(function SubscriptionCard({
   plan,
   billingCycle,
-  currency,
+  currency = "inr",
   isCurrent = false,
   onSubscribe,
+  onCancel,
+  isCancelling = false,
   className = "",
 }: SubscriptionCardProps) {
   const planNameLower = plan.name.toLowerCase();
@@ -34,7 +39,7 @@ export const SubscriptionCard = React.memo(function SubscriptionCard({
     plan.price?.[billingCycle]?.[currency] ??
     plan.price?.monthly?.[currency] ??
     0;
-  const currencySymbol = currency === "inr" ? "₹" : "$";
+  const currencySymbol = getCurrencySymbol(currency);
 
   // Dynamic badge from API data
   const badgeLabel = isGold
@@ -161,26 +166,42 @@ export const SubscriptionCard = React.memo(function SubscriptionCard({
         })}
       </View>
 
-      {/* CTA Button */}
-      <Button
-        title={
-          isCurrent
-            ? "Current Active Plan"
-            : isFree
-            ? "Get Started Free"
-            : `Subscribe to ${plan.name} →`
-        }
-        variant={
-          isCurrent
-            ? "secondary"
-            : isGold || isPlatinum
-            ? "quiz"
-            : "default"
-        }
-        disabled={isCurrent}
-        className="rounded-2xl mt-1 h-11"
-        onPress={() => onSubscribe(plan)}
-      />
+      {/* CTA Button / Actions */}
+      {isCurrent ? (
+        <View className="gap-2 mt-1">
+          <Button
+            title="Current Active Plan"
+            variant="secondary"
+            disabled={true}
+            className="rounded-2xl h-11"
+          />
+          {!isFree && onCancel ? (
+            <Button
+              title={isCancelling ? "Cancelling Subscription..." : "Cancel Subscription"}
+              variant="outline"
+              disabled={isCancelling}
+              className="rounded-2xl h-10 border-red-200 dark:border-red-900/50"
+              textClassName="text-red-600 dark:text-red-400 font-semibold"
+              onPress={onCancel}
+            />
+          ) : null}
+        </View>
+      ) : (
+        <Button
+          title={
+            isFree
+              ? "Get Started Free"
+              : `Subscribe to ${plan.name} →`
+          }
+          variant={
+            isGold || isPlatinum
+              ? "quiz"
+              : "default"
+          }
+          className="rounded-2xl mt-1 h-11"
+          onPress={() => onSubscribe(plan)}
+        />
+      )}
     </Card>
   );
 });

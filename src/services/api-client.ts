@@ -49,12 +49,28 @@ export function getUserSubscriptionTier(user?: User | null): string {
 
 export function getFormattedSubscriptionTier(user?: User | null): string {
   const tier = getUserSubscriptionTier(user);
+  console.log("getFormattedSubscriptionTier -> user:", tier);
+
   if (tier.includes("PLATINUM")) return "Platinum";
   if (tier.includes("GOLD")) return "Gold";
   if (tier.includes("SILVER")) return "Silver";
   if (tier.includes("PRO")) return "PRO Member";
   if (tier === "FREE") return "Free Plan";
   return tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
+}
+
+/**
+ * Centralized user avatar image URL resolver
+ */
+export function getUserAvatarUrl(user?: User | null): string | null {
+  if (!user) return null;
+  return (
+    user.picture ||
+    user.avatarUrl ||
+    user.avatar ||
+    (user as any).pictureUrl ||
+    null
+  );
 }
 
 export type LoginPayload = {

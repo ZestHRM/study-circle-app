@@ -155,6 +155,7 @@ const Button = React.forwardRef<
             {typeof labelContent === "string" ||
             typeof labelContent === "number" ? (
               <RNText
+                maxFontSizeMultiplier={1.25}
                 className={cn(
                   buttonTextVariants({ variant, size }),
                   textClassName,

@@ -1,15 +1,15 @@
 import { AuthScreen } from "@/components/auth-screen";
-import { AuthFooter, AuthHeader } from "@/components/ui";
+import { AuthFooter, AuthHeader, FormStatusMessage } from "@/components/ui";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FormInput } from "@/components/ui/form-input";
 import { Text } from "@/components/ui/text";
-import { getErrorMessage } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useAuthErrorHandler } from "@/lib/hooks/use-auth-error-handler";
 import { verifyEmailSchema, type VerifyEmailValues } from "@/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as React from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { type TextInput, type TextStyle, View } from "react-native";
 
 const RESEND_CODE_INTERVAL_SECONDS = 30;
@@ -19,17 +19,19 @@ export default function VerifyEmailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string }>();
   const { resendVerification, verifyEmail } = useAuth();
-  const { countdown, restartCountdown } = useCountdown(RESEND_CODE_INTERVAL_SECONDS);
+  const { countdown, restartCountdown } = useCountdown(
+    RESEND_CODE_INTERVAL_SECONDS,
+  );
   const codeInputRef = React.useRef<TextInput>(null);
-  const [message, setMessage] = React.useState<string | null>(null);
-  const [generalError, setGeneralError] = React.useState<string | null>(null);
+  const { error, setError, message, setMessage, runAction } =
+    useAuthErrorHandler();
   const [isResending, setIsResending] = React.useState(false);
 
   const {
     control,
     handleSubmit,
     getValues,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<VerifyEmailValues>({
     resolver: zodResolver(verifyEmailSchema),
     defaultValues: {
@@ -39,90 +41,74 @@ export default function VerifyEmailScreen() {
   });
 
   async function onSubmit(data: VerifyEmailValues) {
-    setGeneralError(null);
+    const result = await runAction(
+      () =>
+        verifyEmail({
+          email: data.email.trim().toLowerCase(),
+          code: data.code.trim(),
+        }),
+      "Unable to verify email.",
+    );
 
-    try {
-      await verifyEmail({ email: data.email.trim().toLowerCase(), code: data.code.trim() });
+    if (result.ok) {
       router.replace("/");
-    } catch (caughtError) {
-      setGeneralError(getErrorMessage(caughtError, "Unable to verify email."));
     }
   }
 
   async function onResend() {
     const currentEmail = getValues("email");
     if (!currentEmail.trim()) {
-      setGeneralError("Enter your email address first.");
+      setError("Enter your email address first.");
       return;
     }
 
-    setGeneralError(null);
-    setMessage(null);
     setIsResending(true);
+    const result = await runAction(
+      () => resendVerification(currentEmail.trim().toLowerCase()),
+      "Unable to resend code.",
+    );
+    setIsResending(false);
 
-    try {
-      const responseMessage = await resendVerification(currentEmail.trim().toLowerCase());
-      setMessage(responseMessage);
+    if (result.ok) {
+      setMessage(result.data);
       restartCountdown();
-    } catch (caughtError) {
-      setGeneralError(getErrorMessage(caughtError, "Unable to resend code."));
-    } finally {
-      setIsResending(false);
     }
   }
 
   return (
     <AuthScreen>
-      {/* Reusable Auth Header */}
       <AuthHeader
         title="Verify your"
         highlightTitle="email address"
         subtitle="Enter the verification code sent to your email to activate your account."
       />
 
-      {/* Center Section: Input Fields */}
       <View className="gap-3.5 w-full">
-        <Controller
+        <FormInput
           control={control}
           name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Email address"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              placeholder="name@example.com"
-              keyboardType="email-address"
-              autoComplete="email"
-              autoCapitalize="none"
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => codeInputRef.current?.focus()}
-              error={errors.email?.message}
-            />
-          )}
+          label="Email address"
+          placeholder="name@example.com"
+          keyboardType="email-address"
+          autoComplete="email"
+          autoCapitalize="none"
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => codeInputRef.current?.focus()}
         />
 
         <View className="gap-1.5">
-          <Controller
+          <FormInput
+            ref={codeInputRef}
             control={control}
             name="code"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                ref={codeInputRef}
-                label="Verification code"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                autoCapitalize="none"
-                returnKeyType="send"
-                keyboardType="numeric"
-                autoComplete="sms-otp"
-                textContentType="oneTimeCode"
-                onSubmitEditing={handleSubmit(onSubmit)}
-                error={errors.code?.message}
-              />
-            )}
+            label="Verification code"
+            autoCapitalize="none"
+            returnKeyType="send"
+            keyboardType="numeric"
+            autoComplete="sms-otp"
+            textContentType="oneTimeCode"
+            onSubmitEditing={handleSubmit(onSubmit)}
           />
           <Button
             variant="link"
@@ -142,20 +128,9 @@ export default function VerifyEmailScreen() {
           </Button>
         </View>
 
-        {generalError ? (
-          <Text variant="error" className="text-sm">
-            {generalError}
-          </Text>
-        ) : null}
-
-        {message ? (
-          <Text className="text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-            {message}
-          </Text>
-        ) : null}
+        <FormStatusMessage error={error} message={message} />
       </View>
 
-      {/* Bottom Section: Primary Action & Reusable Auth Footer */}
       <View className="gap-3.5">
         <Button
           variant="quiz"

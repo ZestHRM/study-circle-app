@@ -1,16 +1,22 @@
-import { authApi, type AuthResponse, type LoginPayload, type SignupPayload, type User } from '@/lib/api';
+import {
+  authApi,
+  type AuthResponse,
+  type LoginPayload,
+  type SignupPayload,
+  type User,
+} from "@/lib/api";
 import {
   registerForPushNotificationsAsync,
   syncPushTokenWithBackend,
-} from '@/services/notification-service';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import * as SecureStore from 'expo-secure-store';
-import * as React from 'react';
-import { Platform } from 'react-native';
+} from "@/services/notification-service";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as SecureStore from "expo-secure-store";
+import * as React from "react";
+import { Platform } from "react-native";
 
-const TOKEN_KEY = 'studycircle.auth_token';
+const TOKEN_KEY = "studycircle.auth_token";
 const AUTH_QUERY_KEYS = {
-  me: (token: string) => ['auth', 'me', token] as const,
+  me: (token: string) => ["auth", "me", token] as const,
 };
 
 type AuthContextValue = {
@@ -34,7 +40,7 @@ type AuthContextValue = {
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 async function getStoredToken() {
-  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+  if (Platform.OS === "web" && typeof localStorage !== "undefined") {
     return localStorage.getItem(TOKEN_KEY);
   }
 
@@ -42,7 +48,7 @@ async function getStoredToken() {
 }
 
 async function setStoredToken(token: string) {
-  if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+  if (Platform.OS === "web" && typeof localStorage !== "undefined") {
     localStorage.setItem(TOKEN_KEY, token);
     return;
   }
@@ -52,14 +58,14 @@ async function setStoredToken(token: string) {
 
 async function deleteStoredToken() {
   try {
-    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+    if (Platform.OS === "web" && typeof localStorage !== "undefined") {
       localStorage.removeItem(TOKEN_KEY);
       return;
     }
 
     await SecureStore.deleteItemAsync(TOKEN_KEY);
   } catch (err) {
-    console.warn('Failed to delete stored auth token:', err);
+    console.warn("Failed to delete stored auth token:", err);
   }
 }
 
@@ -69,25 +75,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = React.useState<string | null>(null);
   const [user, setUser] = React.useState<User | null>(null);
 
-  const applyAuthResponse = React.useCallback(async (response: AuthResponse) => {
-    await setStoredToken(response.token);
-    setToken(response.token);
-    setUser(response.user);
-    queryClient.setQueryData(AUTH_QUERY_KEYS.me(response.token), response.user);
+  const applyAuthResponse = React.useCallback(
+    async (response: AuthResponse) => {
+      await setStoredToken(response.token);
+      setToken(response.token);
+      setUser(response.user);
+      queryClient.setQueryData(
+        AUTH_QUERY_KEYS.me(response.token),
+        response.user,
+      );
 
-    try {
-      const pushResult = await registerForPushNotificationsAsync();
-      const pushToken = pushResult.fcmToken || pushResult.expoPushToken;
-      if (pushToken) {
-        void syncPushTokenWithBackend(pushToken, response.token);
+      try {
+        const pushResult = await registerForPushNotificationsAsync();
+        const pushToken = pushResult.fcmToken || pushResult.expoPushToken;
+        if (pushToken) {
+          void syncPushTokenWithBackend(pushToken, response.token);
+        }
+      } catch (err) {
+        console.warn(
+          "[AuthProvider] Failed to sync push token after authentication:",
+          err,
+        );
       }
-    } catch (err) {
-      console.warn('[AuthProvider] Failed to sync push token after authentication:', err);
-    }
-  }, [queryClient]);
+    },
+    [queryClient],
+  );
 
   const meQuery = useQuery({
-    queryKey: token ? AUTH_QUERY_KEYS.me(token) : ['auth', 'me', 'anonymous'],
+    queryKey: token ? AUTH_QUERY_KEYS.me(token) : ["auth", "me", "anonymous"],
     queryFn: async () => authApi.me(token as string),
     enabled: Boolean(token) && !isRestoringSession,
     retry: 1,
@@ -123,7 +138,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               void syncPushTokenWithBackend(pushToken, storedToken);
             }
           } catch (err) {
-            console.warn('[AuthProvider] Failed to sync push token during session restore:', err);
+            console.warn(
+              "[AuthProvider] Failed to sync push token during session restore:",
+              err,
+            );
           }
         }
       } catch {
@@ -188,18 +206,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       async signUp(payload) {
         const response = await signUpMutation.mutateAsync(payload);
-        return response.message ?? 'Please check your email for verification code';
+        return (
+          response.message ?? "Please check your email for verification code"
+        );
       },
       async verifyEmail(payload) {
         await verifyEmailMutation.mutateAsync(payload);
       },
       async resendVerification(email) {
         const response = await resendVerificationMutation.mutateAsync(email);
-        return response.message ?? 'Verification code sent successfully';
+        return response.message ?? "Verification code sent successfully";
       },
       async forgotPassword(email) {
         const response = await forgotPasswordMutation.mutateAsync(email);
-        return response.message ?? 'Verification code sent successfully';
+        return response.message ?? "Verification code sent successfully";
       },
       async resetPassword(payload) {
         await resetPasswordMutation.mutateAsync(payload);
@@ -229,7 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUpMutation,
       token,
       verifyEmailMutation,
-    ]
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -239,7 +259,7 @@ export function useAuth() {
   const context = React.useContext(AuthContext);
 
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
 
   return context;

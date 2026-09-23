@@ -4,7 +4,8 @@ import { Icon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
-import { examMaterialsApi, type ImportantTopic } from "@/services";
+import { useImportantTopicsQuery } from "@/hooks/queries/use-exam-materials";
+import type { ImportantTopic } from "@/services";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 
@@ -19,30 +20,20 @@ export const ImportantTopicsTab = React.memo(function ImportantTopicsTab({
   subjectId,
   materialTitle,
 }: ImportantTopicsTabProps) {
-  const [topics, setTopics] = React.useState<ImportantTopic[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isError, setIsError] = React.useState(false);
+  const {
+    data: topicsData,
+    isLoading,
+    isError,
+  } = useImportantTopicsQuery({
+    examPaperId,
+    subjectId,
+    limit: 20,
+  });
 
-  const fetchTopics = React.useCallback(async () => {
-    setIsLoading(true);
-    setIsError(false);
-    try {
-      const res = await examMaterialsApi.getImportantTopics({
-        examPaperId,
-        subjectId,
-        limit: 20,
-      });
-      setTopics(res.data ?? []);
-    } catch {
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [examPaperId, subjectId]);
-
-  React.useEffect(() => {
-    void fetchTopics();
-  }, [fetchTopics]);
+  const topics: ImportantTopic[] = React.useMemo(
+    () => topicsData?.data ?? [],
+    [topicsData],
+  );
 
   if (isLoading) {
     return (

@@ -1,10 +1,15 @@
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { HeroBanner } from "@/components/ui/hero-banner";
 import { SearchInput } from "@/components/ui/search-input";
+import { SectionHeader } from "@/components/ui/section-header";
+import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
 import { Text } from "@/components/ui/text";
+import { UploadActionCard } from "@/components/ui/upload-action-card";
 import type { ExamMaterialCategory } from "@/services/exam-materials-service";
 import type { Subject } from "@/services/subjects-service";
 import * as React from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, View } from "react-native";
 export interface ExamMaterialsHeaderProps {
   onUploadPress: () => void;
   totalMaterialsCount?: number;
@@ -17,9 +22,24 @@ export interface ExamMaterialsHeaderProps {
   onClearFilters: () => void;
 }
 
+const StaticHeroHeader = React.memo(function StaticHeroHeader() {
+  return (
+    <HeroBanner
+      title={
+        <Text variant="h1" className="tracking-tight leading-tight">
+          Exam Materials
+        </Text>
+      }
+      subtitle="Upload your exam papers and let AI find the important topics for you."
+      imageSource={require("../../../assets/images/student-study-hero.png")}
+      imageWidth={140}
+      imageHeight={115}
+    />
+  );
+});
+
 export const ExamMaterialsHeader = React.memo(function ExamMaterialsHeader({
   onUploadPress,
-  totalMaterialsCount = 0,
   selectedCategory,
   selectedSubjectId,
   onSubjectChange,
@@ -28,113 +48,78 @@ export const ExamMaterialsHeader = React.memo(function ExamMaterialsHeader({
   onSearchChange,
   onClearFilters,
 }: ExamMaterialsHeaderProps) {
-  const hasActiveFilters = Boolean(
-    (selectedCategory && selectedCategory !== "ALL") ||
-    selectedSubjectId ||
-    searchQuery,
+  const [showFilters, setShowFilters] = React.useState(false);
+
+  const isSubjectActive = Boolean(selectedSubjectId);
+  const isCategoryActive = Boolean(
+    selectedCategory && selectedCategory !== "ALL",
   );
+  const isSearchActive = Boolean(searchQuery);
+  const hasActiveFilters =
+    isSubjectActive || isCategoryActive || isSearchActive;
+
+  const selectedSubjectObj = React.useMemo(() => {
+    if (!selectedSubjectId) return null;
+    return subjects.find((s) => String(s.id) === String(selectedSubjectId));
+  }, [subjects, selectedSubjectId]);
+
+  const handleClearSubject = React.useCallback(() => {
+    onSubjectChange("");
+  }, [onSubjectChange]);
 
   return (
-    <View className="gap-3.5 mb-4">
-      {/* Top Banner & Header */}
-      <View className="flex-row items-center justify-between gap-3">
-        <View className="flex-1">
-          <View className="flex-row items-center gap-2">
-            <Text variant="h2" className="text-xl font-bold text-foreground">
-              Exam Materials
-            </Text>
-          </View>
-          <Text
-            variant="muted"
-            className="text-xs text-muted-foreground mt-0.5"
-          >
-            Previous year papers, mock tests & exam prep guides
-          </Text>
-        </View>
+    <View className="mb-4 gap-4">
+      <StaticHeroHeader />
+      <UploadActionCard
+        title="Upload exam paper"
+        subtitle="Upload PYQs, mock test PDFs or question sheets"
+        onPress={onUploadPress}
+      />
 
-        <Button
-          variant="default"
-          size="sm"
-          title="Upload +"
-          icon="plus"
-          iconSize={15}
-          onPress={onUploadPress}
+      <View className="pt-2 gap-3">
+        <SectionHeader
+          title="All Exam Papers & PYQs"
+          actionLabel={hasActiveFilters ? "Clear filters" : undefined}
+          onAction={hasActiveFilters ? onClearFilters : undefined}
+        />
+
+        <SearchInput
+          placeholder="Search exam materials..."
+          value={searchQuery}
+          onChangeText={onSearchChange}
+          onFilterPress={() => setShowFilters((prev) => !prev)}
+          isFilterActive={showFilters || isSubjectActive}
         />
       </View>
 
-      {/* Search Input */}
-      <SearchInput
-        placeholder="Search PYQ, mock paper, or exam note..."
-        value={searchQuery}
-        onChangeText={onSearchChange}
-      />
+      {(showFilters || isSubjectActive) && subjects.length > 0 ? (
+        <Card className="p-3 rounded-2xl gap-2.5">
+          <SubjectSelectDropdown
+            value={selectedSubjectId}
+            onValueChange={onSubjectChange}
+            subjects={subjects}
+            showAllOption={true}
+            allOptionLabel="All Subjects"
+            placeholder="Filter by Subject..."
+            triggerClassName="h-11 px-3 rounded-xl text-xs bg-card border-border"
+          />
 
-      {/* Subject Filter Pills */}
-      {subjects.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 6, paddingRight: 4 }}
-        >
-          <Pressable
-            onPress={() => onSubjectChange("")}
-            className={`px-2.5 py-1 rounded-lg border ${
-              !selectedSubjectId
-                ? "bg-primary/10 border-primary/30"
-                : "bg-transparent border-border"
-            }`}
-          >
-            <Text
-              className={`text-[11px] font-medium ${
-                !selectedSubjectId
-                  ? "text-primary font-bold"
-                  : "text-muted-foreground"
-              }`}
-            >
-              All Subjects
-            </Text>
-          </Pressable>
-
-          {subjects.map((subj) => {
-            const subjIdStr = String(subj.id);
-            const isSelected = selectedSubjectId === subjIdStr;
-            return (
-              <Pressable
-                key={subjIdStr}
-                onPress={() => onSubjectChange(isSelected ? "" : subjIdStr)}
-                className={`px-2.5 py-1 rounded-lg border ${
-                  isSelected
-                    ? "bg-primary/10 border-primary/30"
-                    : "bg-transparent border-border"
-                }`}
-              >
-                <Text
-                  className={`text-[11px] font-medium ${
-                    isSelected
-                      ? "text-primary font-bold"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {subj.name}
-                </Text>
+          {isSubjectActive ? (
+            <View className="flex-row items-center gap-1.5 flex-wrap pt-1 border-t border-border">
+              <Text className="text-[11px] font-bold text-muted-foreground">
+                Active:
+              </Text>
+              <Pressable onPress={handleClearSubject}>
+                <Badge
+                  label={`Subject: ${selectedSubjectObj?.name ?? selectedSubjectId}`}
+                  variant="purple"
+                  icon="x"
+                  iconSize={10}
+                />
               </Pressable>
-            );
-          })}
-        </ScrollView>
-      ) : null}
-
-      {/* Active Filter Clear Bar */}
-      {hasActiveFilters ? (
-        <View className="flex-row items-center justify-between pt-1">
-          <Text variant="muted" className="text-xs">
-            Showing filtered results
-          </Text>
-          <Pressable onPress={onClearFilters} className="active:opacity-70">
-            <Text className="text-xs font-semibold text-primary">
-              Clear Filters
-            </Text>
-          </Pressable>
-        </View>
+            </View>
+          ) : null}
+        </Card>
       ) : null}
     </View>
   );

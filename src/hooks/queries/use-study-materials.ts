@@ -11,17 +11,20 @@ import * as React from "react";
 export function useStudyMaterialsInfinite(options?: {
   limit?: number;
   search?: string;
+  subjectId?: string;
 }) {
   const limit = options?.limit ?? 8;
   const search = options?.search;
+  const subjectId = options?.subjectId;
 
   const query = useInfiniteQuery({
-    queryKey: ["study-materials", limit, search],
+    queryKey: ["study-materials", limit, search, subjectId],
     queryFn: async ({ pageParam = 1 }) =>
       studyMaterialsApi.list({
         page: pageParam as number,
         limit,
         search,
+        subjectId,
       }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {

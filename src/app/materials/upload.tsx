@@ -10,9 +10,11 @@ import {
 import { NotesDetailBottomSheet } from "@/components/notes";
 import { StartQuizSheet } from "@/components/quizzes";
 import {
+  useCreateExamPaperMutation,
   useCreateSubject,
   useFileDownload,
   useFilePicker,
+  useParseQuestionsMutation,
   useStartQuizAttempt,
   useStudyMaterialNotesQuery,
   useSubjectsQuery,
@@ -304,6 +306,9 @@ export default function UploadMaterialScreen() {
     [],
   );
 
+  const parseQuestionsMutation = useParseQuestionsMutation();
+  const createExamPaperMutation = useCreateExamPaperMutation();
+
   const handlePickFile = React.useCallback(async () => {
     setSubmitError(null);
     const picked = await filePicker.pickFile();
@@ -316,11 +321,11 @@ export default function UploadMaterialScreen() {
         setValues((prev) => ({ ...prev, title: cleanTitle }));
       }
 
-      // If uploadType is PYQ, call POST /v1/homework-helps/parse-questions automatically
+      // If uploadType is PYQ, call parseQuestionsMutation automatically
       if (uploadType === "PYQ") {
         try {
           setIsParsingQuestions(true);
-          const parseRes = await examMaterialsApi.parseQuestions({
+          const parseRes = await parseQuestionsMutation.mutateAsync({
             uri: picked.uri,
             name: picked.name,
             type: picked.mimeType || "application/pdf",
@@ -335,7 +340,7 @@ export default function UploadMaterialScreen() {
         }
       }
     }
-  }, [filePicker, values.title, uploadType]);
+  }, [filePicker, values.title, uploadType, parseQuestionsMutation]);
 
   const handleRemoveFile = React.useCallback(() => {
     filePicker.removeFile();
@@ -370,9 +375,9 @@ export default function UploadMaterialScreen() {
       setSubmitting(true);
       setSubmitError(null);
 
-      // Branch 1: PYQ Flow -> POST /v1/exam-papers
+      // Branch 1: PYQ Flow -> createExamPaperMutation
       if (uploadType === "PYQ") {
-        const createdExam = await examMaterialsApi.createExamPaper({
+        const createdExam = await createExamPaperMutation.mutateAsync({
           title: values.title.trim(),
           description: examDescription.trim(),
           subjectId: values.subjectId,
@@ -429,6 +434,7 @@ export default function UploadMaterialScreen() {
     examYear,
     examGrade,
     parsedQuestions,
+    createExamPaperMutation,
     router,
   ]);
 

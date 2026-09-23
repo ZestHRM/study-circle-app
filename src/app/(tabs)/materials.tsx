@@ -18,6 +18,7 @@ export default function MaterialsScreen() {
   const confirm = useConfirmDialog();
   const [selectedSubjectId, setSelectedSubjectId] = React.useState<string>("");
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const {
     materials,
@@ -27,7 +28,10 @@ export default function MaterialsScreen() {
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useStudyMaterialsInfinite();
+  } = useStudyMaterialsInfinite({
+    subjectId: selectedSubjectId,
+    search: searchQuery,
+  });
 
   const { subjects } = useSubjectsQuery();
 
@@ -35,11 +39,6 @@ export default function MaterialsScreen() {
 
   const filteredMaterials = React.useMemo(() => {
     return materials.filter((m) => {
-      if (selectedSubjectId) {
-        const mSubjectId = String(m.subjectId ?? m.subject?.id ?? "");
-        if (mSubjectId !== selectedSubjectId) return false;
-      }
-
       if (selectedDate) {
         if (m.createdAt) {
           const itemDateStr = new Date(m.createdAt).toISOString().split("T")[0];
@@ -50,11 +49,12 @@ export default function MaterialsScreen() {
 
       return true;
     });
-  }, [materials, selectedSubjectId, selectedDate]);
+  }, [materials, selectedDate]);
 
   const handleClearFilters = React.useCallback(() => {
     setSelectedSubjectId("");
     setSelectedDate(null);
+    setSearchQuery("");
   }, []);
 
   const handleOpenAddDialog = React.useCallback(() => {
@@ -110,6 +110,8 @@ export default function MaterialsScreen() {
         subjects={subjects}
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         onClearFilters={handleClearFilters}
       />
     ),
@@ -121,6 +123,8 @@ export default function MaterialsScreen() {
       subjects,
       selectedDate,
       setSelectedDate,
+      searchQuery,
+      setSearchQuery,
       handleClearFilters,
     ],
   );

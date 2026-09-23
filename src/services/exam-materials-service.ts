@@ -125,19 +125,20 @@ export const examMaterialsApi = {
     search?: string;
     category?: ExamMaterialCategory;
     subjectId?: string;
+    _subjectIds?: string;
   }): Promise<ExamMaterialsResponse> {
     const page = params?.page ?? 1;
     const limit = params?.limit ?? 10;
     const search = params?.search ?? "";
     const category = params?.category ?? "ALL";
-    const subjectId = params?.subjectId ?? "";
+    const subjectId = params?.subjectId || params?._subjectIds || "";
 
     const query = new URLSearchParams({
       page: String(page),
       limit: String(limit),
       ...(search ? { search } : {}),
       ...(category && category !== "ALL" ? { category } : {}),
-      ...(subjectId ? { subjectId } : {}),
+      ...(subjectId ? { _subjectIds: subjectId, subjectId } : {}),
     }).toString();
 
     return request<ExamMaterialsResponse>(`/exam-papers?${query}`);

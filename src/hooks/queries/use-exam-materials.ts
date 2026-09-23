@@ -112,6 +112,55 @@ export function useCreateExamMaterial() {
   });
 }
 
+export function useImportantTopicsQuery(params?: {
+  examPaperId?: string;
+  subjectId?: string | number;
+  limit?: number;
+  search?: string;
+}) {
+  return useQuery({
+    queryKey: ["important-topics", params],
+    queryFn: async () => examMaterialsApi.getImportantTopics(params),
+  });
+}
+
+export function useParseQuestionsMutation() {
+  return useMutation({
+    mutationFn: async (file: { uri: string; name: string; type: string }) => {
+      return examMaterialsApi.parseQuestions(file);
+    },
+  });
+}
+
+export function useCreateExamPaperMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      title: string;
+      description?: string;
+      subjectId: string | number;
+      year?: string | number;
+      grade?: string;
+      questions: string[];
+    }) => {
+      return examMaterialsApi.createExamPaper(payload);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["exam-materials"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["important-topics"],
+      });
+      showSuccessToast(
+        "Exam Paper Created",
+        "Your exam paper has been created successfully.",
+      );
+    },
+  });
+}
+
 export function useDeleteExamMaterial() {
   const queryClient = useQueryClient();
 

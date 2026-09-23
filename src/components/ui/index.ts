@@ -43,4 +43,5 @@ export * from "./spinner";
 export * from "./subject-select-dropdown";
 export * from "./swipeable-tab-view";
 export * from "./text";
+export * from "./upload-action-card";
 export * from "./watermark-background";

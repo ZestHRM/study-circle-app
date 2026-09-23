@@ -64,4 +64,9 @@ export const profileApi = {
       "POST",
     );
   },
+
+  async updateProfile(payload: Partial<User>): Promise<User> {
+    return RestClient<User>("/profile", "PUT", payload);
+  },
 };
+

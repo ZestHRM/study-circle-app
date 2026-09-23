@@ -4,6 +4,7 @@ import {
   AIAvatar,
   AuthFooter,
   FormInput,
+  FormStatusMessage,
   Icon,
 } from "@/components/ui";
 import { Button } from "@/components/ui/button";
@@ -465,11 +466,7 @@ export default function SignUpScreen() {
               returnKeyType="send"
               onSubmitEditing={handleSubmit(onSubmitSignUp, onFormError)}
             />
-            {generalError ? (
-              <Text variant="error" className="text-sm">
-                {generalError}
-              </Text>
-            ) : null}
+            <FormStatusMessage error={generalError} />
             <Button
               variant="quiz"
               size="lg"

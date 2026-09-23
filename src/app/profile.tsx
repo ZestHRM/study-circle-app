@@ -1,7 +1,6 @@
 import {
   ProfileHero,
   ProfileInfoCard,
-  type ProfileInfoRow,
   ProfileSecurityCard,
   ProfileStats,
 } from "@/components/profile";
@@ -11,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { THEME_OPTIONS } from "@/constants/profile";
+import { useProfileInfoSections } from "@/hooks";
 import { useAuth } from "@/lib/auth";
 import {
   type ThemePreference,
@@ -18,22 +19,17 @@ import {
 } from "@/lib/theme-preference";
 import { showSuccessToast } from "@/lib/utils/toast";
 import { getFormattedSubscriptionTier } from "@/services";
+import * as Application from "expo-application";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as React from "react";
 import { Alert, BackHandler, Platform, Pressable, View } from "react-native";
-
-const THEME_OPTIONS: { value: ThemePreference; label: string; icon: string }[] =
-  [
-    { value: "system", label: "System", icon: "smartphone" },
-    { value: "light", label: "Light", icon: "sun" },
-    { value: "dark", label: "Dark", icon: "moon" },
-  ];
 
 export default function ProfileScreen() {
   const { user, token, signOut } = useAuth();
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
   const { preference, setPreference } = useThemePreference();
+  const infoCardSections = useProfileInfoSections(user);
 
   React.useEffect(() => {
     if (!token) {
@@ -115,63 +111,16 @@ export default function ProfileScreen() {
     router.push("/change-password");
   }, [router]);
 
-  // Data rows for info sections
-  const personalRows = React.useMemo<ProfileInfoRow[]>(
-    () => [
-      {
-        label: "Full Name",
-        value: user?.name || "N/A",
-        iconName: "user-check",
-      },
-      {
-        label: "Email Address",
-        value: user?.email || "N/A",
-        iconName: "mail",
-        verified: Boolean(user?.email),
-      },
-      {
-        label: "Phone",
-        value: user?.phone || "Not provided",
-        iconName: "phone",
-      },
-    ],
-    [user?.name, user?.email, user?.phone],
-  );
-
-  const academicRows = React.useMemo<ProfileInfoRow[]>(
-    () => [
-      {
-        label: "Institute / University",
-        value: user?.institute || "Study Circle",
-        iconName: "book-open",
-      },
-      {
-        label: "Target Exam / Field",
-        value: (user as any)?.targetExam || "General Learning",
-        iconName: "target",
-      },
-    ],
-    [user?.institute, (user as any)?.targetExam],
-  );
-
-  const locationRows = React.useMemo<ProfileInfoRow[]>(() => {
-    const locParts = [user?.city, user?.state, user?.country].filter(Boolean);
-    const regionText =
-      locParts.length > 0 ? locParts.join(", ") : "Not provided";
-
-    const rows: ProfileInfoRow[] = [
-      { label: "Region", value: regionText, iconName: "map-pin" },
-    ];
-    if (user?.zipcode) {
-      rows.push({ label: "Zipcode", value: user.zipcode, iconName: "hash" });
-    }
-    return rows;
-  }, [user?.city, user?.state, user?.country, user?.zipcode]);
+  const handleNavigateEditProfile = React.useCallback(() => {
+    router.push("/edit-profile");
+  }, [router]);
 
   const activeTierLabel = React.useMemo(
     () => getFormattedSubscriptionTier(user),
     [user],
   );
+  const buildVersion = Application.nativeBuildVersion;
+  const appVersion = Application.nativeApplicationVersion;
 
   return (
     <AppScreen
@@ -184,37 +133,22 @@ export default function ProfileScreen() {
     >
       <View className="mx-auto w-full max-w-md gap-4">
         {/* Profile Hero Header */}
-        <ProfileHero user={user} />
+        <ProfileHero user={user} onEditPress={handleNavigateEditProfile} />
 
         {/* Real-time Stats Cards */}
         <ProfileStats user={user} />
 
-        {/* Personal Details */}
-        <ProfileInfoCard
-          title="Personal Information"
-          headerIcon="user"
-          headerIconColor="primary"
-          headerIconBgClass="bg-blue-500/15"
-          rows={personalRows}
-        />
-
-        {/* Academic Profile */}
-        <ProfileInfoCard
-          title="Academic Profile"
-          headerIcon="book-open"
-          headerIconColor="terracotta"
-          headerIconBgClass="bg-orange-500/15"
-          rows={academicRows}
-        />
-
-        {/* Location Info */}
-        <ProfileInfoCard
-          title="Location Details"
-          headerIcon="map-pin"
-          headerIconColor="quiz"
-          headerIconBgClass="bg-purple-500/15"
-          rows={locationRows}
-        />
+        {/* Personal / Academic / Location Info Cards */}
+        {infoCardSections.map((section) => (
+          <ProfileInfoCard
+            key={section.key}
+            title={section.title}
+            headerIcon={section.headerIcon}
+            headerIconColor={section.headerIconColor}
+            headerIconBgClass={section.headerIconBgClass}
+            rows={section.rows}
+          />
+        ))}
 
         {/* Subscription Status Card */}
         <SubscriptionCard
@@ -245,7 +179,7 @@ export default function ProfileScreen() {
         <View className="items-center justify-center gap-2 pt-2 pb-4">
           <AppLogo size={36} />
           <Text variant="caption" className="font-medium">
-            Study Circle • Version 1.0.0
+            Study Circle • {appVersion}. build: {buildVersion}
           </Text>
         </View>
       </View>

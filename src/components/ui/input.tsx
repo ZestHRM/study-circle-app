@@ -27,6 +27,7 @@ const Input = React.forwardRef<TextInput, InputProps>(function Input(
     <View className="relative w-full flex-row items-center">
       <TextInput
         ref={ref}
+        maxFontSizeMultiplier={props.maxFontSizeMultiplier ?? 1.3}
         placeholderTextColor={APP_COLORS.stone400}
         secureTextEntry={secureTextEntry ? !isPasswordVisible : false}
         className={cn(

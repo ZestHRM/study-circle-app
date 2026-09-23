@@ -10,13 +10,16 @@ import { Icon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
+import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import {
+  useCancelSubscriptionMutation,
   useSubscribeMutation,
   useSubscriptionPlansQuery,
 } from "@/hooks/queries/use-subscriptions";
 import { useAuth } from "@/lib/auth";
 import { showInfoToast } from "@/lib/utils/toast";
 import { getFormattedSubscriptionTier, type SubscriptionPlan } from "@/services";
+import { getUserCurrency } from "@/utils/get-user-currency";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { View } from "react-native";
@@ -24,17 +27,32 @@ import { View } from "react-native";
 export default function SubscriptionsScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const confirm = useConfirmDialog();
   const { plans, isLoading, isError, refetch } = useSubscriptionPlansQuery();
   const subscribeMutation = useSubscribeMutation();
+  const cancelMutation = useCancelSubscriptionMutation();
 
   const [billingCycle, setBillingCycle] = React.useState<"monthly" | "yearly">(
     "monthly",
   );
-  const [currency, setCurrency] = React.useState<"inr" | "usd">("inr");
+
+  const currency = React.useMemo(() => getUserCurrency(), []);
 
   const currentTierName = React.useMemo(() => {
     return getFormattedSubscriptionTier(user);
   }, [user]);
+
+  // Priority sort: current active plan goes to the top!
+  const sortedPlans = React.useMemo(() => {
+    if (!plans || plans.length === 0) return [];
+    return [...plans].sort((a, b) => {
+      const aIsCurrent = a.name.toLowerCase() === currentTierName.toLowerCase();
+      const bIsCurrent = b.name.toLowerCase() === currentTierName.toLowerCase();
+      if (aIsCurrent && !bIsCurrent) return -1;
+      if (!aIsCurrent && bIsCurrent) return 1;
+      return 0;
+    });
+  }, [plans, currentTierName]);
 
   const handleSubscribe = React.useCallback(
     (plan: SubscriptionPlan) => {
@@ -56,6 +74,20 @@ export default function SubscriptionsScreen() {
     },
     [billingCycle, currency, currentTierName, subscribeMutation],
   );
+
+  const handleCancel = React.useCallback(async () => {
+    const isConfirmed = await confirm({
+      title: "Cancel Subscription",
+      description:
+        "Are you sure you want to cancel your current subscription? You will lose access to premium AI features upon period end.",
+      confirmText: "Yes, Cancel Plan",
+      cancelText: "Keep My Plan",
+    });
+
+    if (isConfirmed) {
+      cancelMutation.mutate();
+    }
+  }, [cancelMutation, confirm]);
 
   return (
     <AppScreen
@@ -93,8 +125,6 @@ export default function SubscriptionsScreen() {
         <SubscriptionControls
           billingCycle={billingCycle}
           onBillingCycleChange={setBillingCycle}
-          currency={currency}
-          onCurrencyChange={setCurrency}
         />
 
         {/* Loading or Error States */}
@@ -119,9 +149,9 @@ export default function SubscriptionsScreen() {
             />
           </View>
         ) : (
-          /* Subscription Plans Cards List */
+          /* Subscription Plans Cards List (Current Plan displayed at the very top) */
           <View className="gap-4">
-            {plans.map((plan) => {
+            {sortedPlans.map((plan) => {
               const isCurrent =
                 plan.name.toLowerCase() === currentTierName.toLowerCase();
 
@@ -133,6 +163,8 @@ export default function SubscriptionsScreen() {
                   currency={currency}
                   isCurrent={isCurrent}
                   onSubscribe={handleSubscribe}
+                  onCancel={handleCancel}
+                  isCancelling={cancelMutation.isPending}
                 />
               );
             })}

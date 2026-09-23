@@ -161,3 +161,29 @@ export function useSubscribeMutation() {
     resetState,
   };
 }
+
+export function useCancelSubscriptionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => subscriptionsApi.cancelSubscription(),
+    onSuccess: () => {
+      showSuccessToast(
+        "Subscription Cancelled",
+        "Your subscription has been cancelled successfully.",
+      );
+      void queryClient.invalidateQueries({ queryKey: ["auth"] });
+      void queryClient.invalidateQueries({ queryKey: ["user"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["subscription-plans"],
+      });
+    },
+    onError: (err: any) => {
+      showErrorToast(
+        "Cancellation Failed",
+        err.message || "Failed to cancel subscription. Please try again.",
+      );
+    },
+  });
+}
+

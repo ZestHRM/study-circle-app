@@ -6,4 +6,4 @@ export * from './use-exam-materials';
 export * from './use-subjects';
 export * from './use-subscriptions';
 export * from './use-notifications';
-
+export * from './use-profile';

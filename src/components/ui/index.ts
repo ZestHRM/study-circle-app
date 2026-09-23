@@ -22,6 +22,7 @@ export * from "./error-state";
 export * from "./feature-card";
 export * from "./form-field";
 export * from "./form-input";
+export * from "./form-status-message";
 export * from "./hero-banner";
 export * from "./icon";
 export * from "./infinite-list-footer";

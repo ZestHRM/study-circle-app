@@ -2,11 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
+import {
+  isFailed,
+  isNotesReady,
+  isQuizReady,
+} from "@/lib/utils/material-status";
+import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
 import type { StudyMaterial } from "@/services";
 import * as React from "react";
 import { Linking, Pressable, ScrollView, View } from "react-native";
-import { isFailed, isNotesReady, isQuizReady } from "@/lib/utils/material-status";
-import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
 
 interface MaterialTabProps {
   material: StudyMaterial | null;
@@ -199,7 +203,6 @@ export const MaterialTab = React.memo(function MaterialTab({
                 Extracted Document Text
               </Text>
             </View>
-            <Badge label="OCR Extracted" variant="outline" />
           </View>
           <View className="bg-background rounded-xl p-3.5 border border-border max-h-60">
             <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>

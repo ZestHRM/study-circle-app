@@ -30,7 +30,7 @@ export default function AppTabs() {
           <TabTrigger name="exam-materials" href={"/exam-materials" as any} asChild>
             <TabButton>Exam Material</TabButton>
           </TabTrigger>
-          <TabTrigger name="progress" href="/progress" asChild>
+          <TabTrigger name="progress" href={"/progress" as any} asChild>
             <TabButton>Progress</TabButton>
           </TabTrigger>
           <TabTrigger name="explore" href={"/explore" as any} asChild>

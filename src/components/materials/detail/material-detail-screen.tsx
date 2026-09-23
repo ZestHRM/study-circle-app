@@ -95,8 +95,6 @@ export function MaterialDetailScreen({
   const failed = material ? isFailed(material) : false;
   const title = material?.title ?? "Study Material";
   const subject = material?.subject?.name ?? "General";
-  const pdfUrl = material?.files?.[0]?.url ?? undefined;
-  const questionsList = (material as any)?.questions ?? [];
 
   const handleStartQuiz = React.useCallback(
     async (quiz: Quiz) => {
@@ -235,11 +233,9 @@ export function MaterialDetailScreen({
           isError={isNotesError}
           notesReady={notesReady}
           failed={failed}
-          quizReady={quizReady}
           title={title}
           subject={subject}
           onReadNotes={handleReadNotes}
-          onGoToQuiz={handleGoToQuiz}
           onRetry={refetchNotes}
         />
         <QuizTab

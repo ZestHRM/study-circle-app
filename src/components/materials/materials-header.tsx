@@ -9,7 +9,6 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { SubjectSelectDropdown } from "@/components/ui/subject-select-dropdown";
 import { Text } from "@/components/ui/text";
 import { UploadActionCard } from "@/components/ui/upload-action-card";
-import { APP_COLORS } from "@/constants/colors";
 import { formatInputDate } from "@/lib/utils/formatters";
 import * as React from "react";
 import { Pressable, View } from "react-native";
@@ -30,22 +29,22 @@ export interface MaterialsHeaderProps {
 const BENEFITS = [
   {
     icon: "file-text",
-    iconColor: APP_COLORS.emerald600,
+    iconColor: "emerald",
     bgClass: "bg-emerald-50 dark:bg-emerald-950/40",
     title: "AI notes",
     desc: "Well structured & easy to follow",
   },
   {
     icon: "lightbulb",
-    iconColor: APP_COLORS.warningDark,
+    iconColor: "warning",
     bgClass: "bg-warning-bg",
     title: "Key concepts",
     desc: "Focus on what matters",
   },
   {
     icon: "target",
-    iconColor: APP_COLORS.brandPurple,
-    bgClass: "bg-purple-50 dark:bg-purple-950/40",
+    iconColor: "primary",
+    bgClass: "bg-primary/10",
     title: "Practice ready",
     desc: "Build confidence step by step",
   },
@@ -196,7 +195,7 @@ export const MaterialsHeader = React.memo(function MaterialsHeader({
                 <Pressable onPress={handleClearSubject}>
                   <Badge
                     label={`Subject: ${selectedSubjectObj?.name ?? selectedSubjectId}`}
-                    variant="purple"
+                    variant="default"
                     icon="x"
                     iconSize={10}
                   />
@@ -207,7 +206,7 @@ export const MaterialsHeader = React.memo(function MaterialsHeader({
                 <Pressable onPress={handleClearDate}>
                   <Badge
                     label={`Date: ${formatInputDate(selectedDate)}`}
-                    variant="blue"
+                    variant="default"
                     icon="x"
                     iconSize={10}
                   />

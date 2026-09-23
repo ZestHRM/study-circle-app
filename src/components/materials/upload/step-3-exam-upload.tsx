@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { NoticeBox } from "@/components/ui/notice-box";
 import { Spinner } from "@/components/ui/spinner";
 import { Text } from "@/components/ui/text";
-import { APP_COLORS } from "@/constants/colors";
 import type { PickedFileValues } from "@/schemas";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
@@ -179,7 +178,7 @@ export const Step3ExamUpload = React.memo(function Step3ExamUpload({
                 <Icon
                   name="check-circle"
                   size={18}
-                  color={APP_COLORS.primary}
+                  color="primary"
                 />
                 <Text variant="h3" className="font-extrabold text-sm">
                   Parsed Questions ({parsedQuestions.length})

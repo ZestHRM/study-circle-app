@@ -35,9 +35,7 @@ export const HomeGreeting = React.memo(function HomeGreeting({
 
   return (
     <View className="gap-4 pb-1">
-      {/* Top Header Row: Logo & Badges */}
       <View className="flex-row items-center justify-between pt-1">
-        {/* Left: StudyCircleAI Brand Logo with Tagline */}
         <View className="gap-0.5">
           <AppHeaderBrand logoSize={38} />
           <Text variant="muted" className="text-[11px] pl-0.5">
@@ -45,15 +43,12 @@ export const HomeGreeting = React.memo(function HomeGreeting({
           </Text>
         </View>
 
-        {/* Right: Bell Icon & Tier Badge */}
         <View className="flex-row items-center gap-2.5">
-          {/* Notification Bell */}
           <Pressable
             onPress={() => router.push("/notifications" as any)}
             className="w-10 h-10 rounded-full bg-muted items-center justify-center relative active:opacity-70"
             hitSlop={8}
           >
-
             <Icon name="bell" size={18} color="muted" />
             {unreadCount > 0 ? (
               <View className="min-w-[16px] h-4 px-1 rounded-full bg-blue-600 absolute -top-1 -right-1 items-center justify-center border-2 border-white dark:border-stone-900">
@@ -66,9 +61,7 @@ export const HomeGreeting = React.memo(function HomeGreeting({
         </View>
       </View>
 
-      {/* Greeting Row */}
       <View className="flex-row items-end justify-between pt-1">
-        {/* Left: Greeting Title */}
         <View className="gap-0.5">
           <Text variant="muted" className="text-sm font-medium">
             {timeOfDayGreeting}
@@ -79,7 +72,6 @@ export const HomeGreeting = React.memo(function HomeGreeting({
           <Text variant="muted">Let&apos;s make progress today.</Text>
         </View>
 
-        {/* Right: Date & Motivational Phrase */}
         <View className="items-end gap-0.5 pb-0.5">
           <Text variant="muted">{formattedDate}</Text>
           <Text variant="primary" className="text-xs">

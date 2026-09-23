@@ -37,7 +37,6 @@ export const RecentMaterialsWidget = React.memo(
 
     return (
       <View className="gap-3 pt-2">
-        {/* Header */}
         <View className="flex-row items-center justify-between">
           <Text variant="h3" className="font-bold">
             Recent Materials & Quizzes
@@ -67,11 +66,10 @@ export const RecentMaterialsWidget = React.memo(
 
             return (
               <Card key={mat.id} className="rounded-3xl p-4 gap-3">
-                {/* Main Material Header Row */}
                 <View className="flex-row items-center justify-between gap-2 flex-wrap">
                   <View className="flex-row items-center gap-3 flex-1 min-w-[150px]">
-                    {/* Green Document Icon Box */}
-                    <View className="w-10 h-10 rounded-2xl bg-emerald-100/80 dark:bg-emerald-950/60 items-center justify-center border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
+                    {/* Document Icon Box */}
+                    <View className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 items-center justify-center border border-emerald-200 dark:border-emerald-900/60 shrink-0">
                       <Icon name="file-text" size={18} color="emerald" />
                     </View>
                     <View className="flex-1">
@@ -91,16 +89,16 @@ export const RecentMaterialsWidget = React.memo(
                   {/* Badges & Actions */}
                   <View className="flex-row items-center gap-2 shrink-0">
                     {isNotesReady ? (
-                      <View className="bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full flex-row items-center gap-1 border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
+                      <View className="bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full flex-row items-center gap-1 border border-emerald-200 dark:border-emerald-900/60 shrink-0">
                         <Icon name="book-open" size={11} color="emerald" />
-                        <Text className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                        <Text className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                           Notes ready
                         </Text>
                       </View>
                     ) : (
-                      <View className="bg-amber-100 dark:bg-amber-950/60 px-2.5 py-1 rounded-full flex-row items-center gap-1 border border-amber-200/60 dark:border-amber-800/60 shrink-0">
+                      <View className="bg-warning-bg px-2.5 py-1 rounded-full flex-row items-center gap-1 border border-amber-200 dark:border-amber-900/60 shrink-0">
                         <Icon name="clock" size={11} color="warning" />
-                        <Text className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                        <Text className="text-[11px] font-bold text-warning-dark dark:text-amber-400">
                           Processing
                         </Text>
                       </View>
@@ -110,8 +108,7 @@ export const RecentMaterialsWidget = React.memo(
                       title="View"
                       variant="outline"
                       size="sm"
-                      className="border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/40 px-3.5 py-1 rounded-full h-8 shrink-0 min-w-[58px]"
-                      textClassName="text-xs font-bold text-blue-700 dark:text-blue-300"
+                      className="px-3.5 py-1 rounded-full h-8 shrink-0 min-w-[58px]"
                       onPress={() => handleMaterialPress(mat.id)}
                     />
                   </View>
@@ -119,9 +116,9 @@ export const RecentMaterialsWidget = React.memo(
 
                 {/* Quiz Status Banner */}
                 {isQuizReady || isPro ? (
-                  <View className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 rounded-2xl p-2.5 flex-row items-center justify-between gap-2 flex-wrap">
+                  <View className="bg-muted border border-border rounded-2xl p-2.5 flex-row items-center justify-between gap-2 flex-wrap">
                     <View className="flex-row items-center gap-2 flex-1 min-w-[150px]">
-                      <View className="w-5 h-5 rounded-full bg-blue-200/60 dark:bg-blue-900/60 items-center justify-center shrink-0">
+                      <View className="w-5 h-5 rounded-full bg-primary/10 items-center justify-center shrink-0">
                         <Icon name="check-circle" size={11} color="primary" />
                       </View>
                       <Text variant="subhead">
@@ -139,9 +136,9 @@ export const RecentMaterialsWidget = React.memo(
                     />
                   </View>
                 ) : (
-                  <View className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 rounded-2xl p-2.5 flex-row items-center justify-between gap-2 flex-wrap">
+                  <View className="bg-muted border border-border rounded-2xl p-2.5 flex-row items-center justify-between gap-2 flex-wrap">
                     <View className="flex-row items-center gap-2 flex-1 min-w-[140px]">
-                      <View className="w-5 h-5 rounded-full bg-blue-200/60 dark:bg-blue-900/60 items-center justify-center shrink-0">
+                      <View className="w-5 h-5 rounded-full bg-primary/10 items-center justify-center shrink-0">
                         <Icon name="lock" size={11} color="primary" />
                       </View>
                       <Text variant="subhead">Quiz generated • Locked</Text>
@@ -152,7 +149,7 @@ export const RecentMaterialsWidget = React.memo(
                       variant="ghost"
                       size="sm"
                       className="h-auto p-0 shrink-0"
-                      textClassName="text-xs font-bold text-amber-700 dark:text-amber-400"
+                      textClassName="text-xs font-bold text-warning-dark dark:text-amber-400"
                       onPress={handleUnlockGold}
                     />
                   </View>

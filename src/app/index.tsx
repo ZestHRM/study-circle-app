@@ -1,3 +1,4 @@
+import { APP_COLORS } from "@/constants/colors";
 import { WelcomeScreen } from "@/components/onboarding";
 import { useAuth } from "@/lib/auth";
 import { Redirect } from "expo-router";
@@ -8,8 +9,8 @@ export default function IndexScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-white dark:bg-stone-900 items-center justify-center">
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" color={APP_COLORS.primary} />
       </View>
     );
   }

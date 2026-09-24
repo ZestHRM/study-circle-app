@@ -1,14 +1,13 @@
 import { AppScreen } from "@/components/ui/app-screen";
-import { SwipeableTabView } from "@/components/ui/swipeable-tab-view";
 import { Button } from "@/components/ui/button";
 import { CommonHeader } from "@/components/ui/common-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FeatureCard } from "@/components/ui/feature-card";
 import { Icon } from "@/components/ui/icon";
 import { ListItemCard } from "@/components/ui/list-item-card";
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Spinner } from "@/components/ui/spinner";
+import { SwipeableTabView } from "@/components/ui/swipeable-tab-view";
 import { Text } from "@/components/ui/text";
 import { APP_COLORS } from "@/constants/colors";
 import { getSubjectTheme } from "@/constants/subject-themes";
@@ -20,8 +19,12 @@ import { formatRelativeOrShortDate } from "@/lib/utils/formatters";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as React from "react";
 import { View } from "react-native";
-import { PRESET_THEMES } from "./create-subject-screen";
 import { IdeasDoodle } from "./subject-doodles";
+
+import { StartQuizSheet } from "@/components/quizzes";
+import { useStartQuizAttempt } from "@/hooks/queries";
+import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
+import { type Quiz, type QuizAttempt } from "@/services";
 
 export interface SubjectDetailScreenProps {
   id?: string;
@@ -39,6 +42,29 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
   const [activeTab, setActiveTab] = React.useState<
     "overview" | "materials" | "pyqs"
   >("overview");
+  const [selectedQuizAttempt, setSelectedQuizAttempt] =
+    React.useState<QuizAttempt | null>(null);
+
+  const startAttemptMutation = useStartQuizAttempt();
+
+  const handleStartQuiz = React.useCallback(
+    async (quiz: Quiz) => {
+      if (!quiz || quiz.totalQuestions <= 0) {
+        showInfoToast("No Questions", "This quiz has no questions yet.");
+        return;
+      }
+      try {
+        const attempt = await startAttemptMutation.mutateAsync(quiz.id);
+        setSelectedQuizAttempt(attempt);
+      } catch (e) {
+        showErrorToast(
+          "Error",
+          e instanceof Error ? e.message : "Failed to start quiz.",
+        );
+      }
+    },
+    [startAttemptMutation],
+  );
 
   // Fetch real API data
   const { subjects, isLoading: isLoadingSubjects } = useSubjectsQuery();
@@ -68,34 +94,31 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
   const sId = subject ? String(subject.id) : "";
 
   // Memoize filtered items to prevent re-filtering on every render
-  const {
-    subjectMaterials,
-    subjectNotes,
-    subjectQuizzes,
-  } = React.useMemo(() => {
-    if (!sId) {
-      return {
-        subjectMaterials: [],
-        subjectNotes: [],
-        subjectQuizzes: [],
-      };
-    }
-    const filteredMaterials = materials.filter(
-      (m) => String(m.subjectId) === sId || String(m.subject?.id) === sId,
-    );
-    const filteredNotes = notes.filter(
-      (n) => String(n.subjectId) === sId || String(n.subject?.id) === sId,
-    );
-    const filteredQuizzes = quizzes.filter(
-      (q) => String(q.subjectId) === sId || String(q.subject?.id) === sId,
-    );
+  const { subjectMaterials, subjectNotes, subjectQuizzes } =
+    React.useMemo(() => {
+      if (!sId) {
+        return {
+          subjectMaterials: [],
+          subjectNotes: [],
+          subjectQuizzes: [],
+        };
+      }
+      const filteredMaterials = materials.filter(
+        (m) => String(m.subjectId) === sId || String(m.subject?.id) === sId,
+      );
+      const filteredNotes = notes.filter(
+        (n) => String(n.subjectId) === sId || String(n.subject?.id) === sId,
+      );
+      const filteredQuizzes = quizzes.filter(
+        (q) => String(q.subjectId) === sId || String(q.subject?.id) === sId,
+      );
 
-    return {
-      subjectMaterials: filteredMaterials,
-      subjectNotes: filteredNotes,
-      subjectQuizzes: filteredQuizzes,
-    };
-  }, [materials, notes, quizzes, sId]);
+      return {
+        subjectMaterials: filteredMaterials,
+        subjectNotes: filteredNotes,
+        subjectQuizzes: filteredQuizzes,
+      };
+    }, [materials, notes, quizzes, sId]);
 
   const handleUploadClick = React.useCallback(() => {
     if (subject?.id) {
@@ -194,14 +217,16 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
             id: "materials",
             label: "Materials",
             icon: "file-text",
-            badge: subjectMaterials.length > 0 ? subjectMaterials.length : undefined,
+            badge:
+              subjectMaterials.length > 0 ? subjectMaterials.length : undefined,
             badgeVariant: "blue",
           },
           {
             id: "pyqs",
             label: "PYQs & Quizzes",
             icon: "zap",
-            badge: subjectQuizzes.length > 0 ? subjectQuizzes.length : undefined,
+            badge:
+              subjectQuizzes.length > 0 ? subjectQuizzes.length : undefined,
             badgeVariant: "purple",
           },
         ]}
@@ -215,7 +240,11 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
               onAction={() => router.push("/materials" as any)}
             />
             {isLoadingMaterials ? (
-              <Spinner variant="quiz" size="small" containerStyle={{ marginVertical: 16 }} />
+              <Spinner
+                variant="quiz"
+                size="small"
+                containerStyle={{ marginVertical: 16 }}
+              />
             ) : subjectMaterials.length === 0 ? (
               <EmptyState
                 icon="file-text"
@@ -235,7 +264,7 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
                     iconName="file-text"
                     iconBgClass="bg-blue-50 dark:bg-blue-950/40"
                     iconColor={APP_COLORS.quizBlue}
-                    onPress={() => router.push(`/materials` as any)}
+                    onPress={() => router.push(`/materials/${mat.id}` as any)}
                   />
                 ))}
               </View>
@@ -251,7 +280,11 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
             onAction={handleUploadClick}
           />
           {isLoadingMaterials ? (
-            <Spinner variant="quiz" size="small" containerStyle={{ marginVertical: 16 }} />
+            <Spinner
+              variant="quiz"
+              size="small"
+              containerStyle={{ marginVertical: 16 }}
+            />
           ) : subjectMaterials.length === 0 ? (
             <EmptyState
               icon="file-text"
@@ -271,7 +304,7 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
                   iconName="file-text"
                   iconBgClass="bg-blue-50 dark:bg-blue-950/40"
                   iconColor={APP_COLORS.quizBlue}
-                  onPress={() => router.push(`/materials` as any)}
+                  onPress={() => router.push(`/materials/${mat.id}` as any)}
                 />
               ))}
             </View>
@@ -283,7 +316,7 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
           <SectionHeader
             title="Quizzes & PYQs"
             actionLabel="View All"
-            onAction={() => router.push("/pyqs" as any)}
+            onAction={() => router.push("/(tabs)/exam-materials" as any)}
           />
           {subjectQuizzes.length === 0 ? (
             <EmptyState
@@ -304,7 +337,7 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
                   iconName="check-square"
                   iconBgClass="bg-blue-50 dark:bg-blue-950/40"
                   iconColor={APP_COLORS.quizBlue}
-                  onPress={() => router.push(`/quizzes` as any)}
+                  onPress={() => handleStartQuiz(quiz)}
                 />
               ))}
             </View>
@@ -349,6 +382,18 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
         className="rounded-full h-12 shadow-md mt-2"
         onPress={handleUploadClick}
       />
+
+      {/* Quiz Attempt Sheet */}
+      {selectedQuizAttempt && (
+        <StartQuizSheet
+          key={selectedQuizAttempt.id}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSelectedQuizAttempt(null);
+          }}
+          attempt={selectedQuizAttempt}
+        />
+      )}
     </AppScreen>
   );
 });

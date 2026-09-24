@@ -62,7 +62,10 @@ export const MaterialCard = React.memo(function MaterialCard({
       </Pressable>
 
       <View className="flex-row items-center justify-between pt-1 border-t border-border mt-0.5">
-        <Pressable onPress={handleCardPress} className="flex-1 pr-2 active:opacity-80">
+        <Pressable
+          onPress={handleCardPress}
+          className="flex-1 pr-2 active:opacity-80"
+        >
           <MaterialStatusBadges material={material} />
         </Pressable>
 

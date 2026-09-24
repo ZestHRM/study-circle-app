@@ -1,3 +1,4 @@
+import { MaterialStatusBadges } from "@/components/materials/material-status-badges";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -6,7 +7,6 @@ import { Text } from "@/components/ui/text";
 import { useStudyMaterialsInfinite } from "@/hooks/queries/use-study-materials";
 import { usePlanPermissions } from "@/hooks/use-plan-permissions";
 import { formatShortDate } from "@/lib/utils/formatters";
-import { isNotesReady as isNotesReadyHelper } from "@/lib/utils/material-status";
 import { router } from "expo-router";
 import * as React from "react";
 import { Pressable, View } from "react-native";
@@ -22,10 +22,6 @@ export const RecentMaterialsWidget = React.memo(
 
     const handleUnlockGold = React.useCallback(() => {
       router.push("/subscriptions");
-    }, []);
-
-    const handlePyqsPress = React.useCallback(() => {
-      router.push("/pyqs");
     }, []);
 
     const handleMaterialPress = React.useCallback((id: string) => {
@@ -58,8 +54,6 @@ export const RecentMaterialsWidget = React.memo(
               ? formatShortDate(mat.createdAt)
               : "Recent";
 
-            const isNotesReady = isNotesReadyHelper(mat);
-
             const isQuizReady =
               mat.quizStatus === "GENERATED" ||
               Boolean(mat.quizId || (mat.quizzes && mat.quizzes.length > 0));
@@ -88,21 +82,7 @@ export const RecentMaterialsWidget = React.memo(
 
                   {/* Badges & Actions */}
                   <View className="flex-row items-center gap-2 shrink-0">
-                    {isNotesReady ? (
-                      <View className="bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full flex-row items-center gap-1 border border-emerald-200 dark:border-emerald-900/60 shrink-0">
-                        <Icon name="book-open" size={11} color="emerald" />
-                        <Text className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                          Notes ready
-                        </Text>
-                      </View>
-                    ) : (
-                      <View className="bg-warning-bg px-2.5 py-1 rounded-full flex-row items-center gap-1 border border-amber-200 dark:border-amber-900/60 shrink-0">
-                        <Icon name="clock" size={11} color="warning" />
-                        <Text className="text-[11px] font-bold text-warning-dark dark:text-amber-400">
-                          Processing
-                        </Text>
-                      </View>
-                    )}
+                    <MaterialStatusBadges material={mat} />
 
                     <Button
                       title="View"

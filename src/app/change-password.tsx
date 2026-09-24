@@ -89,7 +89,7 @@ export default function ChangePasswordScreen() {
             icon="arrow-left"
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full bg-muted items-center justify-center p-0 active:opacity-80"
-            iconColor={isDark ? "#f5f5f4" : "#1c1917"}
+            iconColor="foreground"
           />
           <Text variant="subhead" className="font-bold">
             Account Security
@@ -177,7 +177,7 @@ export default function ChangePasswordScreen() {
   return (
     <SafeAreaView
       style={{ flex: 1 }}
-      className="flex-1 bg-[#FAFAF9] dark:bg-stone-950 relative overflow-hidden"
+      className="flex-1 bg-background relative overflow-hidden"
     >
       <WatermarkBackground />
 

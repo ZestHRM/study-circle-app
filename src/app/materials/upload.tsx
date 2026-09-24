@@ -57,6 +57,8 @@ export default function UploadMaterialScreen() {
     fileUri?: string;
     fileName?: string;
     fileType?: string;
+    type?: "STUDY_MATERIAL" | "PYQ";
+    subjectId?: string;
   }>();
   const { token } = useAuth();
   const { isDark } = useThemePreference();
@@ -66,7 +68,7 @@ export default function UploadMaterialScreen() {
   const [step, setStep] = React.useState<1 | 2 | 3 | 4>(1);
   const [values, setValues] = React.useState<FormValues>({
     title: "",
-    subjectId: "",
+    subjectId: params.subjectId ? String(params.subjectId) : "",
   });
   const [selectedSubjectName, setSelectedSubjectName] =
     React.useState<string>("");
@@ -92,6 +94,21 @@ export default function UploadMaterialScreen() {
     }
   }, [params.fileUri, params.fileName, params.fileType, filePicker]);
 
+  // If subjectId was passed via params (from Subject Detail screen), pre-populate subject
+  const isPrePopulatedSubjectRef = React.useRef(false);
+  const { subjects, isLoading: isLoadingSubjects } = useSubjectsQuery();
+  React.useEffect(() => {
+    if (!isPrePopulatedSubjectRef.current && params.subjectId && subjects.length > 0) {
+      isPrePopulatedSubjectRef.current = true;
+      const subIdStr = String(params.subjectId);
+      setValues((prev) => ({ ...prev, subjectId: subIdStr }));
+      const found = subjects.find((s) => String(s.id) === subIdStr);
+      if (found?.name) {
+        setSelectedSubjectName(found.name);
+      }
+    }
+  }, [params.subjectId, subjects]);
+
   // Processing & Polling State
   const [createdMaterialId, setCreatedMaterialId] = React.useState<
     string | null
@@ -108,8 +125,6 @@ export default function UploadMaterialScreen() {
   const [selectedQuizAttempt, setSelectedQuizAttempt] =
     React.useState<QuizAttempt | null>(null);
   const startAttemptMutation = useStartQuizAttempt();
-
-  const { subjects, isLoading: isLoadingSubjects } = useSubjectsQuery();
   const createSubjectMutation = useCreateSubject();
 
   const {
@@ -287,10 +302,21 @@ export default function UploadMaterialScreen() {
     }
 
     setErrors({});
+    if (params.type === "PYQ") {
+      setUploadType("PYQ");
+    }
     setStep(2);
-  }, [values.subjectId]);
+  }, [values.subjectId, params.type]);
 
-  const [uploadType, setUploadType] = React.useState<"STUDY_MATERIAL" | "PYQ">("STUDY_MATERIAL");
+  const [uploadType, setUploadType] = React.useState<"STUDY_MATERIAL" | "PYQ">(
+    params.type === "PYQ" ? "PYQ" : "STUDY_MATERIAL",
+  );
+
+  React.useEffect(() => {
+    if (params.type === "PYQ") {
+      setUploadType("PYQ");
+    }
+  }, [params.type]);
   const [examYear, setExamYear] = React.useState<string>("");
   const [examDescription, setExamDescription] = React.useState<string>("");
   const [examGrade, setExamGrade] = React.useState<string>("");
@@ -535,6 +561,7 @@ export default function UploadMaterialScreen() {
           {step === 2 && (
             <Step2UploadType
               selectedSubjectName={displaySubjectName}
+              initialType={uploadType}
               submitError={submitError}
               onContinue={handleContinueFromStep2}
             />

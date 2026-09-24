@@ -7,6 +7,7 @@ import { View } from "react-native";
 
 export interface Step2UploadTypeProps {
   selectedSubjectName?: string;
+  initialType?: "STUDY_MATERIAL" | "PYQ";
   submitError?: string | null;
   onContinue: (uploadType: "STUDY_MATERIAL" | "PYQ") => void;
 }
@@ -15,12 +16,19 @@ export type Step2UploadProps = Step2UploadTypeProps;
 
 export const Step2UploadType = React.memo(function Step2UploadType({
   selectedSubjectName,
+  initialType = "STUDY_MATERIAL",
   submitError,
   onContinue,
 }: Step2UploadTypeProps) {
   const [selectedUploadType, setSelectedUploadType] = React.useState<
     "STUDY_MATERIAL" | "PYQ"
-  >("STUDY_MATERIAL");
+  >(initialType);
+
+  React.useEffect(() => {
+    if (initialType) {
+      setSelectedUploadType(initialType);
+    }
+  }, [initialType]);
 
   const handleContinuePress = React.useCallback(() => {
     onContinue(selectedUploadType);

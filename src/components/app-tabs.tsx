@@ -16,8 +16,8 @@ export default function AppTabs() {
   const backgroundColor = isDark ? APP_COLORS.stone900 : APP_COLORS.white;
   const borderTopColor = isDark ? APP_COLORS.stone800 : APP_COLORS.stone200;
 
-  const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? 12 : 6);
-  const tabBarHeight = 50 + bottomInset;
+  const bottomInset = Math.max(insets.bottom, Platform.OS === "ios" ? 12 : 10);
+  const tabBarHeight = 56 + bottomInset;
 
   const hasNoSubjects = !isLoading && subjects.length === 0;
 
@@ -31,15 +31,16 @@ export default function AppTabs() {
           backgroundColor,
           borderTopColor,
           borderTopWidth: 1,
-          elevation: 0,
+          elevation: 8,
           height: tabBarHeight,
-          paddingBottom: bottomInset,
+          paddingBottom: Math.max(bottomInset, 6),
           paddingTop: 6,
           display: hasNoSubjects ? "none" : "flex",
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: "600",
+          paddingBottom: 2,
         },
       }}
     >

@@ -175,11 +175,7 @@ export const Step3ExamUpload = React.memo(function Step3ExamUpload({
           <Card className="p-4 gap-3 bg-primary/5 border-border rounded-2xl">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
-                <Icon
-                  name="check-circle"
-                  size={18}
-                  color="primary"
-                />
+                <Icon name="check-circle" size={18} color="primary" />
                 <Text variant="h3" className="font-extrabold text-sm">
                   Parsed Questions ({parsedQuestions.length})
                 </Text>

@@ -33,7 +33,9 @@ export const DailyCheckinWidget = React.memo(function DailyCheckinWidget({
   const hasCheckedIn = Boolean(todayCheckIn);
   const isPaidUser = React.useMemo(() => {
     const tier = getUserSubscriptionTier(user);
-    return Boolean(tier && tier !== "FREE" && tier !== "GUEST" && tier !== "INACTIVE");
+    return Boolean(
+      tier && tier !== "FREE" && tier !== "GUEST" && tier !== "INACTIVE",
+    );
   }, [user]);
   const todayLabel = React.useMemo(() => formatDayDate(), []);
 

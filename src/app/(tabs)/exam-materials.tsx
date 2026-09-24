@@ -1,5 +1,8 @@
 import { useConfirmDialog } from "@/components/confirm-dialog-provider";
-import { ExamMaterialCard, ExamMaterialsHeader } from "@/components/exam-materials";
+import {
+  ExamMaterialCard,
+  ExamMaterialsHeader,
+} from "@/components/exam-materials";
 import { AppHeaderBar } from "@/components/ui/app-header-bar";
 import { AppScreen } from "@/components/ui/app-screen";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -10,7 +13,10 @@ import { useDeleteExamMaterial, useExamMaterialsInfinite } from "@/hooks";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
 import { usePlanPermissions } from "@/hooks/use-plan-permissions";
 import { showErrorToast } from "@/lib/utils/toast";
-import type { ExamMaterial, ExamMaterialCategory } from "@/services/exam-materials-service";
+import type {
+  ExamMaterial,
+  ExamMaterialCategory,
+} from "@/services/exam-materials-service";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { FlatList, RefreshControl, View } from "react-native";
@@ -19,7 +25,8 @@ export default function ExamMaterialsScreen() {
   const router = useRouter();
   const confirm = useConfirmDialog();
   const [selectedSubjectId, setSelectedSubjectId] = React.useState<string>("");
-  const [selectedCategory, setSelectedCategory] = React.useState<ExamMaterialCategory>("ALL");
+  const [selectedCategory, setSelectedCategory] =
+    React.useState<ExamMaterialCategory>("ALL");
   const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const {
@@ -54,7 +61,10 @@ export default function ExamMaterialsScreen() {
       router.push("/subscriptions" as any);
       return;
     }
-    router.push("/materials/upload" as any);
+    router.push({
+      pathname: "/materials/upload",
+      params: { type: "PYQ" },
+    } as any);
   }, [router, isLocked]);
 
   const handleCardPress = React.useCallback(
@@ -144,7 +154,9 @@ export default function ExamMaterialsScreen() {
   );
 
   const hasActiveFilters = Boolean(
-    (selectedCategory && selectedCategory !== "ALL") || selectedSubjectId || searchQuery
+    (selectedCategory && selectedCategory !== "ALL") ||
+    selectedSubjectId ||
+    searchQuery,
   );
 
   const emptyElement = React.useMemo(
@@ -178,15 +190,26 @@ export default function ExamMaterialsScreen() {
                 : "No exam materials match your selected filters. Try clearing your search or category."
             }
             actionLabel={
-              hasActiveFilters ? "Clear All Filters" : "Upload First Exam Paper +"
+              hasActiveFilters
+                ? "Clear All Filters"
+                : "Upload First Exam Paper +"
             }
             actionVariant="quiz"
-            onAction={hasActiveFilters ? handleClearFilters : handleOpenAddDialog}
+            onAction={
+              hasActiveFilters ? handleClearFilters : handleOpenAddDialog
+            }
             className="mt-4"
           />
         )
       ) : null,
-    [isLoading, isLocked, hasActiveFilters, handleClearFilters, handleOpenAddDialog, router],
+    [
+      isLoading,
+      isLocked,
+      hasActiveFilters,
+      handleClearFilters,
+      handleOpenAddDialog,
+      router,
+    ],
   );
 
   const refreshControlElement = React.useMemo(

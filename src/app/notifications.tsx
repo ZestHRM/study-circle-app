@@ -424,7 +424,7 @@ const NotificationCard = React.memo(function NotificationCard({
             className="p-1 rounded-md active:opacity-60"
             hitSlop={8}
           >
-            <Icon name="trash-2" size={14} color="#9CA3AF" />
+            <Icon name="trash-2" size={14} color="muted" />
           </Pressable>
         </View>
       </View>

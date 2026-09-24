@@ -2,6 +2,7 @@ export * from "./pdf-dropzone";
 export * from "./screen-footer-badge";
 export * from "./step-1-subject-picker";
 export * from "./step-2-upload-type";
+export * from "./step-3-exam-upload";
 export * from "./step-3-file-upload";
 export * from "./step-4-complete";
 export * from "./step-4-partial-failure";

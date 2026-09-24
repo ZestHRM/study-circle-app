@@ -2,6 +2,7 @@ import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import {
   Step1SubjectPicker,
   Step2UploadType,
+  Step3ExamUpload,
   Step3FileUpload,
   Step4Ready,
   UploadHeader,
@@ -9,9 +10,11 @@ import {
 import { NotesDetailBottomSheet } from "@/components/notes";
 import { StartQuizSheet } from "@/components/quizzes";
 import {
+  useCreateExamPaperMutation,
   useCreateSubject,
   useFileDownload,
   useFilePicker,
+  useParseQuestionsMutation,
   useStartQuizAttempt,
   useStudyMaterialNotesQuery,
   useSubjectsQuery,
@@ -29,6 +32,7 @@ import {
   step2TitleSchema,
 } from "@/schemas";
 import {
+  examMaterialsApi,
   getErrorMessage,
   studyMaterialsApi,
   type QuizAttempt,
@@ -53,6 +57,8 @@ export default function UploadMaterialScreen() {
     fileUri?: string;
     fileName?: string;
     fileType?: string;
+    type?: "STUDY_MATERIAL" | "PYQ";
+    subjectId?: string;
   }>();
   const { token } = useAuth();
   const { isDark } = useThemePreference();
@@ -62,7 +68,7 @@ export default function UploadMaterialScreen() {
   const [step, setStep] = React.useState<1 | 2 | 3 | 4>(1);
   const [values, setValues] = React.useState<FormValues>({
     title: "",
-    subjectId: "",
+    subjectId: params.subjectId ? String(params.subjectId) : "",
   });
   const [selectedSubjectName, setSelectedSubjectName] =
     React.useState<string>("");
@@ -88,6 +94,21 @@ export default function UploadMaterialScreen() {
     }
   }, [params.fileUri, params.fileName, params.fileType, filePicker]);
 
+  // If subjectId was passed via params (from Subject Detail screen), pre-populate subject
+  const isPrePopulatedSubjectRef = React.useRef(false);
+  const { subjects, isLoading: isLoadingSubjects } = useSubjectsQuery();
+  React.useEffect(() => {
+    if (!isPrePopulatedSubjectRef.current && params.subjectId && subjects.length > 0) {
+      isPrePopulatedSubjectRef.current = true;
+      const subIdStr = String(params.subjectId);
+      setValues((prev) => ({ ...prev, subjectId: subIdStr }));
+      const found = subjects.find((s) => String(s.id) === subIdStr);
+      if (found?.name) {
+        setSelectedSubjectName(found.name);
+      }
+    }
+  }, [params.subjectId, subjects]);
+
   // Processing & Polling State
   const [createdMaterialId, setCreatedMaterialId] = React.useState<
     string | null
@@ -104,8 +125,6 @@ export default function UploadMaterialScreen() {
   const [selectedQuizAttempt, setSelectedQuizAttempt] =
     React.useState<QuizAttempt | null>(null);
   const startAttemptMutation = useStartQuizAttempt();
-
-  const { subjects, isLoading: isLoadingSubjects } = useSubjectsQuery();
   const createSubjectMutation = useCreateSubject();
 
   const {
@@ -283,20 +302,38 @@ export default function UploadMaterialScreen() {
     }
 
     setErrors({});
+    if (params.type === "PYQ") {
+      setUploadType("PYQ");
+    }
     setStep(2);
-  }, [values.subjectId]);
+  }, [values.subjectId, params.type]);
+
+  const [uploadType, setUploadType] = React.useState<"STUDY_MATERIAL" | "PYQ">(
+    params.type === "PYQ" ? "PYQ" : "STUDY_MATERIAL",
+  );
+
+  React.useEffect(() => {
+    if (params.type === "PYQ") {
+      setUploadType("PYQ");
+    }
+  }, [params.type]);
+  const [examYear, setExamYear] = React.useState<string>("");
+  const [examDescription, setExamDescription] = React.useState<string>("");
+  const [examGrade, setExamGrade] = React.useState<string>("");
+  const [parsedQuestions, setParsedQuestions] = React.useState<string[]>([]);
+  const [isParsingQuestions, setIsParsingQuestions] = React.useState(false);
 
   const handleContinueFromStep2 = React.useCallback(
-    (uploadType: "STUDY_MATERIAL" | "PYQ") => {
-      if (uploadType === "PYQ") {
-        router.push("/pyqs" as any);
-      } else {
-        setErrors({});
-        setStep(3);
-      }
+    (type: "STUDY_MATERIAL" | "PYQ") => {
+      setUploadType(type);
+      setErrors({});
+      setStep(3);
     },
-    [router],
+    [],
   );
+
+  const parseQuestionsMutation = useParseQuestionsMutation();
+  const createExamPaperMutation = useCreateExamPaperMutation();
 
   const handlePickFile = React.useCallback(async () => {
     setSubmitError(null);
@@ -309,11 +346,31 @@ export default function UploadMaterialScreen() {
           .replace(/[-_]/g, " ");
         setValues((prev) => ({ ...prev, title: cleanTitle }));
       }
+
+      // If uploadType is PYQ, call parseQuestionsMutation automatically
+      if (uploadType === "PYQ") {
+        try {
+          setIsParsingQuestions(true);
+          const parseRes = await parseQuestionsMutation.mutateAsync({
+            uri: picked.uri,
+            name: picked.name,
+            type: picked.mimeType || "application/pdf",
+          });
+          if (parseRes && Array.isArray(parseRes.questions)) {
+            setParsedQuestions(parseRes.questions);
+          }
+        } catch (e) {
+          console.error("[PYQ Question Parsing Error]:", e);
+        } finally {
+          setIsParsingQuestions(false);
+        }
+      }
     }
-  }, [filePicker, values.title]);
+  }, [filePicker, values.title, uploadType, parseQuestionsMutation]);
 
   const handleRemoveFile = React.useCallback(() => {
     filePicker.removeFile();
+    setParsedQuestions([]);
   }, [filePicker]);
 
   const handleFinalUpload = React.useCallback(async () => {
@@ -324,7 +381,7 @@ export default function UploadMaterialScreen() {
     if (!titleResult.success) {
       newErrors.title =
         titleResult.error.issues[0]?.message ??
-        "Please enter a material title.";
+        "Please enter a title.";
     }
     if (!fileResult.success) {
       newErrors.file =
@@ -344,6 +401,28 @@ export default function UploadMaterialScreen() {
       setSubmitting(true);
       setSubmitError(null);
 
+      // Branch 1: PYQ Flow -> createExamPaperMutation
+      if (uploadType === "PYQ") {
+        const createdExam = await createExamPaperMutation.mutateAsync({
+          title: values.title.trim(),
+          description: examDescription.trim(),
+          subjectId: values.subjectId,
+          year: examYear.trim(),
+          grade: examGrade.trim(),
+          questions: parsedQuestions,
+        });
+
+        console.log("[Create Exam Paper Success]:", createdExam);
+
+        if (createdExam && createdExam.id) {
+          router.replace(`/exam-materials/${createdExam.id}` as any);
+        } else {
+          router.replace("/(tabs)/exam-materials" as any);
+        }
+        return;
+      }
+
+      // Branch 2: Study Material Flow -> POST /v1/study-materials
       const result = await studyMaterialsApi.create({
         title: values.title.trim(),
         subjectId: values.subjectId,
@@ -365,13 +444,25 @@ export default function UploadMaterialScreen() {
     } catch (error) {
       const message = getErrorMessage(
         error,
-        "Failed to upload study material.",
+        "Failed to upload material.",
       );
       setSubmitError(message);
     } finally {
       setSubmitting(false);
     }
-  }, [filePicker.file, token, values.title, values.subjectId, router]);
+  }, [
+    filePicker.file,
+    token,
+    values.title,
+    values.subjectId,
+    uploadType,
+    examDescription,
+    examYear,
+    examGrade,
+    parsedQuestions,
+    createExamPaperMutation,
+    router,
+  ]);
 
   const handleReadNotes = React.useCallback(() => {
     setShowNotesSheet(true);
@@ -470,28 +561,54 @@ export default function UploadMaterialScreen() {
           {step === 2 && (
             <Step2UploadType
               selectedSubjectName={displaySubjectName}
+              initialType={uploadType}
               submitError={submitError}
               onContinue={handleContinueFromStep2}
             />
           )}
 
-          {step === 3 && (
-            <Step3FileUpload
-              materialTitle={values.title}
-              subjectName={displaySubjectName}
-              fileName={filePicker.file?.name}
-              file={filePicker.file}
-              submitting={submitting}
-              titleError={errors.title}
-              fileError={errors.file || filePicker.error || undefined}
-              submitError={submitError}
-              onTitleChange={handleTitleChange}
-              onPickFile={handlePickFile}
-              onRemoveFile={handleRemoveFile}
-              onEditSubject={() => setStep(1)}
-              onUpload={handleFinalUpload}
-            />
-          )}
+          {step === 3 &&
+            (uploadType === "PYQ" ? (
+              <Step3ExamUpload
+                materialTitle={values.title}
+                subjectName={displaySubjectName}
+                year={examYear}
+                description={examDescription}
+                grade={examGrade}
+                fileName={filePicker.file?.name}
+                file={filePicker.file}
+                submitting={submitting}
+                isParsingQuestions={isParsingQuestions}
+                parsedQuestions={parsedQuestions}
+                titleError={errors.title}
+                fileError={errors.file || filePicker.error || undefined}
+                submitError={submitError}
+                onTitleChange={handleTitleChange}
+                onYearChange={setExamYear}
+                onDescriptionChange={setExamDescription}
+                onGradeChange={setExamGrade}
+                onPickFile={handlePickFile}
+                onRemoveFile={handleRemoveFile}
+                onEditSubject={() => setStep(1)}
+                onUpload={handleFinalUpload}
+              />
+            ) : (
+              <Step3FileUpload
+                materialTitle={values.title}
+                subjectName={displaySubjectName}
+                fileName={filePicker.file?.name}
+                file={filePicker.file}
+                submitting={submitting}
+                titleError={errors.title}
+                fileError={errors.file || filePicker.error || undefined}
+                submitError={submitError}
+                onTitleChange={handleTitleChange}
+                onPickFile={handlePickFile}
+                onRemoveFile={handleRemoveFile}
+                onEditSubject={() => setStep(1)}
+                onUpload={handleFinalUpload}
+              />
+            ))}
 
           {step === 4 && (
             <Step4Ready

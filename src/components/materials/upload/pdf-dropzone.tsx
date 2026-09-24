@@ -41,10 +41,10 @@ export const PdfDropzone = React.memo(function PdfDropzone({
       <Pressable
         onPress={onPickFile}
         disabled={disabled}
-        className="bg-[#F3E8FF]/60 dark:bg-stone-800/80 border-2 border-dashed border-[#C4B5FD] dark:border-stone-600 rounded-3xl p-6 items-center justify-center gap-2 active:opacity-80"
+        className="bg-primary/10 border-2 border-dashed border-primary/30 rounded-3xl p-6 items-center justify-center gap-2 active:opacity-80"
       >
-        <View className="w-14 h-14 rounded-full bg-white dark:bg-stone-700 items-center justify-center shadow-sm">
-          <Icon name="cloud" size={26} color="#8B5CF6" />
+        <View className="w-14 h-14 rounded-full bg-card items-center justify-center border border-border shadow-xs">
+          <Icon name="cloud" size={26} color="primary" />
         </View>
 
         <Text variant="h4" className="text-center">
@@ -57,10 +57,10 @@ export const PdfDropzone = React.memo(function PdfDropzone({
 
       {/* Selected File Card */}
       {file ? (
-        <View className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200 dark:border-stone-700 flex-row items-center justify-between shadow-xs">
+        <View className="bg-card rounded-2xl p-4 border border-border flex-row items-center justify-between shadow-xs">
           <View className="flex-row items-center gap-3 flex-1 pr-2">
-            <View className="w-10 h-10 rounded-full bg-[#FFEDD5] items-center justify-center">
-              <Icon name="file-text" size={20} color="#C2410C" />
+            <View className="w-10 h-10 rounded-full bg-warning-bg items-center justify-center">
+              <Icon name="file-text" size={20} color="warning" />
             </View>
 
             <View className="flex-1">
@@ -72,12 +72,12 @@ export const PdfDropzone = React.memo(function PdfDropzone({
           </View>
 
           <View className="flex-row items-center gap-2">
-            <View className="w-7 h-7 rounded-full bg-[#D1FAE5] items-center justify-center">
-              <Icon name="check" size={16} color="#047857" />
+            <View className="w-7 h-7 rounded-full bg-emerald-500/10 items-center justify-center">
+              <Icon name="check" size={16} color="emerald" />
             </View>
             {onRemoveFile ? (
               <Pressable onPress={onRemoveFile} className="p-1">
-                <Icon name="x" size={16} color="#78716C" />
+                <Icon name="x" size={16} color="muted" />
               </Pressable>
             ) : null}
           </View>

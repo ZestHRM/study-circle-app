@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { APP_COLORS } from "@/constants/colors";
 import { formatShortDate } from "@/lib/utils/formatters";
 import type { StudyMaterial } from "@/services";
 import { useRouter } from "expo-router";
@@ -38,8 +37,8 @@ export const MaterialCard = React.memo(function MaterialCard({
         onPress={handleCardPress}
         className="flex-row items-center justify-between gap-3 active:opacity-80"
       >
-        <View className="w-10 h-10 rounded-xl items-center justify-center bg-blue-50 dark:bg-blue-950/40">
-          <Icon name="file-text" size={18} color={APP_COLORS.quizBlue} />
+        <View className="w-10 h-10 rounded-xl items-center justify-center bg-primary/10">
+          <Icon name="file-text" size={18} color="primary" />
         </View>
 
         <View className="flex-1 pr-1 justify-center">
@@ -59,21 +58,24 @@ export const MaterialCard = React.memo(function MaterialCard({
           </Text>
         </View>
 
-        <Icon name="chevron-right" size={18} color={APP_COLORS.stone400} />
+        <Icon name="chevron-right" size={18} color="muted" />
       </Pressable>
 
       <View className="flex-row items-center justify-between pt-1 border-t border-border mt-0.5">
-        <Pressable onPress={handleCardPress} className="flex-1 pr-2 active:opacity-80">
+        <Pressable
+          onPress={handleCardPress}
+          className="flex-1 pr-2 active:opacity-80"
+        >
           <MaterialStatusBadges material={material} />
         </Pressable>
 
         <Pressable
           onPress={handleDeletePress}
           disabled={isDeleting}
-          className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/30 items-center justify-center active:opacity-70"
+          className="w-8 h-8 rounded-lg bg-destructive/10 items-center justify-center active:opacity-70"
           hitSlop={8}
         >
-          <Icon name="trash-2" size={15} color={APP_COLORS.error} />
+          <Icon name="trash-2" size={15} color="error" />
         </Pressable>
       </View>
     </Card>

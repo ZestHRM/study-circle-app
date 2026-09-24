@@ -64,9 +64,9 @@ export function useSubscribeMutation() {
       setStepState("initiating");
       setStepMessage("Initializing subscription plan...");
 
-      const subRes = await subscriptionsApi.subscribe(
-        { planId: selectedPlanId },
-      );
+      const subRes = await subscriptionsApi.subscribe({
+        planId: selectedPlanId,
+      });
 
       const orderId =
         subRes.id ||
@@ -105,13 +105,11 @@ export function useSubscribeMutation() {
       setStepState("verifying");
       setStepMessage("Verifying secure payment...");
 
-      const verifyRes = await subscriptionsApi.verifyPayment(
-        {
-          razorpay_payment_id: sdkResult.paymentId,
-          razorpay_subscription_id: sdkResult.orderId || orderId || "",
-          razorpay_signature: sdkResult.signature || "",
-        },
-      );
+      const verifyRes = await subscriptionsApi.verifyPayment({
+        razorpay_payment_id: sdkResult.paymentId,
+        razorpay_subscription_id: sdkResult.orderId || orderId || "",
+        razorpay_signature: sdkResult.signature || "",
+      });
 
       return { plan, sdkResult, verifyRes };
     },
@@ -132,7 +130,10 @@ export function useSubscribeMutation() {
     },
     onError: (err: any) => {
       if (err?.message === "CANCELLED") {
-        showInfoToast("Payment Cancelled", "You cancelled the payment process.");
+        showInfoToast(
+          "Payment Cancelled",
+          "You cancelled the payment process.",
+        );
         return;
       }
 
@@ -186,4 +187,3 @@ export function useCancelSubscriptionMutation() {
     },
   });
 }
-

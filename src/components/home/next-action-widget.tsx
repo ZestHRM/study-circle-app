@@ -63,7 +63,6 @@ export const NextActionWidget = React.memo(function NextActionWidget({
 
   return (
     <Card className="border-border rounded-3xl p-4 gap-3">
-      {/* Header Row: Title & Badge */}
       <View className="flex-row items-center justify-between gap-2 flex-wrap">
         <Text variant="h3" className="text-base font-bold flex-shrink">
           Next best action
@@ -75,14 +74,11 @@ export const NextActionWidget = React.memo(function NextActionWidget({
         </View>
       </View>
 
-      {/* Main Details Section */}
       <View className="flex-row items-start gap-3.5 pt-0.5">
-        {/* Laptop Icon Box */}
         <View className="w-12 h-12 rounded-2xl bg-primary/10 items-center justify-center border border-primary/20 mt-0.5 shrink-0">
           <Icon name="tv" size={22} color="primary" />
         </View>
 
-        {/* Text Body */}
         <View className="flex-1">
           <Text
             variant="primary"
@@ -102,9 +98,7 @@ export const NextActionWidget = React.memo(function NextActionWidget({
         </View>
       </View>
 
-      {/* Footer Row: Meta & Blue Action Button */}
       <View className="flex-row items-center justify-between gap-2.5 pt-2 border-t border-border mt-1 flex-wrap">
-        {/* Left Meta Information */}
         <View className="flex-row items-center gap-2 flex-wrap flex-1 min-w-[140px]">
           <View className="flex-row items-center gap-1">
             <Icon name="clock" size={13} color="muted" />
@@ -119,7 +113,6 @@ export const NextActionWidget = React.memo(function NextActionWidget({
           </View>
         </View>
 
-        {/* Right Primary Button component */}
         <Button
           title="Start review"
           icon="arrow-right"

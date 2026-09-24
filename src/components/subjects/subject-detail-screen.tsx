@@ -98,8 +98,15 @@ export const SubjectDetailScreen = React.memo(function SubjectDetailScreen({
   }, [materials, notes, quizzes, sId]);
 
   const handleUploadClick = React.useCallback(() => {
-    router.push(`/materials/upload`);
-  }, [router]);
+    if (subject?.id) {
+      router.push({
+        pathname: "/materials/upload",
+        params: { subjectId: String(subject.id) },
+      } as any);
+    } else {
+      router.push("/materials/upload" as any);
+    }
+  }, [router, subject?.id]);
 
   if (isLoadingSubjects && !subject) {
     return (

@@ -75,12 +75,25 @@ export type CreateStudyMaterialPayload = {
 };
 
 export const studyMaterialsApi = {
-  async list(params?: { page?: number; limit?: number; search?: string }) {
-    const queryParams = params ?? { page: 1, limit: 10 };
+  async list(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    subjectId?: string;
+    _subjectIds?: string;
+    _ids?: string;
+  }) {
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 10;
+    const search = params?.search ?? "";
+    const subjectId = params?.subjectId || params?._subjectIds || "";
+
     const query = new URLSearchParams({
-      page: String(queryParams.page ?? 1),
-      limit: String(queryParams.limit ?? 10),
-      ...(queryParams.search ? { search: queryParams.search } : {}),
+      page: String(page),
+      limit: String(limit),
+      ...(search ? { search } : {}),
+      ...(subjectId ? { _subjectIds: subjectId, subjectId } : {}),
+      ...(params?._ids ? { _ids: params._ids } : {}),
     }).toString();
     return request<StudyMaterialsResponse>(`/study-materials?${query}`);
   },

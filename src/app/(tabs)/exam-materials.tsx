@@ -4,9 +4,11 @@ import { AppHeaderBar } from "@/components/ui/app-header-bar";
 import { AppScreen } from "@/components/ui/app-screen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
+import { PaywallCard } from "@/components/ui/paywall-card";
 import { APP_COLORS } from "@/constants/colors";
 import { useDeleteExamMaterial, useExamMaterialsInfinite } from "@/hooks";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
+import { usePlanPermissions } from "@/hooks/use-plan-permissions";
 import { showErrorToast } from "@/lib/utils/toast";
 import type { ExamMaterial, ExamMaterialCategory } from "@/services/exam-materials-service";
 import { useRouter } from "expo-router";
@@ -44,9 +46,16 @@ export default function ExamMaterialsScreen() {
     setSearchQuery("");
   }, []);
 
+  const { maxExamPaperYears } = usePlanPermissions();
+  const isLocked = maxExamPaperYears === 0;
+
   const handleOpenAddDialog = React.useCallback(() => {
+    if (isLocked) {
+      router.push("/subscriptions" as any);
+      return;
+    }
     router.push("/materials/upload" as any);
-  }, [router]);
+  }, [router, isLocked]);
 
   const handleCardPress = React.useCallback(
     (material: ExamMaterial) => {
@@ -141,27 +150,43 @@ export default function ExamMaterialsScreen() {
   const emptyElement = React.useMemo(
     () =>
       !isLoading ? (
-        <EmptyState
-          icon="file-check"
-          title={
-            !hasActiveFilters
-              ? "No Exam Materials Yet"
-              : "No Matching Exam Materials"
-          }
-          description={
-            !hasActiveFilters
-              ? "Upload previous year question papers (PYQs), mock test papers, or model answer keys."
-              : "No exam materials match your selected filters. Try clearing your search or category."
-          }
-          actionLabel={
-            hasActiveFilters ? "Clear All Filters" : "Upload First Exam Paper +"
-          }
-          actionVariant="quiz"
-          onAction={hasActiveFilters ? handleClearFilters : handleOpenAddDialog}
-          className="mt-4"
-        />
+        isLocked && !hasActiveFilters ? (
+          <PaywallCard
+            title="Access to Exam Materials"
+            description="Get complete access to upload, view and analyze your exam materials with AI."
+            buttonLabel="Upgrade to Pro →"
+            onUpgradePress={() => router.push("/subscriptions" as any)}
+            iconName="lock"
+            features={[
+              "Upload & analyze exam materials",
+              "Get AI powered important topics",
+              "Access notes, quizzes & more",
+            ]}
+            className="mt-2"
+          />
+        ) : (
+          <EmptyState
+            icon="file-check"
+            title={
+              !hasActiveFilters
+                ? "No Exam Materials Yet"
+                : "No Matching Exam Materials"
+            }
+            description={
+              !hasActiveFilters
+                ? "Upload previous year question papers (PYQs), mock test papers, or model answer keys."
+                : "No exam materials match your selected filters. Try clearing your search or category."
+            }
+            actionLabel={
+              hasActiveFilters ? "Clear All Filters" : "Upload First Exam Paper +"
+            }
+            actionVariant="quiz"
+            onAction={hasActiveFilters ? handleClearFilters : handleOpenAddDialog}
+            className="mt-4"
+          />
+        )
       ) : null,
-    [isLoading, hasActiveFilters, handleClearFilters, handleOpenAddDialog],
+    [isLoading, isLocked, hasActiveFilters, handleClearFilters, handleOpenAddDialog, router],
   );
 
   const refreshControlElement = React.useMemo(

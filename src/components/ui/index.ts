@@ -46,3 +46,4 @@ export * from "./swipeable-tab-view";
 export * from "./text";
 export * from "./upload-action-card";
 export * from "./watermark-background";
+export * from "./paywall-card";

@@ -1,4 +1,11 @@
-import { Badge, ErrorState, Icon, Spinner, Text } from "@/components/ui";
+import {
+  Badge,
+  ErrorState,
+  Icon,
+  PaywallCard,
+  Spinner,
+  Text,
+} from "@/components/ui";
 import type { Quiz } from "@/services";
 import { useRouter } from "expo-router";
 import * as React from "react";
@@ -71,27 +78,6 @@ export const QuizTab = React.memo(function QuizTab({
     (quiz as any)?.quizQuestions?.length ??
     0;
 
-  const paywallFeatures = React.useMemo(() => {
-    const questionText =
-      totalQuestionsCount > 0
-        ? `${totalQuestionsCount} practice questions included`
-        : "AI-generated practice questions";
-
-    return [
-      { icon: "layers", label: questionText, color: "primary" },
-      {
-        icon: "message-square",
-        label: "Instant feedback",
-        color: "primary",
-      },
-      {
-        icon: "bar-chart-2",
-        label: "Detailed performance reports",
-        color: "emerald",
-      },
-    ];
-  }, [totalQuestionsCount]);
-
   const sampleQuestions = React.useMemo(() => {
     if (quiz && (quiz as any).quizQuestions?.length > 0) {
       return (quiz as any).quizQuestions
@@ -120,7 +106,7 @@ export const QuizTab = React.memo(function QuizTab({
     );
   }
 
-  // ── Free User or Forbidden — Exact Paywall UI matching design ──
+  // ── Free User or Forbidden — Reusable Paywall Card ──
   if (isForbidden || !isPro) {
     return (
       <ScrollView
@@ -129,34 +115,22 @@ export const QuizTab = React.memo(function QuizTab({
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="bg-card border border-border rounded-3xl p-5 gap-4 items-center">
-          {/* Top Illustration: Clipboard + Crown Badge */}
-          <View className="items-center justify-center my-2 relative">
-            <View className="w-20 h-20 rounded-3xl bg-primary/10 items-center justify-center border border-primary/20">
-              <Icon name="clipboard" size={38} color="primary" />
-              {/* Crown overlay badge */}
-              <View className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary items-center justify-center border-2 border-background shadow-xs">
-                <Icon name="award" size={16} color="white" />
-              </View>
-            </View>
-          </View>
-
-          {/* Title & Description */}
-          <View className="items-center gap-1 text-center">
-            <Text variant="h2" className="text-center font-bold">
-              Your quiz is ready!
-            </Text>
-            <Text
-              variant="muted"
-              className="text-center leading-relaxed max-w-[280px]"
-            >
-              We created a practice set from your material. Test your knowledge
-              and boost your score.
-            </Text>
-          </View>
-
-          {/* Locked Sample Questions Box */}
-          <View className="w-full bg-card rounded-2xl border border-border overflow-hidden divide-y divide-border">
+        <PaywallCard
+          title="Access to AI Quizzes"
+          description="We created a practice set from your material. Upgrade to Pro to test your knowledge & boost your score."
+          buttonLabel="Unlock AI Quizzes →"
+          onUpgradePress={handleOpenBilling}
+          iconName="clipboard"
+          features={[
+            totalQuestionsCount > 0
+              ? `${totalQuestionsCount} practice questions included`
+              : "AI-generated practice questions",
+            "Instant answer feedback & score",
+            "Detailed performance analytics",
+          ]}
+        >
+          {/* Sample Questions Locked Preview */}
+          <View className="w-full bg-card rounded-2xl border border-border overflow-hidden divide-y divide-border my-1">
             {sampleQuestions.map((item: { id: string; q: string }) => (
               <View
                 key={item.id}
@@ -177,44 +151,7 @@ export const QuizTab = React.memo(function QuizTab({
               </View>
             ))}
           </View>
-
-          {/* Primary Action Button: Unlock AI Quizzes */}
-          <Pressable
-            onPress={handleOpenBilling}
-            className="w-full bg-primary rounded-2xl flex-row items-center justify-center gap-2 py-3.5 shadow-xs active:opacity-90 mt-1"
-          >
-            <Icon name="award" size={18} color="white" />
-            <Text variant="subhead" className="text-white font-bold">
-              Unlock AI Quizzes →
-            </Text>
-          </Pressable>
-
-          {/* Feature Checklist */}
-          <View className="w-full gap-2.5 pt-2 px-2">
-            {paywallFeatures.map((feature) => (
-              <View key={feature.label} className="flex-row items-center gap-3">
-                <View className="w-7 h-7 rounded-xl bg-primary/10 items-center justify-center">
-                  <Icon
-                    name={feature.icon as any}
-                    size={14}
-                    color={feature.color as any}
-                  />
-                </View>
-                <Text variant="subhead">{feature.label}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Restore purchase footer link */}
-          <View className="flex-row items-center justify-center gap-1 pt-2">
-            <Text variant="caption">Already a Pro user?</Text>
-            <Pressable onPress={handleOpenBilling}>
-              <Text variant="primary" className="text-xs font-bold">
-                Restore purchase
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+        </PaywallCard>
       </ScrollView>
     );
   }

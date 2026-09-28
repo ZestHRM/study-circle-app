@@ -15,6 +15,7 @@ import * as React from "react";
 import { Platform } from "react-native";
 
 const TOKEN_KEY = "studycircle.auth_token";
+const USER_KEY = "studycircle.auth_user";
 const AUTH_QUERY_KEYS = {
   me: (token: string) => ["auth", "me", token] as const,
 };
@@ -56,16 +57,45 @@ async function setStoredToken(token: string) {
   await SecureStore.setItemAsync(TOKEN_KEY, token);
 }
 
-async function deleteStoredToken() {
+async function getStoredUser(): Promise<User | null> {
+  try {
+    let raw: string | null = null;
+    if (Platform.OS === "web" && typeof localStorage !== "undefined") {
+      raw = localStorage.getItem(USER_KEY);
+    } else {
+      raw = await SecureStore.getItemAsync(USER_KEY);
+    }
+    return raw ? (JSON.parse(raw) as User) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function setStoredUser(user: User) {
+  try {
+    const raw = JSON.stringify(user);
+    if (Platform.OS === "web" && typeof localStorage !== "undefined") {
+      localStorage.setItem(USER_KEY, raw);
+      return;
+    }
+    await SecureStore.setItemAsync(USER_KEY, raw);
+  } catch (err) {
+    console.warn("Failed to store user profile:", err);
+  }
+}
+
+async function deleteStoredAuth() {
   try {
     if (Platform.OS === "web" && typeof localStorage !== "undefined") {
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
       return;
     }
 
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(USER_KEY);
   } catch (err) {
-    console.warn("Failed to delete stored auth token:", err);
+    console.warn("Failed to delete stored auth data:", err);
   }
 }
 
@@ -78,12 +108,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const applyAuthResponse = React.useCallback(
     async (response: AuthResponse) => {
       await setStoredToken(response.token);
+      await setStoredUser(response.user);
       setToken(response.token);
       setUser(response.user);
       queryClient.setQueryData(
         AUTH_QUERY_KEYS.me(response.token),
         response.user,
       );
+      void queryClient.invalidateQueries({ queryKey: ["auth"] });
 
       try {
         const pushResult = await registerForPushNotificationsAsync();
@@ -104,9 +136,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const meQuery = useQuery({
     queryKey: token ? AUTH_QUERY_KEYS.me(token) : ["auth", "me", "anonymous"],
     queryFn: async () => authApi.me(token as string),
-    enabled: Boolean(token) && !isRestoringSession,
+    enabled: Boolean(token),
     retry: 1,
+    initialData: () => {
+      if (!token) return undefined;
+      return (
+        queryClient.getQueryData<User>(AUTH_QUERY_KEYS.me(token)) ??
+        user ??
+        undefined
+      );
+    },
   });
+
+  React.useEffect(() => {
+    if (meQuery.data) {
+      setUser(meQuery.data);
+      void setStoredUser(meQuery.data);
+    }
+  }, [meQuery.data]);
 
   React.useEffect(() => {
     if (!meQuery.isError || !token) {
@@ -114,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     async function clearInvalidSession() {
-      await deleteStoredToken();
+      await deleteStoredAuth();
       setToken(null);
       setUser(null);
     }
@@ -127,10 +174,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function restoreSession() {
       try {
-        const storedToken = await getStoredToken();
+        const [storedToken, storedUser] = await Promise.all([
+          getStoredToken(),
+          getStoredUser(),
+        ]);
 
         if (mounted && storedToken) {
           setToken(storedToken);
+          if (storedUser) {
+            setUser(storedUser);
+            queryClient.setQueryData(
+              AUTH_QUERY_KEYS.me(storedToken),
+              storedUser,
+            );
+          }
           try {
             const pushResult = await registerForPushNotificationsAsync();
             const pushToken = pushResult.fcmToken || pushResult.expoPushToken;
@@ -145,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch {
-        await deleteStoredToken();
+        await deleteStoredAuth();
       } finally {
         if (mounted) {
           setIsRestoringSession(false);
@@ -158,7 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [queryClient]);
 
   const signInMutation = useMutation({
     mutationFn: authApi.login,
@@ -226,7 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       async signOut() {
         try {
-          await deleteStoredToken();
+          await deleteStoredAuth();
         } catch {
           // Ignore storage cleanup error
         }

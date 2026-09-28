@@ -42,7 +42,7 @@ export const MaterialCard = React.memo(function MaterialCard({
         </View>
 
         <View className="flex-1 pr-1 justify-center">
-          <View className="flex-row items-center gap-2 mb-0.5">
+          <View className="flex-row items-center gap-2 mb-0.5 flex-wrap">
             <Badge label={subjectName} variant="default" />
             <Text variant="muted" className="text-[11px]">
               {formatShortDate(material.createdAt)}

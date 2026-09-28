@@ -191,7 +191,7 @@ export default function NotificationsScreen() {
       {/* Reusable Header */}
       <CommonHeader
         title="Notifications"
-        subtitle="Stay updated with your study circles & progress"
+        subtitle=""
         showBack={true}
         logoPosition="left"
         rightElement={renderHeaderRight()}
@@ -296,6 +296,23 @@ export default function NotificationsScreen() {
   );
 }
 
+const ICON_CONFIG_MAP: Record<
+  string,
+  { icon: string; color: "purple" | "emerald" | "warning" | "primary"; bg: string }
+> = {
+  quiz: { icon: "help-circle", color: "purple", bg: "bg-purple-500/10" },
+  study: { icon: "book-open", color: "emerald", bg: "bg-emerald-500/10" },
+  circle: { icon: "users", color: "warning", bg: "bg-amber-500/10" },
+  subscription: { icon: "award", color: "warning", bg: "bg-amber-500/10" },
+  system: { icon: "shield", color: "primary", bg: "bg-primary/10" },
+};
+
+const DEFAULT_ICON_CONFIG = {
+  icon: "bell",
+  color: "primary" as const,
+  bg: "bg-primary/10",
+};
+
 function extractText(val: any): string {
   if (!val) return "";
   if (typeof val === "string") return val;
@@ -326,36 +343,25 @@ const NotificationCard = React.memo(function NotificationCard({
 }) {
   const isRead = Boolean(item.isRead || item.read);
 
-  const displayTitle =
-    extractText(item.title) ||
-    extractText((item as any).heading) ||
-    "Notification";
+  const displayTitle = React.useMemo(
+    () =>
+      extractText(item.title) ||
+      extractText((item as any).heading) ||
+      "Notification",
+    [item.title, (item as any).heading],
+  );
 
-  const displayBody =
-    extractText(item.message) ||
-    extractText(item.body) ||
-    extractText(item.content) ||
-    extractText(item.data?.message) ||
-    extractText(item.data?.body) ||
-    extractText(item.data?.title) ||
-    "";
-
-  const getIcon = (type?: NotificationType) => {
-    switch (type) {
-      case "quiz":
-        return <Icon name="help-circle" size={20} color="purple" />;
-      case "study":
-        return <Icon name="book-open" size={18} color="emerald" />;
-      case "circle":
-        return <Icon name="users" size={18} color="warning" />;
-      case "subscription":
-        return <Icon name="award" size={18} color="warning" />;
-      case "system":
-        return <Icon name="shield" size={18} color="primary" />;
-      default:
-        return <Icon name="bell" size={18} color="primary" />;
-    }
-  };
+  const displayBody = React.useMemo(
+    () =>
+      extractText(item.message) ||
+      extractText(item.body) ||
+      extractText(item.content) ||
+      extractText(item.data?.message) ||
+      extractText(item.data?.body) ||
+      extractText(item.data?.title) ||
+      "",
+    [item.message, item.body, item.content, item.data],
+  );
 
   const formattedTime = React.useMemo(() => {
     return formatRelativeTime(item.createdAt);
@@ -373,61 +379,79 @@ const NotificationCard = React.memo(function NotificationCard({
     [onDelete, item.id],
   );
 
+  const iconConfig = item.type
+    ? ICON_CONFIG_MAP[item.type] ?? DEFAULT_ICON_CONFIG
+    : DEFAULT_ICON_CONFIG;
+
   return (
     <Card
       onPress={handleCardPress}
-      className={`p-4 rounded-xl flex-row items-start gap-3 ${
+      className={`p-3 rounded-2xl flex-row items-start gap-3 border shadow-2xs ${
         isRead
-          ? "bg-card border-border opacity-80"
-          : "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900 shadow-sm"
+          ? "bg-card border-border/60 opacity-90"
+          : "bg-primary/5 border-primary/20"
       }`}
     >
-      {/* Icon Badge */}
+      {/* Compact Icon Badge */}
       <View
-        className={`w-10 h-10 rounded-full items-center justify-center ${
-          isRead ? "bg-muted" : "bg-blue-100 dark:bg-blue-900/40"
+        className={`w-9 h-9 rounded-xl items-center justify-center shrink-0 ${
+          isRead ? "bg-muted" : iconConfig.bg
         }`}
       >
-        {getIcon(item.type)}
+        <Icon
+          name={iconConfig.icon}
+          size={16}
+          color={isRead ? "muted" : iconConfig.color}
+        />
       </View>
 
-      {/* Content */}
+      {/* Content Block */}
       <View className="flex-1 gap-1">
         <View className="flex-row items-center justify-between">
-          <Text
-            variant="h4"
-            className={isRead ? "opacity-75 font-bold" : "font-bold"}
-            numberOfLines={1}
-          >
-            {displayTitle}
-          </Text>
+          <View className="flex-row items-center gap-1.5 flex-1 mr-2">
+            {!isRead && (
+              <View className="w-2 h-2 rounded-full bg-primary shrink-0" />
+            )}
+            <Text
+              variant="h4"
+              className={`text-xs flex-1 ${
+                isRead
+                  ? "font-semibold text-foreground/80"
+                  : "font-bold text-foreground"
+              }`}
+              numberOfLines={1}
+            >
+              {displayTitle}
+            </Text>
+          </View>
 
-          {!isRead && (
-            <View className="w-2 h-2 rounded-full bg-blue-600 ml-1" />
-          )}
+          <Text
+            variant="caption"
+            className="text-[10px] text-muted-foreground font-medium shrink-0"
+          >
+            {formattedTime}
+          </Text>
         </View>
 
         {displayBody ? (
-          <Text variant="muted" className="leading-relaxed" numberOfLines={2}>
+          <Text
+            variant="muted"
+            className="text-[11px] text-muted-foreground leading-relaxed pr-2"
+            numberOfLines={2}
+          >
             {displayBody}
           </Text>
         ) : null}
-
-        <View className="flex-row items-center justify-between pt-1">
-          <Text variant="caption" className="text-[10px] font-medium">
-            {formattedTime}
-          </Text>
-
-          {/* Individual Delete Action */}
-          <Pressable
-            onPress={handleDeletePress}
-            className="p-1 rounded-md active:opacity-60"
-            hitSlop={8}
-          >
-            <Icon name="trash-2" size={14} color="muted" />
-          </Pressable>
-        </View>
       </View>
+
+      {/* Quick Delete Action */}
+      <Pressable
+        onPress={handleDeletePress}
+        className="p-1 rounded-lg active:bg-muted self-center"
+        hitSlop={8}
+      >
+        <Icon name="trash-2" size={13} color="muted" />
+      </Pressable>
     </Card>
   );
 });

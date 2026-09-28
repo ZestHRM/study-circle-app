@@ -43,7 +43,6 @@ export const ProfileHero = React.memo(function ProfileHero({
   });
 
   const avatarUri = localAvatarUri || getUserAvatarUrl(user);
-
   const handleBackPress = React.useCallback(() => {
     if (onBack) {
       onBack();
@@ -140,6 +139,16 @@ export const ProfileHero = React.memo(function ProfileHero({
             )}
           </Pressable>
         </View>
+
+        {/* User Name & Email */}
+        <Text variant="h2" className="text-foreground font-black text-xl text-center">
+          {user?.name || "Student User"}
+        </Text>
+        {user?.email ? (
+          <Text variant="subhead" className="text-muted-foreground text-xs mt-0.5">
+            {user.email}
+          </Text>
+        ) : null}
 
         {/* Badges Row */}
         <View className="flex-row items-center gap-2 mt-3 flex-wrap justify-center">

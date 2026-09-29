@@ -1,20 +1,16 @@
 import { ErrorState, Icon, Spinner, Text } from "@/components/ui";
-import { APP_COLORS } from "@/constants/colors";
 import * as React from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { getSectionMeta, parseNotesIntoSections } from "./notes-parser";
-
 interface NotesTabProps {
   notesData: any;
   isLoading: boolean;
   isError: boolean;
   notesReady: boolean;
   failed: boolean;
-  quizReady: boolean;
   title: string;
   subject: string;
   onReadNotes: () => void;
-  onGoToQuiz: () => void;
   onRetry: () => void;
 }
 
@@ -24,11 +20,9 @@ export const NotesTab = React.memo(function NotesTab({
   isError,
   notesReady,
   failed,
-  quizReady,
   title,
   subject,
   onReadNotes,
-  onGoToQuiz,
   onRetry,
 }: NotesTabProps) {
   const sections = React.useMemo(() => {
@@ -101,10 +95,10 @@ export const NotesTab = React.memo(function NotesTab({
         className="flex-1 bg-background items-center justify-center px-8 gap-5"
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       >
-        <View className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-950/40 items-center justify-center">
-          <Icon name="cpu" size={28} color={APP_COLORS.quizBlue} />
+        <View className="w-16 h-16 rounded-2xl bg-primary/10 items-center justify-center">
+          <Icon name="cpu" size={28} color="primary" />
         </View>
-        <Text variant="h3" className="text-center">
+        <Text variant="h3" className="text-center font-bold">
           AI is generating your notes…
         </Text>
         <Text variant="muted" className="text-center leading-6">
@@ -112,15 +106,15 @@ export const NotesTab = React.memo(function NotesTab({
           usually takes 1–2 minutes.
         </Text>
         <View
-          className="w-full bg-blue-100 dark:bg-blue-950/40 rounded-full overflow-hidden"
+          className="w-full bg-muted rounded-full overflow-hidden"
           style={{ height: 8 }}
         >
           <View
-            className="h-full bg-blue-500 rounded-full"
+            className="h-full bg-primary rounded-full"
             style={{ width: "70%" }}
           />
         </View>
-        <Text variant="primary" className="text-xs">
+        <Text variant="primary" className="text-xs font-bold">
           Processing…
         </Text>
       </View>
@@ -152,10 +146,7 @@ export const NotesTab = React.memo(function NotesTab({
         showsVerticalScrollIndicator={false}
       >
         {/* ── Hero Banner ── */}
-        <View
-          className="mx-4 mt-4 mb-3 rounded-3xl overflow-hidden"
-          style={{ backgroundColor: APP_COLORS.quizBlueHover }}
-        >
+        <View className="mx-4 mt-4 mb-3 rounded-3xl overflow-hidden bg-primary shadow-xs">
           {/* Decorative circles */}
           <View
             style={{
@@ -184,7 +175,7 @@ export const NotesTab = React.memo(function NotesTab({
             {/* Top row: badge + sparkle */}
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2 bg-white/15 rounded-full px-3 py-1">
-                <Icon name="star" size={12} color="#FCD34D" />
+                <Icon name="star" size={12} color="warning" />
                 <Text variant="caption" className="text-white font-bold">
                   AI Generated
                 </Text>
@@ -204,12 +195,12 @@ export const NotesTab = React.memo(function NotesTab({
             <View>
               <Text
                 variant="h2"
-                className="text-white leading-tight"
+                className="text-white leading-tight font-extrabold"
                 numberOfLines={2}
               >
                 {notesData?.title || title}
               </Text>
-              <Text variant="subhead" className="text-blue-200 mt-1">
+              <Text variant="subhead" className="text-white/80 mt-1">
                 {notesData?.subjectName || subject} • {sections.length} topics
                 covered
               </Text>
@@ -222,18 +213,11 @@ export const NotesTab = React.memo(function NotesTab({
                   key={s.label}
                   className="flex-1 bg-white/10 rounded-2xl p-2.5 items-center gap-0.5"
                 >
-                  <Icon
-                    name={s.icon as any}
-                    size={13}
-                    color="rgba(255,255,255,0.8)"
-                  />
+                  <Icon name={s.icon as any} size={13} color="white" />
                   <Text variant="h4" className="text-white">
                     {s.value}
                   </Text>
-                  <Text
-                    variant="caption"
-                    style={{ fontSize: 9, color: "rgba(255,255,255,0.7)" }}
-                  >
+                  <Text variant="caption" className="text-white/70 text-[9px]">
                     {s.label}
                   </Text>
                 </View>
@@ -243,13 +227,13 @@ export const NotesTab = React.memo(function NotesTab({
             {/* Read Notes Button */}
             <Pressable
               onPress={onReadNotes}
-              className="bg-white rounded-2xl h-12 flex-row items-center justify-center gap-2 mt-1 active:opacity-85"
+              className="bg-card rounded-2xl h-12 flex-row items-center justify-center gap-2 mt-1 active:opacity-85"
             >
-              <Icon name="book-open" size={16} color={APP_COLORS.quizBlueHover} />
-              <Text variant="primary" style={{ color: APP_COLORS.quizBlueHover }}>
+              <Icon name="book-open" size={16} color="primary" />
+              <Text variant="primary" className="font-bold">
                 Read Full Notes
               </Text>
-              <Icon name="arrow-right" size={14} color={APP_COLORS.quizBlueHover} />
+              <Icon name="arrow-right" size={14} color="primary" />
             </Pressable>
           </View>
         </View>
@@ -263,7 +247,7 @@ export const NotesTab = React.memo(function NotesTab({
             Topics Covered
           </Text>
           <Pressable onPress={onReadNotes} className="active:opacity-70">
-            <Text variant="primary" className="text-xs">
+            <Text variant="primary" className="text-xs font-bold">
               Read All →
             </Text>
           </Pressable>
@@ -304,11 +288,7 @@ export const NotesTab = React.memo(function NotesTab({
 
                 <View className="flex-row items-center gap-1">
                   <Text variant="caption">{section.bullets.length} points</Text>
-                  <Icon
-                    name="chevron-right"
-                    size={14}
-                    color={APP_COLORS.stone300}
-                  />
+                  <Icon name="chevron-right" size={14} color="muted" />
                 </View>
               </Pressable>
             );
@@ -317,9 +297,9 @@ export const NotesTab = React.memo(function NotesTab({
           {sections.length > 8 && (
             <Pressable
               onPress={onReadNotes}
-              className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/40 rounded-2xl py-3.5 items-center active:opacity-70"
+              className="bg-primary/10 border border-primary/20 rounded-2xl py-3.5 items-center active:opacity-70"
             >
-              <Text variant="primary" className="text-sm">
+              <Text variant="primary" className="text-sm font-bold">
                 +{sections.length - 8} more topics · Read Full Notes
               </Text>
             </Pressable>

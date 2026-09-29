@@ -1,8 +1,9 @@
+import { useConfirmDialog } from "@/components/confirm-dialog-provider";
 import { NotesDetailBottomSheet } from "@/components/notes/notes-detail-bottom-sheet";
 import { StartQuizSheet } from "@/components/quizzes";
 import { AppScreen } from "@/components/ui/app-screen";
 import { Spinner } from "@/components/ui/spinner";
-import { useConfirmDialog } from "@/components/confirm-dialog-provider";
+import { SwipeableTabView } from "@/components/ui/swipeable-tab-view";
 import {
   useDeleteStudyMaterial,
   useQuizzesInfiniteQuery,
@@ -12,24 +13,28 @@ import {
 } from "@/hooks/queries";
 import { usePlanPermissions } from "@/hooks/use-plan-permissions";
 import { useAuth } from "@/lib/auth";
-import { hasQuizAccess, type Quiz, type QuizAttempt } from "@/services";
+import { useThemePreference } from "@/lib/theme-preference";
+import {
+  isFailed,
+  isNotesReady,
+  isQuizFailed,
+  isQuizReady,
+} from "@/lib/utils/material-status";
+import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
+import { type Quiz, type QuizAttempt } from "@/services";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { StatusBar, View } from "react-native";
-import { useThemePreference } from "@/lib/theme-preference";
-import { isFailed, isNotesReady, isQuizReady, isQuizFailed } from "@/lib/utils/material-status";
-import { showErrorToast, showInfoToast } from "@/lib/utils/toast";
-import { SwipeableTabView } from "@/components/ui/swipeable-tab-view";
 import { DetailHeader } from "./detail-header";
 import { MaterialTab } from "./material-tab";
 import { NotesTab } from "./notes-tab";
 import { QuizTab } from "./quiz-tab";
 import type { TabType } from "./types";
 
-interface MaterialDetailScreenProps {
+export type MaterialDetailScreenProps = {
   materialId: string;
-}
+};
 
 export function MaterialDetailScreen({
   materialId,
@@ -90,7 +95,6 @@ export function MaterialDetailScreen({
   const failed = material ? isFailed(material) : false;
   const title = material?.title ?? "Study Material";
   const subject = material?.subject?.name ?? "General";
-  const pdfUrl = material?.files?.[0]?.url ?? undefined;
 
   const handleStartQuiz = React.useCallback(
     async (quiz: Quiz) => {
@@ -163,7 +167,13 @@ export function MaterialDetailScreen({
   }, [confirm, deleteMaterialMutation, material, title, router]);
 
   const headerElement = React.useMemo(
-    () => <DetailHeader title={title} onBack={handleBack} onDelete={handleDeleteMaterial} />,
+    () => (
+      <DetailHeader
+        title={title}
+        onBack={handleBack}
+        onDelete={handleDeleteMaterial}
+      />
+    ),
     [title, handleBack, handleDeleteMaterial],
   );
 
@@ -174,7 +184,11 @@ export function MaterialDetailScreen({
 
   if (isMaterialLoading) {
     return (
-      <AppScreen edges={["top"]} header={loadingHeaderElement} scrollable={false}>
+      <AppScreen
+        edges={["top"]}
+        header={loadingHeaderElement}
+        scrollable={false}
+      >
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
         <View
           className="flex-1 items-center justify-center"
@@ -219,11 +233,9 @@ export function MaterialDetailScreen({
           isError={isNotesError}
           notesReady={notesReady}
           failed={failed}
-          quizReady={quizReady}
           title={title}
           subject={subject}
           onReadNotes={handleReadNotes}
-          onGoToQuiz={handleGoToQuiz}
           onRetry={refetchNotes}
         />
         <QuizTab

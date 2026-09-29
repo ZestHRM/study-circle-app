@@ -37,12 +37,8 @@ export const StudyStreakWidget = React.memo(function StudyStreakWidget() {
   const isLoading = streakQuery.isLoading || recentActivityQuery.isLoading;
   const streak: DashboardStreak | null = streakQuery.data ?? null;
   const currentStreak = getCurrentStreak(streak);
-  const bestStreak = streak?.bestStreak ?? 0;
   const recentActivity: DashboardRecentActivityItem[] =
     recentActivityQuery.data ?? [];
-  const progressToBest =
-    bestStreak > 0 ? Math.min((currentStreak / bestStreak) * 100, 100) : 0;
-
   // 7-day visual tracker
   const last7Days = React.useMemo(() => {
     const days = [];

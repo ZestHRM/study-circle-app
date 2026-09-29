@@ -1,15 +1,13 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { NoticeBox } from "@/components/ui/notice-box";
 import { SelectionCard } from "@/components/ui/selection-card";
 import { Text } from "@/components/ui/text";
-import { APP_COLORS } from "@/constants/colors";
 import * as React from "react";
 import { View } from "react-native";
 
 export interface Step2UploadTypeProps {
   selectedSubjectName?: string;
+  initialType?: "STUDY_MATERIAL" | "PYQ";
   submitError?: string | null;
   onContinue: (uploadType: "STUDY_MATERIAL" | "PYQ") => void;
 }
@@ -18,12 +16,19 @@ export type Step2UploadProps = Step2UploadTypeProps;
 
 export const Step2UploadType = React.memo(function Step2UploadType({
   selectedSubjectName,
+  initialType = "STUDY_MATERIAL",
   submitError,
   onContinue,
 }: Step2UploadTypeProps) {
   const [selectedUploadType, setSelectedUploadType] = React.useState<
     "STUDY_MATERIAL" | "PYQ"
-  >("STUDY_MATERIAL");
+  >(initialType);
+
+  React.useEffect(() => {
+    if (initialType) {
+      setSelectedUploadType(initialType);
+    }
+  }, [initialType]);
 
   const handleContinuePress = React.useCallback(() => {
     onContinue(selectedUploadType);
@@ -33,9 +38,7 @@ export const Step2UploadType = React.memo(function Step2UploadType({
     <View className="gap-5">
       {/* Title & Subtitle Header */}
       <View className="gap-1">
-        <Text variant="h2">
-          What are you uploading?
-        </Text>
+        <Text variant="h2">What are you uploading?</Text>
         <Text variant="muted">
           Choose the type of content so we can organise and process it better.
         </Text>
@@ -75,7 +78,6 @@ export const Step2UploadType = React.memo(function Step2UploadType({
           subtitle="Important questions + why they matter"
           icon="clipboard"
           iconColor="warning"
-          badge={<Badge label="Coming Soon" icon="clock" variant="amber" />}
           features={[
             { text: "Upload past year papers (PYQs)", iconColor: "warning" },
             {
@@ -85,12 +87,6 @@ export const Step2UploadType = React.memo(function Step2UploadType({
           ]}
         />
       </View>
-
-      {/* Info Notice Box */}
-      <NoticeBox
-        variant="info"
-        message="PYQ analysis module is coming soon. Select Study Material to upload notes and generate AI quizzes."
-      />
 
       {submitError ? (
         <Text variant="error" className="text-center">

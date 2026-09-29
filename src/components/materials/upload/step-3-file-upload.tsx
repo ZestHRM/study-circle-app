@@ -53,9 +53,9 @@ export const Step3FileUpload = React.memo(function Step3FileUpload({
       </View>
 
       {/* Selected Subject Banner */}
-      <Card className="rounded-2xl p-4 border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/30 flex-row items-center justify-between">
+      <Card className="rounded-2xl p-4 border-primary/20 bg-primary/10 flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
-          <View className="w-9 h-9 rounded-xl bg-blue-500/15 items-center justify-center">
+          <View className="w-9 h-9 rounded-xl bg-primary/20 items-center justify-center">
             <Icon name="book-open" size="sm" color="primary" />
           </View>
           <View>
@@ -72,13 +72,13 @@ export const Step3FileUpload = React.memo(function Step3FileUpload({
             title="Edit"
             onPress={onEditSubject}
             className="px-3 py-1 h-8 rounded-full"
-            textClassName="text-xs font-bold text-blue-600 dark:text-blue-400"
+            textClassName="text-xs font-bold text-primary"
           />
         ) : null}
       </Card>
 
       {/* Material Title Input Field */}
-      <Card className="rounded-2xl p-4 border-stone-200 dark:border-stone-800">
+      <Card className="rounded-2xl p-4 border-border bg-card">
         <CardContent className="p-0">
           <Input
             label="Material title"

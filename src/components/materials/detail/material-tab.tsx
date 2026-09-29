@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { APP_COLORS } from "@/constants/colors";
 import {
   isFailed,
   isNotesReady,
@@ -28,7 +27,7 @@ function MRow({
   return (
     <View className="flex-row items-center gap-3">
       <View className="w-8 h-8 rounded-xl bg-muted items-center justify-center">
-        <Icon name={icon as any} size={14} color={APP_COLORS.stone500} />
+        <Icon name={icon as any} size={14} color="muted" />
       </View>
       <Text variant="caption" style={{ width: 72 }}>
         {label}
@@ -54,7 +53,7 @@ function AiStatusRow({
   return (
     <View className="flex-row items-center justify-between px-4 py-3.5">
       <View className="flex-row items-center gap-2.5">
-        <Icon name={icon as any} size={15} color={APP_COLORS.stone500} />
+        <Icon name={icon as any} size={15} color="muted" />
         <Text variant="h4">{label}</Text>
       </View>
       {failed ? (
@@ -113,20 +112,20 @@ export const MaterialTab = React.memo(function MaterialTab({
           <View
             className={`w-14 h-14 rounded-2xl items-center justify-center ${
               isPdf
-                ? "bg-red-100 dark:bg-red-950/50"
+                ? "bg-red-50 dark:bg-red-950/40"
                 : isImage
-                  ? "bg-blue-100 dark:bg-blue-950/50"
-                  : "bg-amber-100 dark:bg-amber-950/50"
+                  ? "bg-primary/10"
+                  : "bg-warning-bg"
             }`}
           >
             <Text
               variant="caption"
               className={`font-black tracking-wider ${
                 isPdf
-                  ? "text-red-600 dark:text-red-400"
+                  ? "text-destructive"
                   : isImage
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-amber-600 dark:text-amber-400"
+                    ? "text-primary"
+                    : "text-warning-dark"
               }`}
             >
               {fileExt}
@@ -180,9 +179,9 @@ export const MaterialTab = React.memo(function MaterialTab({
         {fileUrl ? (
           <Pressable
             onPress={handleOpenFile}
-            className="w-full bg-blue-600 rounded-xl py-3 flex-row items-center justify-center gap-2 active:opacity-85 mt-1"
+            className="w-full bg-primary rounded-xl py-3 flex-row items-center justify-center gap-2 active:opacity-85 mt-1"
           >
-            <Icon name="file-text" size={16} color={APP_COLORS.white} />
+            <Icon name="file-text" size={16} color="white" />
             <Text variant="subhead" className="text-white font-bold">
               Open Uploaded File →
             </Text>
@@ -195,7 +194,7 @@ export const MaterialTab = React.memo(function MaterialTab({
         <View className="bg-card rounded-2xl border border-border p-4 gap-3">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
-              <Icon name="align-left" size={15} color={APP_COLORS.stone600} />
+              <Icon name="align-left" size={15} color="muted" />
               <Text
                 variant="caption"
                 className="font-bold uppercase tracking-wider"

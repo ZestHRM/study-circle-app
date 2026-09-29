@@ -1,23 +1,32 @@
 import { useConfirmDialog } from "@/components/confirm-dialog-provider";
-import { MaterialCard, MaterialsHeader } from "@/components/materials";
+import {
+  ExamMaterialCard,
+  ExamMaterialsHeader,
+} from "@/components/exam-materials";
 import { AppHeaderBar } from "@/components/ui/app-header-bar";
 import { AppScreen } from "@/components/ui/app-screen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InfiniteListFooter } from "@/components/ui/infinite-list-footer";
+import { PaywallCard } from "@/components/ui/paywall-card";
 import { APP_COLORS } from "@/constants/colors";
-import { useDeleteStudyMaterial, useStudyMaterialsInfinite } from "@/hooks";
+import { useDeleteExamMaterial, useExamMaterialsInfinite } from "@/hooks";
 import { useSubjectsQuery } from "@/hooks/queries/use-subjects";
+import { usePlanPermissions } from "@/hooks/use-plan-permissions";
 import { showErrorToast } from "@/lib/utils/toast";
-import { type StudyMaterial } from "@/services";
+import type {
+  ExamMaterial,
+  ExamMaterialCategory,
+} from "@/services/exam-materials-service";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { FlatList, RefreshControl, View } from "react-native";
 
-export default function MaterialsScreen() {
+export default function ExamMaterialsScreen() {
   const router = useRouter();
   const confirm = useConfirmDialog();
   const [selectedSubjectId, setSelectedSubjectId] = React.useState<string>("");
-  const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    React.useState<ExamMaterialCategory>("ALL");
   const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const {
@@ -28,43 +37,47 @@ export default function MaterialsScreen() {
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useStudyMaterialsInfinite({
+  } = useExamMaterialsInfinite({
+    category: selectedCategory,
     subjectId: selectedSubjectId,
     search: searchQuery,
   });
 
   const { subjects } = useSubjectsQuery();
 
-  const deleteMaterialMutation = useDeleteStudyMaterial();
-
-  const filteredMaterials = React.useMemo(() => {
-    return materials.filter((m) => {
-      if (selectedDate) {
-        if (m.createdAt) {
-          const itemDateStr = new Date(m.createdAt).toISOString().split("T")[0];
-          const filterDateStr = selectedDate.toISOString().split("T")[0];
-          if (itemDateStr !== filterDateStr) return false;
-        }
-      }
-
-      return true;
-    });
-  }, [materials, selectedDate]);
+  const deleteMaterialMutation = useDeleteExamMaterial();
 
   const handleClearFilters = React.useCallback(() => {
     setSelectedSubjectId("");
-    setSelectedDate(null);
+    setSelectedCategory("ALL");
     setSearchQuery("");
   }, []);
 
+  const { maxExamPaperYears } = usePlanPermissions();
+  const isLocked = maxExamPaperYears === 0;
+
   const handleOpenAddDialog = React.useCallback(() => {
-    router.push("/materials/upload");
-  }, [router]);
+    if (isLocked) {
+      router.push("/subscriptions" as any);
+      return;
+    }
+    router.push({
+      pathname: "/materials/upload",
+      params: { type: "PYQ" },
+    } as any);
+  }, [router, isLocked]);
+
+  const handleCardPress = React.useCallback(
+    (material: ExamMaterial) => {
+      router.push(`/exam-materials/${material.id}` as any);
+    },
+    [router],
+  );
 
   const handleDeleteMaterial = React.useCallback(
-    async (material: StudyMaterial) => {
+    async (material: ExamMaterial) => {
       const confirmed = await confirm({
-        title: "Delete Study Material",
+        title: "Delete Exam Material",
         description: `Are you sure you want to delete "${material.title}"? This action cannot be undone.`,
         confirmText: "Delete",
         cancelText: "Cancel",
@@ -78,38 +91,37 @@ export default function MaterialsScreen() {
         const message =
           error instanceof Error
             ? error.message
-            : "Unable to delete the study material right now.";
+            : "Unable to delete the exam material right now.";
         showErrorToast("Delete Failed", message);
       }
     },
     [confirm, deleteMaterialMutation],
   );
 
-  const keyExtractor = React.useCallback((item: StudyMaterial) => item.id, []);
+  const keyExtractor = React.useCallback((item: ExamMaterial) => item.id, []);
 
   const ItemSeparator = React.useCallback(() => <View className="h-3.5" />, []);
 
   const renderItem = React.useCallback(
-    ({ item }: { item: StudyMaterial }) => (
-      <MaterialCard
+    ({ item }: { item: ExamMaterial }) => (
+      <ExamMaterialCard
         material={item}
         onDelete={handleDeleteMaterial}
+        onPress={handleCardPress}
         isDeleting={deleteMaterialMutation.isPending}
       />
     ),
-    [handleDeleteMaterial, deleteMaterialMutation.isPending],
+    [handleDeleteMaterial, handleCardPress, deleteMaterialMutation.isPending],
   );
 
   const headerElement = React.useMemo(
     () => (
-      <MaterialsHeader
+      <ExamMaterialsHeader
         onUploadPress={handleOpenAddDialog}
         totalMaterialsCount={materials.length}
         selectedSubjectId={selectedSubjectId}
         onSubjectChange={setSelectedSubjectId}
         subjects={subjects}
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onClearFilters={handleClearFilters}
@@ -121,8 +133,6 @@ export default function MaterialsScreen() {
       selectedSubjectId,
       setSelectedSubjectId,
       subjects,
-      selectedDate,
-      setSelectedDate,
       searchQuery,
       setSearchQuery,
       handleClearFilters,
@@ -135,40 +145,71 @@ export default function MaterialsScreen() {
         <InfiniteListFooter
           isFetchingNextPage={isFetchingNextPage}
           hasNextPage={hasNextPage}
-          totalLoaded={filteredMaterials.length}
-          itemLabel="materials"
+          totalLoaded={materials.length}
+          itemLabel="exam materials"
         />
       </View>
     ),
-    [isFetchingNextPage, hasNextPage, filteredMaterials.length],
+    [isFetchingNextPage, hasNextPage, materials.length],
   );
 
-  const hasActiveFilters = Boolean(selectedSubjectId || selectedDate);
+  const hasActiveFilters = Boolean(
+    (selectedCategory && selectedCategory !== "ALL") ||
+    selectedSubjectId ||
+    searchQuery,
+  );
 
   const emptyElement = React.useMemo(
     () =>
       !isLoading ? (
-        <EmptyState
-          icon="file-text"
-          title={
-            !hasActiveFilters
-              ? "No Study Materials Yet"
-              : "No Matching Materials"
-          }
-          description={
-            !hasActiveFilters
-              ? "Upload your first PDF or document to generate AI notes and practice quizzes automatically."
-              : "No materials found matching your selected subject or date filters. Try clearing filters."
-          }
-          actionLabel={
-            hasActiveFilters ? "Clear All Filters" : "Upload First Material +"
-          }
-          actionVariant="quiz"
-          onAction={hasActiveFilters ? handleClearFilters : handleOpenAddDialog}
-          className="mt-4"
-        />
+        isLocked && !hasActiveFilters ? (
+          <PaywallCard
+            title="Access to Exam Materials"
+            description="Get complete access to upload, view and analyze your exam materials with AI."
+            buttonLabel="Upgrade to Pro →"
+            onUpgradePress={() => router.push("/subscriptions" as any)}
+            iconName="lock"
+            features={[
+              "Upload & analyze exam materials",
+              "Get AI powered important topics",
+              "Access notes, quizzes & more",
+            ]}
+            className="mt-2"
+          />
+        ) : (
+          <EmptyState
+            icon="file-check"
+            title={
+              !hasActiveFilters
+                ? "No Exam Materials Yet"
+                : "No Matching Exam Materials"
+            }
+            description={
+              !hasActiveFilters
+                ? "Upload previous year question papers (PYQs), mock test papers, or model answer keys."
+                : "No exam materials match your selected filters. Try clearing your search or category."
+            }
+            actionLabel={
+              hasActiveFilters
+                ? "Clear All Filters"
+                : "Upload First Exam Paper +"
+            }
+            actionVariant="quiz"
+            onAction={
+              hasActiveFilters ? handleClearFilters : handleOpenAddDialog
+            }
+            className="mt-4"
+          />
+        )
       ) : null,
-    [isLoading, hasActiveFilters, handleClearFilters, handleOpenAddDialog],
+    [
+      isLoading,
+      isLocked,
+      hasActiveFilters,
+      handleClearFilters,
+      handleOpenAddDialog,
+      router,
+    ],
   );
 
   const refreshControlElement = React.useMemo(
@@ -176,7 +217,7 @@ export default function MaterialsScreen() {
       <RefreshControl
         refreshing={isRefreshing}
         onRefresh={refetch}
-        tintColor={APP_COLORS.quizBlue}
+        tintColor={APP_COLORS.primary}
       />
     ),
     [isRefreshing, refetch],
@@ -189,7 +230,7 @@ export default function MaterialsScreen() {
       scrollable={false}
     >
       <FlatList
-        data={filteredMaterials}
+        data={materials}
         keyExtractor={keyExtractor}
         contentContainerStyle={{
           paddingHorizontal: 18,

@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { APP_COLORS } from "@/constants/colors";
 import {
   useDashboardChartData,
   useDashboardStreak,
@@ -60,10 +59,18 @@ export const StatsCardsWidget = React.memo(function StatsCardsWidget() {
             <Icon name="clock" size={16} color="primary" />
           </View>
           <View className="flex-1 min-w-0">
-            <Text variant="h2" className="text-sm font-black leading-tight" numberOfLines={1}>
+            <Text
+              variant="h2"
+              className="text-sm font-black leading-tight"
+              numberOfLines={1}
+            >
               {formattedHours}
             </Text>
-            <Text variant="muted" className="text-[10px] font-medium leading-tight text-muted-foreground" numberOfLines={1}>
+            <Text
+              variant="muted"
+              className="text-[10px] font-medium leading-tight text-muted-foreground"
+              numberOfLines={1}
+            >
               studied
             </Text>
           </View>
@@ -78,10 +85,18 @@ export const StatsCardsWidget = React.memo(function StatsCardsWidget() {
             <Icon name="check" size={16} color="white" />
           </View>
           <View className="flex-1 min-w-0">
-            <Text variant="h2" className="text-sm font-black leading-tight" numberOfLines={1}>
+            <Text
+              variant="h2"
+              className="text-sm font-black leading-tight"
+              numberOfLines={1}
+            >
               {totalTasks}
             </Text>
-            <Text variant="muted" className="text-[10px] font-medium leading-tight text-muted-foreground" numberOfLines={2}>
+            <Text
+              variant="muted"
+              className="text-[10px] font-medium leading-tight text-muted-foreground"
+              numberOfLines={2}
+            >
               tasks done
             </Text>
           </View>
@@ -96,10 +111,18 @@ export const StatsCardsWidget = React.memo(function StatsCardsWidget() {
             <Icon name="zap" size={16} color="warning" />
           </View>
           <View className="flex-1 min-w-0">
-            <Text variant="h2" className="text-sm font-black leading-tight" numberOfLines={1}>
+            <Text
+              variant="h2"
+              className="text-sm font-black leading-tight"
+              numberOfLines={1}
+            >
               {streakDays} {streakDays === 1 ? "day" : "days"}
             </Text>
-            <Text variant="muted" className="text-[10px] font-medium leading-tight text-muted-foreground" numberOfLines={1}>
+            <Text
+              variant="muted"
+              className="text-[10px] font-medium leading-tight text-muted-foreground"
+              numberOfLines={1}
+            >
               streak
             </Text>
           </View>

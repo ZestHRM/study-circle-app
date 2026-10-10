@@ -40,8 +40,15 @@
     },
     "plugins": [
       "expo-router",
-      "@react-native-firebase/app",
-      "@react-native-firebase/messaging",
+      [
+        "@react-native-firebase/app/app.plugin.js",
+        {
+          "ios": {
+            "disableSPM": true
+          }
+        }
+      ],
+      "@react-native-firebase/messaging/app.plugin.js",
       [
         "expo-status-bar",
         {
@@ -69,7 +76,19 @@
       "@react-native-community/datetimepicker",
       "expo-image",
       "expo-web-browser",
-      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [
+              {
+                "name": "GoogleUtilities",
+                "modular_headers": true
+              }
+            ]
+          }
+        }
+      ],
       "./plugins/withDisableUserScriptSandboxing",
       "expo-localization"
     ],

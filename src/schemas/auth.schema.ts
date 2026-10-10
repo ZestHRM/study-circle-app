@@ -33,6 +33,7 @@ export const signUpSchema = z
       .string()
       .trim()
       .min(1, { message: "Institute is required." }),
+    referralCode: z.string().trim().optional(),
     level: z.enum(["School", "College", "Coaching", "CompetitiveExams"], {
       message: "Please select an education level.",
     }),

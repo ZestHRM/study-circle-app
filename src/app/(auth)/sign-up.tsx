@@ -54,6 +54,7 @@ export default function SignUpScreen() {
         email: "",
         phone: "",
         institute: "",
+        referralCode: "",
         level: "School",
         classOrStandard: "",
         password: "",
@@ -155,6 +156,7 @@ export default function SignUpScreen() {
         email: data.email.trim().toLowerCase(),
         phone: data.phone.trim(),
         institute: data.institute.trim(),
+        referralCode: data.referralCode?.trim() || undefined,
         level: data.level,
         classOrStandard: data.classOrStandard.trim(),
         password: data.password,
@@ -431,6 +433,14 @@ export default function SignUpScreen() {
               name="institute"
               label="School or institute"
               placeholder="School, college, or institute name"
+              returnKeyType="next"
+            />
+            <FormInput
+              control={control}
+              name="referralCode"
+              label="Referral code (optional)"
+              placeholder="Enter referral code"
+              autoCapitalize="characters"
               returnKeyType="next"
               onSubmitEditing={handleStep3Next}
             />

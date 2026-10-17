@@ -25,6 +25,7 @@ import { useRouter } from "expo-router";
 import * as React from "react";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { Pressable, View } from "react-native";
+import { AppEventsLogger } from "react-native-fbsdk-next";
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -189,6 +190,7 @@ export default function SignUpScreen() {
         code,
       });
       stop();
+      AppEventsLogger.logEvent("fb_mobile_complete_registration");
       router.replace("/(tabs)");
     } catch (caughtError) {
       const errorMsg = getErrorMessage(

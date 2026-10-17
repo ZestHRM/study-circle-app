@@ -88,7 +88,19 @@
       ],
       "./plugins/withDisableUserScriptSandboxing",
       "./plugins/withFirebaseNotificationColorOverride",
-      "expo-localization"
+      "expo-localization",
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "1091081653716636",
+          "clientToken": "17d62b4888fdcbaca56d284ce949a181",
+          "displayName": "StudyCircleAI",
+          "scheme": "fb1091081653716636",
+          "isAutoInitEnabled": true,
+          "autoLogAppEventsEnabled": true,
+          "advertiserIDCollectionEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
